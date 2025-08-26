@@ -13,9 +13,11 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 
-// A browser-only feature check
-const SpeechRecognition =
-  (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+let SpeechRecognition: any = null;
+if (typeof window !== 'undefined') {
+    SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+}
+
 
 export function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
