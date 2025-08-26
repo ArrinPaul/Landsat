@@ -11,3 +11,4 @@ import '@/ai/flows/chatbot.ts';
 import '@/ai/flows/plan-crops.ts';
 import '@/ai/flows/schedule-irrigation.ts';
 import '@/ai/flows/text-to-speech.ts';
+import '@/ai/flows/compute-metrics.ts';
