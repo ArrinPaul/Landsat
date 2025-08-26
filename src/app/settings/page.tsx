@@ -81,7 +81,7 @@ export default function SettingsPage() {
                 <p className="text-sm text-muted-foreground">
                     <strong>Earth Insights Dashboard</strong>
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground whitespace-nowrap">
                     &copy; 2025 Earth Insights. All rights reserved. | Team: LunarX
                 </p>
                 </div>
