@@ -9,6 +9,8 @@ import React, { useState, useEffect } from "react";
 import { usePathname } from 'next/navigation';
 import { cn } from "@/lib/utils";
 import { ContactSheet } from "./contact-sheet";
+import { LanguageSwitcher } from "./language-switcher";
+import { useLanguage } from "@/hooks/use-language";
 
 const scrolltoHash = function (element_id: string) {
   const element = document.getElementById(element_id.replace('#', ''))
@@ -18,6 +20,7 @@ const scrolltoHash = function (element_id: string) {
 }
 
 export function Header() {
+  const { t } = useLanguage();
   const [isScrolled, setIsScrolled] = useState(false);
   const pathname = usePathname();
   const isLandingPage = pathname === '/';
@@ -51,7 +54,7 @@ export function Header() {
         <div className="mr-8 flex items-center">
           <Link href="/" className="flex items-center gap-2">
             <Mountain className="h-6 w-6" />
-            <span className="font-bold text-lg">Earth Insights</span>
+            <span className="font-bold text-lg">{t('header.title')}</span>
           </Link>
         </div>
         <nav className="hidden md:flex items-center space-x-2 lg:space-x-4 text-sm font-medium">
@@ -62,7 +65,7 @@ export function Header() {
                         scrolltoHash("#features");
                     }
                 }}>
-                    Features
+                    {t('header.features')}
                 </Link>
             </Button>
             <Button variant="link" asChild className={linkClass}>
@@ -72,7 +75,7 @@ export function Header() {
                         scrolltoHash("#about");
                     }
                 }}>
-                    About
+                    {t('header.about')}
                 </Link>
             </Button>
             <Button variant="link" asChild className={linkClass}>
@@ -80,7 +83,7 @@ export function Header() {
                      e.preventDefault();
                      setContactOpen(true);
                 }}>
-                    Contact
+                    {t('header.contact')}
                 </Link>
             </Button>
         </nav>
@@ -88,7 +91,7 @@ export function Header() {
            <Button variant="ghost" asChild className={buttonLinkClass}>
                 <Link href="/dashboard">
                     <LayoutDashboard className="mr-2 h-4 w-4"/>
-                    Dashboard
+                    {t('header.dashboard')}
                 </Link>
             </Button>
              <Button variant="ghost" asChild className={cn(buttonLinkClass, "hidden")}>
@@ -100,12 +103,13 @@ export function Header() {
              <Button variant="ghost" asChild className={buttonLinkClass}>
                 <Link href="/settings">
                     <Settings className="mr-2 h-4 w-4"/>
-                    Settings
+                    {t('header.settings')}
                 </Link>
             </Button>
+          <LanguageSwitcher className={buttonLinkClass} />
           <ThemeToggle />
            <Button asChild size="sm" className={cn(!isLandingPage && "hidden")}>
-                <Link href="/dashboard">Get Started</Link>
+                <Link href="/dashboard">{t('header.getStarted')}</Link>
            </Button>
         </div>
       </div>
