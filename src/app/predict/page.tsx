@@ -12,12 +12,9 @@ import { useToast } from "@/hooks/use-toast";
 import { suggestCoordinatesAction, getWeatherReportAction, planCropsAction, scheduleIrrigationAction } from "@/lib/actions";
 import type { WeatherData, CropPlan, IrrigationSchedule } from "@/lib/types";
 import { WeatherReport } from "@/components/weather-report";
-import { useAuth } from "@/hooks/use-auth";
-
 
 export default function PredictPage() {
     const { toast } = useToast();
-    const { user, loading: authLoading } = useAuth();
     const [lat, setLat] = useState("40.7128");
     const [lon, setLon] = useState("-74.0060");
     const [locationDesc, setLocationDesc] = useState("New York City");
@@ -29,15 +26,6 @@ export default function PredictPage() {
     const [irrigationSchedule, setIrrigationSchedule] = useState<IrrigationSchedule | null>(null);
 
     type PredictionType = 'weather' | 'crops' | 'irrigation';
-    
-    if (authLoading) {
-      return null;
-    }
-
-    if (!user) {
-      return null;
-    }
-
 
     const handleSuggestCoordinates = async () => {
         if (!locationDesc) {

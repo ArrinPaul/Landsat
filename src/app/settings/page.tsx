@@ -8,11 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth";
 
 export default function SettingsPage() {
   const { toast } = useToast();
-  const { user, loading } = useAuth();
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [permission, setPermission] = useState<NotificationPermission>("default");
 
@@ -22,14 +20,6 @@ export default function SettingsPage() {
       setNotificationsEnabled(Notification.permission === "granted");
     }
   }, []);
-  
-  if (loading) {
-    return null;
-  }
-
-  if (!user) {
-    return null;
-  }
 
   const handleNotificationToggle = async (checked: boolean) => {
     if (!("Notification" in window)) {
