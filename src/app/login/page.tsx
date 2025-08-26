@@ -24,6 +24,9 @@ import { auth } from "@/lib/firebase";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/use-auth";
+import Link from "next/link";
+import { Mountain } from "lucide-react";
 
 function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -55,8 +58,8 @@ function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
 }
 
 export default function LoginPage() {
-  const [signInWithGoogle, , googleLoading] = useSignInWithGoogle(auth);
-  const [signInWithGithub, , githubLoading] = useSignInWithGithub(auth);
+  const [signInWithGoogle, , googleLoading, googleError] = useSignInWithGoogle(auth);
+  const [signInWithGithub, , githubLoading, githubError] = useSignInWithGithub(auth);
   const [
     createUserWithEmailAndPassword,
     ,
@@ -71,6 +74,7 @@ export default function LoginPage() {
   ] = useSignInWithEmailAndPassword(auth);
   const { toast } = useToast();
   const router = useRouter();
+  const { user } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -78,13 +82,17 @@ export default function LoginPage() {
   const isLoading = googleLoading || githubLoading || createLoading || signInLoading;
 
   useEffect(() => {
-    if (createError) {
-      toast({ title: "Registration Error", description: createError.message, variant: "destructive" });
+    if (user) {
+      router.push("/dashboard");
     }
-    if (signInError) {
-      toast({ title: "Login Error", description: signInError.message, variant: "destructive" });
+  }, [user, router]);
+  
+  useEffect(() => {
+    const error = createError || signInError || googleError || githubError;
+    if (error) {
+      toast({ title: "Authentication Error", description: error.message.replace("Firebase: ", ""), variant: "destructive" });
     }
-  }, [createError, signInError, toast]);
+  }, [createError, signInError, googleError, githubError, toast]);
 
   const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,8 +127,14 @@ export default function LoginPage() {
 
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-muted/20">
-      <Tabs defaultValue="login" className="w-[400px]">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-muted/20 p-4">
+       <div className="absolute top-8 left-8">
+            <Link href="/" className="flex items-center gap-2 text-foreground">
+                <Mountain className="h-6 w-6" />
+                <span className="font-bold text-lg">Earth Insights</span>
+            </Link>
+       </div>
+      <Tabs defaultValue="login" className="w-full max-w-md">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="login">Login</TabsTrigger>
           <TabsTrigger value="signup">Sign Up</TabsTrigger>
@@ -146,27 +160,24 @@ export default function LoginPage() {
               </CardContent>
               <CardFooter className="flex flex-col gap-4">
                 <Button className="w-full" type="submit" disabled={isLoading}>
-                    {signInLoading && <Loader2 className="animate-spin" />}
-                    Login with Email
+                    {signInLoading ? <Loader2 className="animate-spin" /> : "Login with Email"}
                 </Button>
                 <div className="relative w-full">
                   <div className="absolute inset-0 flex items-center">
                     <span className="w-full border-t" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">
+                    <span className="bg-card px-2 text-muted-foreground">
                       Or continue with
                     </span>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4 w-full">
                   <Button variant="outline" onClick={() => handleSocialLogin('google')} disabled={isLoading}>
-                    {googleLoading ? <Loader2 className="animate-spin" /> : <GoogleIcon />}
-                    Google
+                    {googleLoading ? <Loader2 className="animate-spin" /> : <><GoogleIcon className="mr-2"/> Google</>}
                   </Button>
                   <Button variant="outline" onClick={() => handleSocialLogin('github')} disabled={isLoading}>
-                    {githubLoading ? <Loader2 className="animate-spin" /> : <Github />}
-                    GitHub
+                    {githubLoading ? <Loader2 className="animate-spin" /> : <><Github className="mr-2"/> GitHub</>}
                   </Button>
                 </div>
               </CardFooter>
@@ -194,8 +205,7 @@ export default function LoginPage() {
               </CardContent>
               <CardFooter className="flex flex-col gap-4">
                 <Button className="w-full" type="submit" disabled={isLoading}>
-                    {createLoading && <Loader2 className="animate-spin" />}
-                    Sign up with Email
+                    {createLoading ? <Loader2 className="animate-spin" /> : "Sign up with Email"}
                 </Button>
                 <p className="px-8 text-center text-sm text-muted-foreground">
                     By clicking continue, you agree to our{" "}

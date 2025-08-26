@@ -17,7 +17,7 @@ import { useAuth } from "@/hooks/use-auth";
 
 export default function PredictPage() {
     const { toast } = useToast();
-    const { user } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const [lat, setLat] = useState("40.7128");
     const [lon, setLon] = useState("-74.0060");
     const [locationDesc, setLocationDesc] = useState("New York City");
@@ -29,6 +29,14 @@ export default function PredictPage() {
     const [irrigationSchedule, setIrrigationSchedule] = useState<IrrigationSchedule | null>(null);
 
     type PredictionType = 'weather' | 'crops' | 'irrigation';
+    
+    if (authLoading) {
+      return null;
+    }
+
+    if (!user) {
+      return null;
+    }
 
 
     const handleSuggestCoordinates = async () => {
@@ -87,7 +95,6 @@ export default function PredictPage() {
         <div className="flex flex-col min-h-screen">
             <Header />
             <main className="flex-1 p-4 md:p-6">
-               { user && (
                 <div className="container mx-auto space-y-8">
                     <Card>
                         <CardHeader>
@@ -143,7 +150,7 @@ export default function PredictPage() {
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2"><Tractor/> Crop Planning</CardTitle>
                                 <CardDescription>Receive recommendations on suitable crops and planting schedules.</CardDescription>
-                            </CardHeader>
+                            </Header>
                             <CardContent>
                                 <Button onClick={() => handlePrediction('crops')} disabled={!!isLoading}>
                                      {isLoading === 'crops' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
@@ -155,7 +162,7 @@ export default function PredictPage() {
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2"><Droplets/> Irrigation Schedule</CardTitle>
                                 <CardDescription>Get AI-based advice on when and how much to water your fields.</CardDescription>
-                            </CardHeader>
+                            </Header>
                             <CardContent>
                                 <Button onClick={() => handlePrediction('irrigation')} disabled={!!isLoading}>
                                     {isLoading === 'irrigation' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
@@ -236,7 +243,6 @@ export default function PredictPage() {
                     )}
 
                 </div>
-               )}
             </main>
         </div>
     );
