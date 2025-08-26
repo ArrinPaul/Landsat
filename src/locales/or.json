@@ -14,7 +14,7 @@
     "landing.features.subtitle": "ବୃକ୍ଷଲତା ସ୍ୱାସ୍ଥ୍ୟରୁ ସହରୀ ସମ୍ପ୍ରସାରଣ ପର୍ଯ୍ୟନ୍ତ, ଆପଣଙ୍କୁ ସୂଚਿਤ ନିଷ୍పత్తి ନେବାକୁ ଆବଶ୍ୟક ଡାଟା ପਾଆନ୍ତু।",
     "landing.features.keyFeatures": "ਮੁੱਖ ବୈଶିଷ୍ଟ୍ୟଗୁଡିକ",
     "landing.features.coordinateInput": "निर्देशांक इनपुट",
-    "landing.features.coordinateInputDesc": "ପૃଥିବୀର ଯେକୌଣସି ଅଞ୍ଚଳ ବିଶ୍ଳେଷଣ କରିବାକୁ অक्षांश/रेखांश ପ୍ରବେଶ କରନ୍ତୁ।",
+    "landing.features.coordinateInputDesc": "ପୃଥିବୀର ଯେକୌଣସି ଅଞ୍ଚଳ ବିଶ୍ଳେଷଣ କରିବାକୁ অक्षांश/रेखांश ପ୍ରବେଶ କରନ୍ତୁ।",
     "landing.features.metricComputation": "ମେଟ୍ରିକ୍ ଗଣନା",
     "landing.features.metricComputationDesc": "NDVI, NDWI, ଏବଂ NDBI ପରି ମୁଖ୍ୟ ସ୍ପେକ୍ଟ୍ରାଲ୍ ସୂଚକାଙ୍କ ଗଣନା କରନ୍ତୁ।",
     "landing.features.interactiveVisuals": "ପାରସ୍ପରିକ ଭିଜୁଆଲ୍",
@@ -24,7 +24,7 @@
     "landing.whyUs.title": "ଅନ୍ତିମ ପରିବେଶ ଡାଟା ପ୍ଲାଟଫର୍ମ",
     "landing.whyUs.subtitle": "ଆମେ ଜଟିଳ ଉପଗ୍ରହ ଚିତ୍ର ଏବଂ ସ୍ପଷ୍ଟ, କାର୍ଯ୍ୟକ୍ଷମ ପରିବେଶ बुद्धिमत्ता ମଧ୍ୟରେ ଏକ ନਿਰਵିఘ్ନ ସେତୁ ਪ੍ਰਦਾਨ କରୁ।",
     "landing.whyUs.tag": "ଆମେ କାହିଁକି?",
-    "landing.whyUs.point1": "শক্তিশালী, स्केलेबल ବିશ્ଳେଷଣ ପାଇଁ Google Earth Engine ଉପରେ ନିର୍ମିତ।",
+    "landing.whyUs.point1": "শক্তিশালী, स्केलेबल ବିଶ୍ଳେଷଣ ପାଇଁ Google Earth Engine ଉପରେ ନିର୍ମିତ।",
     "landing.whyUs.point2": "ଆପଣଙ୍କ ଅନుସନ୍ଧାନକୁ ଶକ୍ତି ଦେବାକୁ ସଠిକ୍, ଦ୍ରୁତ ପରିବେଶ ଅନ୍ତର୍ଦृष्टि।",
     "landing.whyUs.point3": "ସହଜ ଡାଟା ଅನ್వేषण ପାଇଁ ବ୍ୟବହାରକାରୀ-अनुकूल ଏବଂ ଶକ୍ତିଶାଳୀ ଭିଜୁଆଲାଇଜେସନ୍।",
     "landing.whyUs.point4": "ଅନୁସନ୍ଧାନ ଏବଂ ନିଷ୍పత్తి ଗ୍ରହଣ ପାଇଁ ରପ୍τανି-ಸಿದ್ಧ।",
@@ -43,7 +43,7 @@
     "contact.submitted.title": "ଧನ್ಯವಾದ!",
     "contact.submitted.description": "ଆପଣଙ୍କ ସନ୍ଦେଶ ପଠାଯାଇଛି। ଆମେ ଶୀଘ୍ର ଆପଣଙ୍କ ସହିତ ଯୋଗାଯୋଗ କରିବୁ।",
     "contact.submitted.close": "ବନ୍ଦ କରନ୍ତୁ",
-    "footer.copyright": "© 2024 ଆର୍ଥ ଇନସାଇଟ୍ସ। ସମସ୍ତ ଅଧିକାର ସଂରକ୍ଷିତ।",
+    "footer.copyright": "© 2025 ଆର୍ଥ ଇନସାଇଟ୍ସ। ସମସ୍ତ ଅଧିକାର ସଂରକ୍ଷିତ। | ଟିମ୍: ଲୁନାରଏକ୍ସ",
     "footer.about": "ଆମ ବିଷୟରେ",
     "footer.contact": "ଯୋଗାଯੋଗ"
 }

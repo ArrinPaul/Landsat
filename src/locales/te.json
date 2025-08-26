@@ -1,4 +1,3 @@
-
 {
     "header.title": "ఎర్త్ ఇన్‌సైట్స్",
     "header.features": "లక్షణాలు",
@@ -17,7 +16,7 @@
     "landing.features.coordinateInput": "निर्देशಾಂక ఇన్‌పుట్",
     "landing.features.coordinateInputDesc": "భూమిపై ఏదైనా ప్రాంతాన్ని విశ్లేషించడానికి అక్షాంశం/రేఖాంశాన్ని నమోదు చేయండి.",
     "landing.features.metricComputation": "మెట్రిక్ గణన",
-    "landing.features.metricComputationDesc": "NDVI, NDWI, மற்றும் NDBI వంటి కీలక స్పెక్ట్రల్ సూచికలను లెక్కించండి.",
+    "landing.features.metricComputationDesc": "NDVI, NDWI, మరియు NDBI వంటి కీలక స్పెక్ట్రల్ సూచికలను లెక్కించండి.",
     "landing.features.interactiveVisuals": "ఇంటరాక్టివ్ విజువల్స్",
     "landing.features.interactiveVisualsDesc": "టైమ్-సిరీస్ చార్ట్‌లు మరియు శాటిలైట్ వర్సెస్ గ్రౌండ్ ట్రూత్ స్కాటర్ ప్లాట్లు.",
     "landing.features.exportEasily": "సులభంగా ஏற்றுமதி చేయండి",
@@ -44,7 +43,7 @@
     "contact.submitted.title": "ಧನ್ಯವಾದాలు!",
     "contact.submitted.description": "మీ సందేశం పంపబడింది. మేము விரைவில் మిమ్మల్ని సంప్రదిస్తాము.",
     "contact.submitted.close": "మూసివేయండి",
-    "footer.copyright": "© 2024 ఎర్త్ ఇన్‌సైట్స్. అన్ని హక్కులు ప్రత్యేకించబడినవి.",
+    "footer.copyright": "© 2025 ఎర్త్ ఇన్‌సైట్స్. అన్ని హక్కులు ప్రత్యేకించబడినవి. | బృందం: లూనార్ఎక్స్",
     "footer.about": "మా గురించి",
     "footer.contact": "సంప్రదించండి"
 }
