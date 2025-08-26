@@ -6,7 +6,7 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from './ui/card';
 import { Input } from './ui/input';
 import { ScrollArea } from './ui/scroll-area';
-import { MessageSquare, Send, X, Loader2, Bot, Mic, SpeakerLoud, Play } from 'lucide-react';
+import { MessageSquare, Send, X, Loader2, Bot, Mic, Volume2, Play } from 'lucide-react';
 import { chatbotAction, textToSpeechAction } from '@/lib/actions';
 import type { ChatMessage } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -139,7 +139,7 @@ export function Chatbot() {
 
       if (state === 'loading') return <Loader2 className="h-4 w-4 animate-spin" />;
       if (state === 'playing') return <Play className="h-4 w-4" />;
-      return <SpeakerLoud className="h-4 w-4" />
+      return <Volume2 className="h-4 w-4" />
   }
 
   return (
