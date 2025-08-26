@@ -12,7 +12,7 @@ import { useAuth } from "@/hooks/use-auth";
 
 export default function SettingsPage() {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [permission, setPermission] = useState<NotificationPermission>("default");
 
@@ -22,6 +22,14 @@ export default function SettingsPage() {
       setNotificationsEnabled(Notification.permission === "granted");
     }
   }, []);
+  
+  if (loading) {
+    return null;
+  }
+
+  if (!user) {
+    return null;
+  }
 
   const handleNotificationToggle = async (checked: boolean) => {
     if (!("Notification" in window)) {
@@ -54,7 +62,6 @@ export default function SettingsPage() {
     <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-1 p-4 md:p-6">
-        { user && 
             <Card className="max-w-2xl mx-auto">
             <CardHeader>
                 <CardTitle>Settings</CardTitle>
@@ -90,7 +97,6 @@ export default function SettingsPage() {
                 </div>
             </CardContent>
             </Card>
-        }
       </main>
     </div>
   );
