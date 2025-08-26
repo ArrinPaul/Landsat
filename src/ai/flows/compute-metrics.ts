@@ -47,8 +47,13 @@ const initialize = () => new Promise<void>((resolve, reject) => {
 
 
 async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
+    const creds = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
+    if (!creds) {
+        throw new Error("GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable not set. Please provide service account credentials in your .env file.");
+    }
+
     console.log('Authenticating with Earth Engine...');
-    const privateKey = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON!);
+    const privateKey = JSON.parse(creds);
     await authenticate(privateKey);
     console.log('Earth Engine Authenticated.');
     
