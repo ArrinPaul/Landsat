@@ -10,3 +10,4 @@ import '@/ai/flows/get-weather-report.ts';
 import '@/ai/flows/chatbot.ts';
 import '@/ai/flows/plan-crops.ts';
 import '@/ai/flows/schedule-irrigation.ts';
+import '@/ai/flows/text-to-speech.ts';

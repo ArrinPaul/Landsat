@@ -9,9 +9,11 @@ import { getWeatherReport } from "@/ai/flows/get-weather-report";
 import { chatbot } from "@/ai/flows/chatbot";
 import { planCrops } from "@/ai/flows/plan-crops";
 import { scheduleIrrigation } from "@/ai/flows/schedule-irrigation";
+import { textToSpeech } from "@/ai/flows/text-to-speech";
 
 import type { MetricData, SatellitePassData, WeatherData, CropPlan, IrrigationSchedule } from "@/lib/types";
 import type { ChatbotInput, ChatbotOutput } from "@/ai/flows/chatbot";
+import type { TextToSpeechOutput } from "@/ai/flows/text-to-speech";
 
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) {
@@ -120,6 +122,16 @@ export async function scheduleIrrigationAction(input: { latitude: number; longit
         return { data: result, error: null };
     } catch (error) {
         console.error("Irrigation scheduling action error:", error);
+        return { data: null, error: `AI Error: ${getErrorMessage(error)}` };
+    }
+}
+
+export async function textToSpeechAction(text: string): Promise<{ data: TextToSpeechOutput | null; error: string | null; }> {
+    try {
+        const result = await textToSpeech({ text });
+        return { data: result, error: null };
+    } catch (error) {
+        console.error("Text to speech action error:", error);
         return { data: null, error: `AI Error: ${getErrorMessage(error)}` };
     }
 }
