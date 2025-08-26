@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { Mountain, LayoutDashboard, BarChart3, Settings } from "lucide-react";
+import { Mountain, LayoutDashboard, BarChart3, Settings, LogOut } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "./ui/button";
 import React, { useState, useEffect } from "react";
@@ -11,6 +11,8 @@ import { cn } from "@/lib/utils";
 import { ContactSheet } from "./contact-sheet";
 import { LanguageSwitcher } from "./language-switcher";
 import { useLanguage } from "@/hooks/use-language";
+import { useAuth } from "@/hooks/use-auth";
+import { auth } from "@/lib/firebase";
 
 const scrolltoHash = function (element_id: string) {
   const element = document.getElementById(element_id.replace('#', ''))
@@ -21,6 +23,7 @@ const scrolltoHash = function (element_id: string) {
 
 export function Header() {
   const { t } = useLanguage();
+  const { user } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
   const pathname = usePathname();
   const isLandingPage = pathname === '/';
@@ -36,16 +39,16 @@ export function Header() {
   
   const navClass = cn(
     "sticky top-0 z-50 w-full transition-all duration-300",
-    isLandingPage && !isScrolled ? "bg-transparent text-white" : "border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 text-foreground"
+    isLandingPage && !isScrolled && !user ? "bg-transparent text-white" : "border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 text-foreground"
   );
   
   const linkClass = cn(
       "transition-colors",
-      isLandingPage && !isScrolled ? "hover:text-gray-200" : "hover:text-foreground/80"
+      isLandingPage && !isScrolled && !user ? "hover:text-gray-200" : "hover:text-foreground/80"
   );
   
   const buttonLinkClass = cn(
-    isLandingPage && !isScrolled ? "text-white hover:bg-white/20" : ""
+    isLandingPage && !isScrolled && !user ? "text-white hover:bg-white/20" : ""
   );
 
   return (
@@ -88,27 +91,30 @@ export function Header() {
             </Button>
         </nav>
         <div className="flex flex-1 items-center justify-end space-x-2">
-           <Button variant="ghost" asChild className={buttonLinkClass}>
-                <Link href="/dashboard">
-                    <LayoutDashboard className="mr-2 h-4 w-4"/>
-                    {t('header.dashboard')}
-                </Link>
-            </Button>
-             <Button variant="ghost" asChild className={cn(buttonLinkClass, "hidden")}>
-                <Link href="/visualizations">
-                    <BarChart3 className="mr-2 h-4 w-4"/>
-                    Visualizations
-                </Link>
-            </Button>
-             <Button variant="ghost" asChild className={buttonLinkClass}>
-                <Link href="/settings">
-                    <Settings className="mr-2 h-4 w-4"/>
-                    {t('header.settings')}
-                </Link>
-            </Button>
+           { user && (
+            <>
+                <Button variant="ghost" asChild className={buttonLinkClass}>
+                    <Link href="/dashboard">
+                        <LayoutDashboard className="mr-2 h-4 w-4"/>
+                        {t('header.dashboard')}
+                    </Link>
+                </Button>
+                <Button variant="ghost" asChild className={buttonLinkClass}>
+                    <Link href="/settings">
+                        <Settings className="mr-2 h-4 w-4"/>
+                        {t('header.settings')}
+                    </Link>
+                </Button>
+                <Button variant="ghost" onClick={() => auth.signOut()} className={buttonLinkClass}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign Out
+                </Button>
+            </>
+           )
+           }
           <LanguageSwitcher className={buttonLinkClass} />
           <ThemeToggle />
-           <Button asChild size="sm" className={cn(!isLandingPage && "hidden")}>
+           <Button asChild size="sm" className={cn((!isLandingPage && user) && "hidden", user && "hidden")}>
                 <Link href="/dashboard">{t('header.getStarted')}</Link>
            </Button>
         </div>

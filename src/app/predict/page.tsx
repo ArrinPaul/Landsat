@@ -12,12 +12,12 @@ import { useToast } from "@/hooks/use-toast";
 import { suggestCoordinatesAction, getWeatherReportAction, planCropsAction, scheduleIrrigationAction } from "@/lib/actions";
 import type { WeatherData, CropPlan, IrrigationSchedule } from "@/lib/types";
 import { WeatherReport } from "@/components/weather-report";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/hooks/use-auth";
 
-type PredictionType = 'weather' | 'crops' | 'irrigation';
 
 export default function PredictPage() {
     const { toast } = useToast();
+    const { user } = useAuth();
     const [lat, setLat] = useState("40.7128");
     const [lon, setLon] = useState("-74.0060");
     const [locationDesc, setLocationDesc] = useState("New York City");
@@ -27,6 +27,9 @@ export default function PredictPage() {
     const [weather, setWeather] = useState<WeatherData | null>(null);
     const [cropPlan, setCropPlan] = useState<CropPlan | null>(null);
     const [irrigationSchedule, setIrrigationSchedule] = useState<IrrigationSchedule | null>(null);
+
+    type PredictionType = 'weather' | 'crops' | 'irrigation';
+
 
     const handleSuggestCoordinates = async () => {
         if (!locationDesc) {
@@ -84,6 +87,7 @@ export default function PredictPage() {
         <div className="flex flex-col min-h-screen">
             <Header />
             <main className="flex-1 p-4 md:p-6">
+               { user && (
                 <div className="container mx-auto space-y-8">
                     <Card>
                         <CardHeader>
@@ -232,6 +236,7 @@ export default function PredictPage() {
                     )}
 
                 </div>
+               )}
             </main>
         </div>
     );

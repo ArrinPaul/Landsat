@@ -8,9 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function SettingsPage() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [permission, setPermission] = useState<NotificationPermission>("default");
 
@@ -52,41 +54,43 @@ export default function SettingsPage() {
     <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-1 p-4 md:p-6">
-        <Card className="max-w-2xl mx-auto">
-          <CardHeader>
-            <CardTitle>Settings</CardTitle>
-            <CardDescription>
-              Manage your preferences and application settings.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="dark-mode">Dark Mode</Label>
-              <ThemeToggle />
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex flex-col">
-                <Label htmlFor="notifications">Satellite Pass Alerts</Label>
-                 <p className="text-xs text-muted-foreground">Receive a notification before a satellite passes over your location.</p>
-              </div>
-              <Switch 
-                id="notifications" 
-                checked={notificationsEnabled}
-                onCheckedChange={handleNotificationToggle}
-              />
-            </div>
+        { user && 
+            <Card className="max-w-2xl mx-auto">
+            <CardHeader>
+                <CardTitle>Settings</CardTitle>
+                <CardDescription>
+                Manage your preferences and application settings.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div className="flex items-center justify-between">
+                <Label htmlFor="dark-mode">Dark Mode</Label>
+                <ThemeToggle />
+                </div>
+                <div className="flex items-center justify-between">
+                <div className="flex flex-col">
+                    <Label htmlFor="notifications">Satellite Pass Alerts</Label>
+                    <p className="text-xs text-muted-foreground">Receive a notification before a satellite passes over your location.</p>
+                </div>
+                <Switch 
+                    id="notifications" 
+                    checked={notificationsEnabled}
+                    onCheckedChange={handleNotificationToggle}
+                />
+                </div>
 
-            <div className="space-y-2 pt-6">
-              <h3 className="text-lg font-semibold">About</h3>
-              <p className="text-sm text-muted-foreground">
-                <strong>Earth Insights Dashboard</strong>
-              </p>
-              <p className="text-xs text-muted-foreground">
-                &copy; 2025 Earth Insights. All rights reserved. | Team: LunarX
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+                <div className="space-y-2 pt-6">
+                <h3 className="text-lg font-semibold">About</h3>
+                <p className="text-sm text-muted-foreground">
+                    <strong>Earth Insights Dashboard</strong>
+                </p>
+                <p className="text-xs text-muted-foreground">
+                    &copy; 2025 Earth Insights. All rights reserved. | Team: LunarX
+                </p>
+                </div>
+            </CardContent>
+            </Card>
+        }
       </main>
     </div>
   );
