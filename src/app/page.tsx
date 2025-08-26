@@ -29,7 +29,7 @@ export default function LandingPage() {
         <section className="relative w-full h-[80vh] md:h-[90vh] flex items-center justify-center text-center text-white overflow-hidden">
              <div className="absolute inset-0 z-0 bg-gray-900">
                 <GeometricBackground />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent"></div>
              </div>
 
             <div className="container px-4 md:px-6 z-10">
