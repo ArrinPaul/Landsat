@@ -2,18 +2,15 @@
 "use client";
 
 import Link from "next/link";
-import { Mountain, LayoutDashboard, Settings, LogOut, LogIn } from "lucide-react";
+import { Mountain, LayoutDashboard, Settings, LogIn } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "./ui/button";
 import React, { useState, useEffect } from "react";
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { cn } from "@/lib/utils";
 import { ContactSheet } from "./contact-sheet";
 import { LanguageSwitcher } from "./language-switcher";
 import { useLanguage } from "@/hooks/use-language";
-import { useAuth } from "@/hooks/use-auth";
-import { auth } from "@/lib/firebase";
-import { useToast } from "@/hooks/use-toast";
 
 const scrolltoHash = function (element_id: string) {
   const element = document.getElementById(element_id.replace('#', ''))
@@ -24,9 +21,6 @@ const scrolltoHash = function (element_id: string) {
 
 export function Header() {
   const { t } = useLanguage();
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const router = useRouter();
   const [isScrolled, setIsScrolled] = useState(false);
   const pathname = usePathname();
   const isLandingPage = pathname === '/';
@@ -40,12 +34,6 @@ export function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleSignOut = async () => {
-    await auth.signOut();
-    toast({ title: "Signed Out", description: "You have been successfully signed out."});
-    router.push('/');
-  }
-  
   const navClass = cn(
     "sticky top-0 z-50 w-full transition-all duration-300",
     isLandingPage && !isScrolled ? "bg-transparent text-white" : "border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 text-foreground"
@@ -104,7 +92,6 @@ export function Header() {
             </Button>
         </nav>
         <div className="flex flex-1 items-center justify-end space-x-2">
-           { user ? (
             <>
                 <Button variant="ghost" asChild className={buttonLinkClass}>
                     <Link href="/dashboard">
@@ -118,23 +105,17 @@ export function Header() {
                         {t('header.settings')}
                     </Link>
                 </Button>
-                <Button variant="ghost" onClick={handleSignOut} className={buttonLinkClass}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Sign Out
-                </Button>
             </>
-           ) : (
             <>
               <LanguageSwitcher className={buttonLinkClass} />
               <ThemeToggle />
               <Button asChild size="sm">
-                  <Link href="/login">
+                  <Link href="/dashboard">
                     <LogIn className="mr-2 h-4 w-4" />
                     {t('header.getStarted')}
                   </Link>
               </Button>
             </>
-           )}
         </div>
       </div>
       <ContactSheet open={isContactOpen} onOpenChange={setContactOpen} />
