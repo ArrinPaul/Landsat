@@ -82,7 +82,7 @@ export default function SettingsPage() {
                 <strong>Earth Insights Dashboard</strong>
               </p>
               <p className="text-xs text-muted-foreground">
-                &copy; 2024 Earth Insights. All rights reserved.
+                &copy; 2025 Earth Insights. All rights reserved. | Team: LunarX
               </p>
             </div>
           </CardContent>
