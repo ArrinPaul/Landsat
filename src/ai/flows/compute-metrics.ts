@@ -36,62 +36,73 @@ export async function computeMetrics(input: ComputeMetricsInput): Promise<Comput
     return computeMetricsFlow(input);
 }
 
+// Promisify the ee.data.authenticateViaPrivateKey and ee.initialize functions
+const authenticate = (key: any) => new Promise<void>((resolve, reject) => {
+    ee.data.authenticateViaPrivateKey(key, () => resolve(), (err: string) => reject(new Error(err)));
+});
+
+const initialize = () => new Promise<void>((resolve, reject) => {
+    ee.initialize(null, null, () => resolve(), (err: string) => reject(new Error(err)));
+});
+
 
 async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
+    console.log('Authenticating with Earth Engine...');
+    const privateKey = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON!);
+    await authenticate(privateKey);
+    console.log('Earth Engine Authenticated.');
+    
     console.log('Initializing Earth Engine...');
+    await initialize();
+    console.log('Earth Engine Initialized.');
+
     return new Promise((resolve, reject) => {
-        ee.initialize(null, null, () => {
-            try {
-                console.log('Earth Engine Initialized.');
-                const point = ee.Geometry.Point([input.longitude, input.latitude]);
-                const collection = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
-                    .filterBounds(point)
-                    .filterDate(input.startDate, input.endDate)
-                    .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20));
+        try {
+            const point = ee.Geometry.Point([input.longitude, input.latitude]);
+            const collection = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
+                .filterBounds(point)
+                .filterDate(input.startDate, input.endDate)
+                .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20));
 
-                const withMetrics = collection.map(image => {
-                    const ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI');
-                    const ndwi = image.normalizedDifference(['B3', 'B8']).rename('NDWI');
-                    const ndbi = image.normalizedDifference(['B11', 'B8']).rename('NDBI');
-                    return image.addBands([ndvi, ndwi, ndbi]);
-                });
-                
-                const reducer = ee.Reducer.mean();
+            const withMetrics = collection.map(image => {
+                const ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI');
+                const ndwi = image.normalizedDifference(['B3', 'B8']).rename('NDWI');
+                const ndbi = image.normalizedDifference(['B11', 'B8']).rename('NDBI');
+                return image.addBands([ndvi, ndwi, ndbi]);
+            });
+            
+            const reducer = ee.Reducer.mean();
 
-                const chartData = withMetrics.select(['NDVI', 'NDWI', 'NDBI']).map(image => {
-                    const mean = image.reduceRegion({
-                        reducer: reducer,
-                        geometry: point,
-                        scale: 10,
-                        maxPixels: 1e9
-                    });
-                    return ee.Feature(null, {
-                        'system:time_start': image.get('system:time_start'),
-                        'NDVI': mean.get('NDVI'),
-                        'NDWI': mean.get('NDWI'),
-                        'NDBI': mean.get('NDBI'),
-                    });
+            const chartData = withMetrics.select(['NDVI', 'NDWI', 'NDBI']).map(image => {
+                const mean = image.reduceRegion({
+                    reducer: reducer,
+                    geometry: point,
+                    scale: 10,
+                    maxPixels: 1e9
                 });
-                
-                console.log('Evaluating chart data...');
-                chartData.evaluate((data: any, error: any) => {
-                    if (error) {
-                        console.error('Earth Engine Error:', error);
-                        reject(new Error(`Earth Engine Error: ${error}`));
-                    } else {
-                        console.log('Earth Engine evaluation successful.');
-                        resolve(data);
-                    }
+                return ee.Feature(null, {
+                    'system:time_start': image.get('system:time_start'),
+                    'NDVI': mean.get('NDVI'),
+                    'NDWI': mean.get('NDWI'),
+                    'NDBI': mean.get('NDBI'),
                 });
+            });
+            
+            console.log('Evaluating chart data...');
+            chartData.evaluate((data: any, error: any) => {
+                if (error) {
+                    console.error('Earth Engine Error:', error);
+                    reject(new Error(`Earth Engine Error: ${error}`));
+                } else {
+                    console.log('Earth Engine evaluation successful.');
+                    resolve(data);
+                }
+            });
 
-            } catch (e) {
-                console.error('Error during Earth Engine processing:', e);
-                reject(e);
-            }
-        }, (err: any) => {
-            console.error('Earth Engine initialization failed:', err);
-            reject(new Error(`Earth Engine initialization failed: ${err}`));
-        });
+        } catch (e) {
+            console.error('Error during Earth Engine processing:', e);
+            reject(e);
+        }
     });
 }
 
