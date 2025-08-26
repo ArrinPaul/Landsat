@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Header } from "@/components/header";
 import { ContactSheet } from "@/components/contact-sheet";
 import { useLanguage } from "@/hooks/use-language";
+import { GeometricBackground } from "@/components/geometric-background";
 
 
 export default function LandingPage() {
@@ -26,7 +27,8 @@ export default function LandingPage() {
       <Header />
       <main className="flex-1">
         <section className="relative w-full h-[80vh] md:h-[90vh] flex items-center justify-center text-center text-white overflow-hidden">
-             <div className="absolute inset-0 z-0">
+             <div className="absolute inset-0 z-0 bg-gray-900">
+                <GeometricBackground />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent"></div>
              </div>
 
