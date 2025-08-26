@@ -16,6 +16,7 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 import { CheckCircle, Mail } from "lucide-react";
+import { useLanguage } from "@/hooks/use-language";
 
 interface ContactSheetProps {
     open: boolean;
@@ -23,18 +24,17 @@ interface ContactSheetProps {
 }
 
 export function ContactSheet({ open, onOpenChange }: ContactSheetProps) {
+  const { t } = useLanguage();
   const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    // Handle form submission logic here
     console.log("Form submitted");
     setSubmitted(true);
   };
 
   const handleClose = () => {
     onOpenChange(false);
-    // Reset form after a short delay to allow closing animation
     setTimeout(() => {
         setSubmitted(false);
     }, 300);
@@ -44,43 +44,43 @@ export function ContactSheet({ open, onOpenChange }: ContactSheetProps) {
     <Sheet open={open} onOpenChange={handleClose}>
       <SheetContent>
         <SheetHeader>
-          <SheetTitle>Contact Us</SheetTitle>
+          <SheetTitle>{t('contact.title')}</SheetTitle>
           <SheetDescription>
-            Have a question or want to work with us? Fill out the form below.
+            {t('contact.description')}
           </SheetDescription>
         </SheetHeader>
         {submitted ? (
             <div className="flex flex-col items-center justify-center h-full gap-4 text-center">
                 <CheckCircle className="h-20 w-20 text-green-500" />
-                <h3 className="text-xl font-semibold">Thank You!</h3>
-                <p className="text-muted-foreground">Your message has been sent. We will get back to you soon.</p>
-                 <Button onClick={handleClose}>Close</Button>
+                <h3 className="text-xl font-semibold">{t('contact.submitted.title')}</h3>
+                <p className="text-muted-foreground">{t('contact.submitted.description')}</p>
+                 <Button onClick={handleClose}>{t('contact.submitted.close')}</Button>
             </div>
         ) : (
             <form onSubmit={handleSubmit} className="py-4 space-y-4">
                 <div className="space-y-2">
-                    <Label htmlFor="name">Name</Label>
-                    <Input id="name" placeholder="Enter your name" required />
+                    <Label htmlFor="name">{t('contact.name')}</Label>
+                    <Input id="name" placeholder={t('contact.namePlaceholder')} required />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" placeholder="Enter your email" required />
+                    <Label htmlFor="email">{t('contact.email')}</Label>
+                    <Input id="email" type="email" placeholder={t('contact.emailPlaceholder')} required />
                 </div>
                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number (Optional)</Label>
-                    <Input id="phone" type="tel" placeholder="Enter your phone number" />
+                    <Label htmlFor="phone">{t('contact.phone')}</Label>
+                    <Input id="phone" type="tel" placeholder={t('contact.phonePlaceholder')} />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="message">Message</Label>
-                    <Textarea id="message" placeholder="Your message" required />
+                    <Label htmlFor="message">{t('contact.message')}</Label>
+                    <Textarea id="message" placeholder={t('contact.messagePlaceholder')} required />
                 </div>
                  <SheetFooter>
                     <SheetClose asChild>
-                        <Button type="button" variant="outline">Cancel</Button>
+                        <Button type="button" variant="outline">{t('contact.cancel')}</Button>
                     </SheetClose>
                     <Button type="submit">
                         <Mail className="mr-2 h-4 w-4" />
-                        Send Message
+                        {t('contact.send')}
                     </Button>
                 </SheetFooter>
             </form>
