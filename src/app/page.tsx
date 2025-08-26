@@ -6,7 +6,6 @@ import React, { useState } from "react";
 import { Cpu, BarChart, Download, SlidersHorizontal, CheckCircle, ArrowRight, BrainCircuit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/header";
-import { VideoBackground } from "@/components/video-background";
 import { ContactSheet } from "@/components/contact-sheet";
 import { useLanguage } from "@/hooks/use-language";
 
@@ -28,7 +27,6 @@ export default function LandingPage() {
       <main className="flex-1">
         <section className="relative w-full h-[80vh] md:h-[90vh] flex items-center justify-center text-center text-white overflow-hidden">
              <div className="absolute inset-0 z-0">
-                <VideoBackground />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent"></div>
              </div>
 
