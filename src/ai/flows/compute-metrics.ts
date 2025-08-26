@@ -10,11 +10,10 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import ee from '@google/earthengine';
-import { a, b } from '@google/earthengine/build/seald-classes';
 
 const DataPointSchema = z.object({
   date: z.string(),
-  value: z.number(),
+  value: z.number().nullable(),
 });
 
 const ComputeMetricsInputSchema = z.object({
@@ -26,7 +25,9 @@ const ComputeMetricsInputSchema = z.object({
 export type ComputeMetricsInput = z.infer<typeof ComputeMetricsInputSchema>;
 
 const ComputeMetricsOutputSchema = z.object({
-    timeSeries: z.array(DataPointSchema).describe('The computed time-series data for the metric.'),
+    NDVI: z.array(DataPointSchema).describe('The computed time-series data for NDVI.'),
+    NDWI: z.array(DataPointSchema).describe('The computed time-series data for NDWI.'),
+    NDBI: z.array(DataPointSchema).describe('The computed time-series data for NDBI.'),
 });
 export type ComputeMetricsOutput = z.infer<typeof ComputeMetricsOutputSchema>;
 
@@ -37,44 +38,58 @@ export async function computeMetrics(input: ComputeMetricsInput): Promise<Comput
 
 
 async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
+    console.log('Initializing Earth Engine...');
     return new Promise((resolve, reject) => {
         ee.initialize(null, null, () => {
             try {
+                console.log('Earth Engine Initialized.');
                 const point = ee.Geometry.Point([input.longitude, input.latitude]);
                 const collection = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
                     .filterBounds(point)
                     .filterDate(input.startDate, input.endDate)
                     .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20));
 
-                const withNdvi = collection.map(image => {
+                const withMetrics = collection.map(image => {
                     const ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI');
-                    return image.addBands(ndvi);
+                    const ndwi = image.normalizedDifference(['B3', 'B8']).rename('NDWI');
+                    const ndbi = image.normalizedDifference(['B11', 'B8']).rename('NDBI');
+                    return image.addBands([ndvi, ndwi, ndbi]);
                 });
+                
+                const reducer = ee.Reducer.mean();
 
-                const chartData = withNdvi.select('NDVI').map(image => {
+                const chartData = withMetrics.select(['NDVI', 'NDWI', 'NDBI']).map(image => {
                     const mean = image.reduceRegion({
-                        reducer: ee.Reducer.mean(),
+                        reducer: reducer,
                         geometry: point,
                         scale: 10,
+                        maxPixels: 1e9
                     });
                     return ee.Feature(null, {
                         'system:time_start': image.get('system:time_start'),
-                        'NDVI': mean.get('NDVI')
+                        'NDVI': mean.get('NDVI'),
+                        'NDWI': mean.get('NDWI'),
+                        'NDBI': mean.get('NDBI'),
                     });
                 });
-
+                
+                console.log('Evaluating chart data...');
                 chartData.evaluate((data: any, error: any) => {
                     if (error) {
+                        console.error('Earth Engine Error:', error);
                         reject(new Error(`Earth Engine Error: ${error}`));
                     } else {
+                        console.log('Earth Engine evaluation successful.');
                         resolve(data);
                     }
                 });
 
             } catch (e) {
+                console.error('Error during Earth Engine processing:', e);
                 reject(e);
             }
         }, (err: any) => {
+            console.error('Earth Engine initialization failed:', err);
             reject(new Error(`Earth Engine initialization failed: ${err}`));
         });
     });
@@ -96,11 +111,21 @@ const computeMetricsFlow = ai.defineFlow(
       throw new Error('No data returned from Earth Engine.');
     }
 
-    const timeSeries = eeData.features.map((feature: any) => ({
-      date: new Date(feature.properties['system:time_start']).toISOString(),
-      value: feature.properties.NDVI,
-    })).filter((d: any) => d.value !== null);
+    const ndviSeries: z.infer<typeof DataPointSchema>[] = [];
+    const ndwiSeries: z.infer<typeof DataPointSchema>[] = [];
+    const ndbiSeries: z.infer<typeof DataPointSchema>[] = [];
 
-    return { timeSeries };
+    eeData.features.forEach((feature: any) => {
+      const date = new Date(feature.properties['system:time_start']).toISOString();
+      ndviSeries.push({ date, value: feature.properties.NDVI });
+      ndwiSeries.push({ date, value: feature.properties.NDWI });
+      ndbiSeries.push({ date, value: feature.properties.NDBI });
+    });
+
+    return { 
+        NDVI: ndviSeries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
+        NDWI: ndwiSeries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
+        NDBI: ndbiSeries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
+     };
   }
 );

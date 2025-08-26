@@ -14,63 +14,6 @@ import type { MetricData, GroundTruthDataPoint, SatellitePassData, WeatherData, 
 import { Skeleton } from "@/components/ui/skeleton";
 import { predictSatellitePassAction, getWeatherReportAction, computeMetricsAction } from "@/lib/actions";
 
-// Mock data generation for other metrics
-const metricNames = [
-  'NDBI', 'NDWI', 'NBR', 'MNDWI', 'Yield Index', 'Soil Moisture Percent', 'Water Percent', 'SWIR Ratio',
-  'Vegetation Area', 'Built-up Area', 'Water Area', 'Other Area',
-  'Vegetation Area Change', 'Built-up Area Change', 'Water Area Change', 'Other Area Change',
-  'Built-up Expansion', 'Vegetation Loss'
-];
-
-function generateMockMetricData(dateRange: DateRange, metricName: string): Omit<MetricData, 'name'> {
-  const from = dateRange.from || new Date();
-  const to = dateRange.to || new Date();
-  const diffDays = Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24));
-
-  let baseValue = Math.random() * 2 - 1;
-    if (metricName.includes('Percent') || metricName === 'Yield Index') {
-        baseValue = Math.random() * 100;
-    }
-    if (metricName.includes('Area')) {
-        baseValue = Math.random() * 1000;
-    }
-     if (metricName.includes('Change') || metricName.includes('Expansion') || metricName.includes('Loss')) {
-        baseValue = (Math.random() - 0.5) * 200;
-    }
-
-
-    const timeSeries = Array.from({ length: diffDays }, (_, i) => {
-      const date = addDays(from, i);
-      let value = baseValue + (Math.random() - 0.5) * 0.1 * (i / diffDays);
-       if (metricName.includes('Change') || metricName.includes('Expansion') || metricName.includes('Loss')) {
-        value = baseValue + (Math.random() - 0.5) * 10 * (i/diffDays);
-       }
-      return { date: date.toISOString(), value };
-    });
-
-    const validPoints = timeSeries.filter(d => d.value !== null && !isNaN(d.value));
-    const firstValue = validPoints.length > 0 ? validPoints[0].value : null;
-    const lastValue = validPoints.length > 0 ? validPoints[validPoints.length - 1].value : null;
-    
-    let percentageChange: number | null = null;
-    if (firstValue !== null && lastValue !== null && firstValue !== 0) {
-        if(metricName.includes('Change') || metricName.includes('Expansion') || metricName.includes('Loss')) {
-            percentageChange = lastValue;
-        } else {
-             percentageChange = ((lastValue - firstValue) / Math.abs(firstValue)) * 100;
-        }
-    }
-    
-    return {
-      timeSeries,
-      firstValue,
-      lastValue,
-      percentageChange,
-      n: validPoints.length,
-    };
-}
-
-
 export function Dashboard() {
   const { toast } = useToast();
   const [lat, setLat] = useState("40.7128");
@@ -163,7 +106,7 @@ export function Dashboard() {
     toast({ title: "Loaded from history", description: `Loaded settings for ${entry.locationDesc}`});
   };
 
-  const processTimeSeries = (timeSeries: DataPoint[]) => {
+  const processTimeSeries = (timeSeries: DataPoint[]): Omit<MetricData, 'name' | 'timeSeries' | 'groundTruth' | 'insight'> => {
     const validPoints = timeSeries.filter(d => d.value !== null && !isNaN(d.value));
     const firstValue = validPoints.length > 0 ? validPoints[0].value : null;
     const lastValue = validPoints.length > 0 ? validPoints[validPoints.length - 1].value : null;
@@ -217,28 +160,27 @@ export function Dashboard() {
     if (result.error || !result.data) {
         toast({ title: "Error Computing Metrics", description: result.error || "An unknown error occurred.", variant: "destructive" });
         setIsComputing(false);
+        setActiveComputation(false);
         return;
     }
 
-    const realNdviData = result.data;
-    const processedNdvi = processTimeSeries(realNdviData);
-
-    const ndviMetric: MetricData = {
-        name: 'NDVI',
-        timeSeries: realNdviData,
-        ...processedNdvi,
-        groundTruth: groundTruthData || undefined,
-    };
-    
-    const otherMockMetrics: MetricData[] = metricNames.map(name => {
-        const mockData = generateMockMetricData(dateRange, name);
-        return { name, ...mockData };
+    const computedMetrics: MetricData[] = Object.entries(result.data).map(([name, timeSeries]) => {
+      const processed = processTimeSeries(timeSeries);
+      const metric: MetricData = {
+        name,
+        timeSeries,
+        ...processed,
+      };
+      if (name === 'NDVI' && groundTruthData) {
+        metric.groundTruth = groundTruthData;
+      }
+      return metric;
     });
 
-    setMetrics([ndviMetric, ...otherMockMetrics]);
+    setMetrics(computedMetrics);
     setSelectedMetric('NDVI');
     setIsComputing(false);
-    toast({ title: "Success", description: "Metrics computed successfully. NDVI is from live data." });
+    toast({ title: "Success", description: "Metrics computed successfully from live data." });
 
   }, [lat, lon, locationDesc, dateRange, groundTruthData, toast]);
   
@@ -287,7 +229,13 @@ export function Dashboard() {
           </div>
       )}
 
-      {activeComputation && metrics.length > 0 && (
+      {activeComputation && !isComputing && metrics.length === 0 && (
+          <div className="text-center py-16 text-muted-foreground">
+              <p>Could not compute metrics. Please check your inputs and try again.</p>
+          </div>
+      )}
+
+      {metrics.length > 0 && !isComputing && (
         <>
           <div className="grid gap-6 lg:grid-cols-4">
             <div className="lg:col-span-3">
