@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useCallback, useEffect } from "react";
-import { addDays, format } from "date-fns";
+import { addDays, format, formatISO } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { InputPanel } from "@/components/input-panel";
 import { SummaryCards } from "@/components/summary-cards";
@@ -10,32 +10,31 @@ import { MetricsTable } from "@/components/metrics-table";
 import { Visualizations } from "@/components/visualizations";
 import { WeatherReport } from "@/components/weather-report";
 import { useToast } from "@/hooks/use-toast";
-import type { MetricData, GroundTruthDataPoint, SatellitePassData, WeatherData, HistoryEntry } from "@/lib/types";
+import type { MetricData, GroundTruthDataPoint, SatellitePassData, WeatherData, HistoryEntry, DataPoint } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
-import { predictSatellitePassAction, getWeatherReportAction } from "@/lib/actions";
+import { predictSatellitePassAction, getWeatherReportAction, computeMetricsAction } from "@/lib/actions";
 
-// Mock data generation
+// Mock data generation for other metrics
 const metricNames = [
-  'NDVI', 'NDBI', 'NDWI', 'NBR', 'MNDWI', 'Yield Index', 'Soil Moisture Percent', 'Water Percent', 'SWIR Ratio',
+  'NDBI', 'NDWI', 'NBR', 'MNDWI', 'Yield Index', 'Soil Moisture Percent', 'Water Percent', 'SWIR Ratio',
   'Vegetation Area', 'Built-up Area', 'Water Area', 'Other Area',
   'Vegetation Area Change', 'Built-up Area Change', 'Water Area Change', 'Other Area Change',
   'Built-up Expansion', 'Vegetation Loss'
 ];
 
-function generateMockMetricData(dateRange: DateRange, groundTruth?: GroundTruthDataPoint[]): MetricData[] {
+function generateMockMetricData(dateRange: DateRange, metricName: string): Omit<MetricData, 'name'> {
   const from = dateRange.from || new Date();
   const to = dateRange.to || new Date();
   const diffDays = Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24));
 
-  return metricNames.map(name => {
-    let baseValue = Math.random() * 2 - 1;
-    if (name.includes('Percent') || name === 'Yield Index') {
+  let baseValue = Math.random() * 2 - 1;
+    if (metricName.includes('Percent') || metricName === 'Yield Index') {
         baseValue = Math.random() * 100;
     }
-    if (name.includes('Area')) {
+    if (metricName.includes('Area')) {
         baseValue = Math.random() * 1000;
     }
-     if (name.includes('Change') || name.includes('Expansion') || name.includes('Loss')) {
+     if (metricName.includes('Change') || metricName.includes('Expansion') || metricName.includes('Loss')) {
         baseValue = (Math.random() - 0.5) * 200;
     }
 
@@ -43,7 +42,7 @@ function generateMockMetricData(dateRange: DateRange, groundTruth?: GroundTruthD
     const timeSeries = Array.from({ length: diffDays }, (_, i) => {
       const date = addDays(from, i);
       let value = baseValue + (Math.random() - 0.5) * 0.1 * (i / diffDays);
-       if (name.includes('Change') || name.includes('Expansion') || name.includes('Loss')) {
+       if (metricName.includes('Change') || metricName.includes('Expansion') || metricName.includes('Loss')) {
         value = baseValue + (Math.random() - 0.5) * 10 * (i/diffDays);
        }
       return { date: date.toISOString(), value };
@@ -55,24 +54,22 @@ function generateMockMetricData(dateRange: DateRange, groundTruth?: GroundTruthD
     
     let percentageChange: number | null = null;
     if (firstValue !== null && lastValue !== null && firstValue !== 0) {
-        if(name.includes('Change') || name.includes('Expansion') || name.includes('Loss')) {
-            percentageChange = lastValue; // For change metrics, this might represent the final change percentage
+        if(metricName.includes('Change') || metricName.includes('Expansion') || metricName.includes('Loss')) {
+            percentageChange = lastValue;
         } else {
              percentageChange = ((lastValue - firstValue) / Math.abs(firstValue)) * 100;
         }
     }
     
     return {
-      name,
       timeSeries,
       firstValue,
       lastValue,
       percentageChange,
       n: validPoints.length,
-      groundTruth: name === 'NDVI' ? groundTruth : undefined, // Only attach ground truth to NDVI for demo
     };
-  });
 }
+
 
 export function Dashboard() {
   const { toast } = useToast();
@@ -110,7 +107,6 @@ export function Dashboard() {
 
     const passTime = new Date(nextPass.passTime);
     const now = new Date();
-    // Notify 1 minute before the pass
     const notificationTime = passTime.getTime() - 60000; 
     const delay = notificationTime - now.getTime();
 
@@ -118,7 +114,7 @@ export function Dashboard() {
       const timerId = setTimeout(() => {
         new Notification("Satellite Alert", {
           body: `Satellite ${nextPass.satelliteName} will pass over your selected location (${lat}, ${lon}) in 1 minute.`,
-          icon: "/favicon.ico", // Optional: add an icon
+          icon: "/favicon.ico",
         });
       }, delay);
 
@@ -167,6 +163,24 @@ export function Dashboard() {
     toast({ title: "Loaded from history", description: `Loaded settings for ${entry.locationDesc}`});
   };
 
+  const processTimeSeries = (timeSeries: DataPoint[]) => {
+    const validPoints = timeSeries.filter(d => d.value !== null && !isNaN(d.value));
+    const firstValue = validPoints.length > 0 ? validPoints[0].value : null;
+    const lastValue = validPoints.length > 0 ? validPoints[validPoints.length - 1].value : null;
+    
+    let percentageChange: number | null = null;
+    if (firstValue !== null && lastValue !== null && firstValue !== 0) {
+      percentageChange = ((lastValue - firstValue) / Math.abs(firstValue)) * 100;
+    }
+    
+    return {
+      firstValue,
+      lastValue,
+      percentageChange,
+      n: validPoints.length,
+    };
+  }
+
   const handleCompute = useCallback(async () => {
     if (!lat || !lon) {
       toast({ title: "Error", description: "Please provide valid latitude and longitude.", variant: "destructive" });
@@ -191,16 +205,41 @@ export function Dashboard() {
       dateRange,
       timestamp: new Date(),
     };
-    setHistory(prev => [newHistoryEntry, ...prev.slice(0, 9)]); // Keep last 10 entries
+    setHistory(prev => [newHistoryEntry, ...prev.slice(0, 9)]);
 
+    const result = await computeMetricsAction({
+        latitude: parseFloat(lat),
+        longitude: parseFloat(lon),
+        startDate: formatISO(dateRange.from, { representation: 'date' }),
+        endDate: formatISO(dateRange.to, { representation: 'date' }),
+    });
 
-    setTimeout(() => {
-      const mockData = generateMockMetricData(dateRange, groundTruthData || undefined);
-      setMetrics(mockData);
-      setSelectedMetric('NDVI'); // Reset to default metric on new computation
-      setIsComputing(false);
-      toast({ title: "Success", description: "Metrics computed successfully." });
-    }, 1000);
+    if (result.error || !result.data) {
+        toast({ title: "Error Computing Metrics", description: result.error || "An unknown error occurred.", variant: "destructive" });
+        setIsComputing(false);
+        return;
+    }
+
+    const realNdviData = result.data;
+    const processedNdvi = processTimeSeries(realNdviData);
+
+    const ndviMetric: MetricData = {
+        name: 'NDVI',
+        timeSeries: realNdviData,
+        ...processedNdvi,
+        groundTruth: groundTruthData || undefined,
+    };
+    
+    const otherMockMetrics: MetricData[] = metricNames.map(name => {
+        const mockData = generateMockMetricData(dateRange, name);
+        return { name, ...mockData };
+    });
+
+    setMetrics([ndviMetric, ...otherMockMetrics]);
+    setSelectedMetric('NDVI');
+    setIsComputing(false);
+    toast({ title: "Success", description: "Metrics computed successfully. NDVI is from live data." });
+
   }, [lat, lon, locationDesc, dateRange, groundTruthData, toast]);
   
 
