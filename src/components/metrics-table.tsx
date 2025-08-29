@@ -23,6 +23,7 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { generateInsightAction, generateReportAction } from "@/lib/actions";
 import { generateCsv, downloadFile } from "@/lib/csv";
@@ -129,19 +130,19 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
     setInsightLoading(metricName);
     
     const metric = tableData.find(m => m.name === metricName);
-    if (metric) {
+    if (metric && metric.firstValue !== null && metric.lastValue !== null && metric.percentageChange !== null && metric.n !== null) {
       const result = await generateInsightAction({
           metricName: metric.name,
           firstValue: metric.firstValue,
           lastValue: metric.lastValue,
           percentageChange: metric.percentageChange,
-          numberOfValidPoints: metric.n ?? 0,
+          numberOfValidPoints: metric.n,
       });
 
       if (result.error) {
         toast({ title: "AI Error", description: result.error, variant: "destructive" });
       } else if (result.data) {
-        setTableData(prevData => prevData.map(m => m.name === metricName ? { ...m, insight: result.data } : m));
+        setTableData(prevData => prevData.map(m => m.name === metricName ? { ...m, insight: result.data.insight } : m));
       }
     }
     setInsightLoading(null);
@@ -174,12 +175,12 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
         unit: d.type === 'landcover' ? 'km²' : 'index value'
     }));
 
-    const result = await generateReportAction(metricsForReport, location, dateRange);
+    const result = await generateReportAction(JSON.stringify(metricsForReport, null, 2), location, dateRange);
     setReportLoading(false);
     if (result.error) {
       toast({ title: 'Report Generation Error', description: result.error, variant: 'destructive' });
     } else if (result.data) {
-      downloadFile(result.data, 'summary-report.txt', 'text/plain');
+      downloadFile(result.data.summaryReport, 'summary-report.txt', 'text/plain');
       toast({ title: 'Success', description: 'Summary report generated and downloaded.' });
     }
   };
@@ -269,3 +270,5 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
     </Card>
   );
 }
+
+    
