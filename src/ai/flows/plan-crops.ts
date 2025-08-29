@@ -46,14 +46,40 @@ const prompt = ai.definePrompt({
 
   The current date is ${new Date().toISOString()}.
 
+  Your response should include:
+  1.  A list of 2-3 suitable crops. For each crop, provide a brief reason why it's a good choice.
+  2.  An optimal planting window (e.g., start and end dates).
+  3.  A practical suggestion for cooperative farming.
+
   Location:
   - Latitude: {{{latitude}}}
   - Longitude: {{{longitude}}}
 
-  Your response should include:
-  1.  A list of 2-3 suitable crops. For each crop, provide a brief reason why it's a good choice (e.g., "Maize: Well-suited to the sandy loam soils and expected rainfall patterns in this area.").
-  2.  An optimal planting window (e.g., start and end dates).
-  3.  A practical suggestion for cooperative farming. This should be a tangible idea that small-scale farmers in the area could implement together to improve their outcomes. For example: "Local farmers could pool resources to invest in a shared cold storage facility, allowing them to sell their produce at more favorable times and reduce post-harvest losses." or "Consider forming a cooperative to purchase seeds and fertilizers in bulk, which would significantly reduce costs for everyone."
+  Example Input:
+  { "latitude": 17.3850, "longitude": 78.4867 }
+
+  Example Output:
+  {
+    "suitableCrops": [
+        {
+            "name": "Cotton",
+            "reason": "The region's black soil and semi-arid climate are ideal for cotton cultivation. It's a cash crop with high market demand."
+        },
+        {
+            "name": "Sorghum (Jowar)",
+            "reason": "Highly drought-tolerant and a staple food crop in the Deccan Plateau. It performs well with the expected rainfall patterns."
+        },
+        {
+            "name": "Pigeon Pea (Tur)",
+            "reason": "A hardy legume that improves soil fertility by fixing nitrogen. It's often intercropped with cotton or sorghum."
+        }
+    ],
+    "plantingWindow": {
+        "start": "Mid-June",
+        "end": "Early-July"
+    },
+    "cooperativeFarmingSuggestion": "Local farmers could form a cooperative to invest in a shared ginning and pressing facility for cotton. This would add value to their produce and allow them to sell directly to textile mills, bypassing middlemen and increasing profits."
+  }
   `,
 });
 

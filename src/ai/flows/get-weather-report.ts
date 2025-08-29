@@ -46,7 +46,7 @@ const prompt = ai.definePrompt({
   name: 'getWeatherReportPrompt',
   input: {schema: GetWeatherReportInputSchema},
   output: {schema: GetWeatherReportOutputSchema},
-  prompt: `You are a weather reporting service. Given the coordinates, provide a detailed weather report for the entire day.
+  prompt: `You are a weather reporting service. Given the coordinates, provide a detailed and realistic weather report for the entire day.
 
   The current date is ${new Date().toISOString()}.
 
@@ -57,6 +57,31 @@ const prompt = ai.definePrompt({
 
   Latitude: {{{latitude}}}
   Longitude: {{{longitude}}}
+
+  Example Input:
+  { "latitude": 28.6139, "longitude": 77.2090 }
+
+  Example Output:
+  {
+    "current": {
+      "temperature": 34,
+      "conditions": "Hazy Sunshine",
+      "humidity": 45,
+      "windSpeed": 10,
+      "iconName": "Sun"
+    },
+    "forecast": [
+      {"time": "Now", "temperature": 34, "conditions": "Hazy", "iconName": "Sun"},
+      {"time": "2 PM", "temperature": 35, "conditions": "Sunny", "iconName": "Sun"},
+      {"time": "3 PM", "temperature": 36, "conditions": "Sunny", "iconName": "Sun"},
+      {"time": "4 PM", "temperature": 35, "conditions": "Sunny", "iconName": "Sun"},
+      {"time": "5 PM", "temperature": 34, "conditions": "Partly Cloudy", "iconName": "Cloudy"},
+      {"time": "6 PM", "temperature": 33, "conditions": "Partly Cloudy", "iconName": "Cloudy"},
+      {"time": "7 PM", "temperature": 32, "conditions": "Clear", "iconName": "Moon"},
+      {"time": "8 PM", "temperature": 31, "conditions": "Clear", "iconName": "Moon"}
+    ],
+    "summary": "Expect a hot and hazy day with clear skies in the evening."
+  }
 `,
 });
 
