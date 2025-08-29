@@ -128,7 +128,7 @@ export default function PredictPage() {
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2"><Thermometer/> Weather Forecast</CardTitle>
                                 <CardDescription>Get the current weather and a 24-hour forecast.</CardDescription>
-                            </Header>
+                            </CardHeader>
                             <CardContent>
                                 <Button onClick={() => handlePrediction('weather')} disabled={!!isLoading}>
                                     {isLoading === 'weather' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
@@ -140,7 +140,7 @@ export default function PredictPage() {
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2"><Tractor/> Crop Planning</CardTitle>
                                 <CardDescription>Receive recommendations on suitable crops and planting schedules.</CardDescription>
-                            </Header>
+                            </CardHeader>
                             <CardContent>
                                 <Button onClick={() => handlePrediction('crops')} disabled={!!isLoading}>
                                      {isLoading === 'crops' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
@@ -152,7 +152,7 @@ export default function PredictPage() {
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2"><Droplets/> Irrigation Schedule</CardTitle>
                                 <CardDescription>Get AI-based advice on when and how much to water your fields.</CardDescription>
-                            </Header>
+                            </CardHeader>
                             <CardContent>
                                 <Button onClick={() => handlePrediction('irrigation')} disabled={!!isLoading}>
                                     {isLoading === 'irrigation' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
@@ -180,7 +180,7 @@ export default function PredictPage() {
                         <Card>
                             <CardHeader>
                                 <CardTitle>Crop Plan Recommendation</CardTitle>
-                            </Header>
+                            </CardHeader>
                             <CardContent className="space-y-4">
                                 <div>
                                     <h4 className="font-semibold">Planting Window</h4>
@@ -208,7 +208,7 @@ export default function PredictPage() {
                         <Card>
                             <CardHeader>
                                 <CardTitle>Irrigation Schedule Recommendation</CardTitle>
-                            </Header>
+                            </CardHeader>
                             <CardContent className="space-y-4">
                                 <div>
                                     <h4 className="font-semibold">Recommendation</h4>
