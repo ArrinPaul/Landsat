@@ -100,6 +100,23 @@ export interface CropYieldPrediction {
     notes: string;
 }
 
+export interface SuggestCropInput {
+    latitude: number;
+    longitude: number;
+    soilType: string;
+    moistureLevel: 'Dry' | 'Optimal' | 'Wet';
+    climateDescription: string;
+    currentCrop?: string;
+}
+
+export interface SuggestCropOutput {
+    suggestedCrop: string;
+    suitabilityScore: number;
+    reasoning: string;
+    alternativeCrop?: string;
+}
+
+
 // New Types for Land Cover Analysis
 export interface LandCoverStat {
   area: number;

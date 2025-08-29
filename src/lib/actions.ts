@@ -13,9 +13,9 @@ import { textToSpeech } from "@/ai/flows/text-to-speech";
 import { computeMetrics, type ComputeMetricsOutput } from "@/ai/flows/compute-metrics";
 import { predictSoilMoisture } from "@/ai/flows/predict-soil-moisture";
 import { predictCropYield } from "@/ai/flows/predict-crop-yield";
+import { suggestCrop } from "@/ai/flows/suggest-crop";
 
-
-import type { SatellitePassData, WeatherData, CropPlan, IrrigationSchedule, AnalysisResult, SoilMoisturePrediction, CropYieldPrediction } from "@/lib/types";
+import type { SatellitePassData, WeatherData, CropPlan, IrrigationSchedule, AnalysisResult, SoilMoisturePrediction, CropYieldPrediction, SuggestCropInput, SuggestCropOutput } from "@/lib/types";
 import type { ChatbotInput, ChatbotOutput } from "@/ai/flows/chatbot";
 import type { TextToSpeechOutput } from "@/ai/flows/text-to-speech";
 import type { GenerateDataInsightsInput } from "@/ai/flows/generate-insights";
@@ -154,6 +154,16 @@ export async function predictCropYieldAction(input: { latitude: number; longitud
         return { data: result, error: null };
     } catch (error) {
         console.error("Crop yield prediction error:", error);
+        return { data: null, error: `AI Error: ${getErrorMessage(error)}` };
+    }
+}
+
+export async function suggestCropAction(input: SuggestCropInput): Promise<{ data: SuggestCropOutput | null; error: string | null; }> {
+    try {
+        const result = await suggestCrop(input);
+        return { data: result, error: null };
+    } catch (error) {
+        console.error("Crop suggestion action error:", error);
         return { data: null, error: `AI Error: ${getErrorMessage(error)}` };
     }
 }
