@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { Mountain, LayoutDashboard, Settings, LogIn, Wheat, BrainCircuit } from "lucide-react";
+import { Mountain, LayoutDashboard, Settings, LogIn, BrainCircuit } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "./ui/button";
 import React, { useState, useEffect } from "react";
@@ -57,67 +57,54 @@ export function Header() {
             <span className="font-bold text-lg">{t('header.title')}</span>
           </Link>
         </div>
-        <nav className="hidden md:flex items-center space-x-2 lg:space-x-4 text-sm font-medium">
-             <Button variant="link" asChild className={linkClass}>
-                <Link href={isLandingPage ? "#features" : "/#features"} onClick={(e) => {
-                    if (isLandingPage) {
-                        e.preventDefault();
-                        scrolltoHash("#features");
-                    }
-                }}>
-                    {t('header.features')}
-                </Link>
-            </Button>
-            <Button variant="link" asChild className={linkClass}>
-                <Link href={isLandingPage ? "#about" : "/#about"} onClick={(e) => {
-                     if (isLandingPage) {
-                        e.preventDefault();
-                        scrolltoHash("#about");
-                    }
-                }}>
-                    {t('header.about')}
-                </Link>
-            </Button>
-            <Button variant="link" asChild className={linkClass}>
-                <Link href="#contact" onClick={(e) => {
-                     e.preventDefault();
-                     setContactOpen(true);
-                }}>
-                    {t('header.contact')}
-                </Link>
-            </Button>
-        </nav>
+        {isLandingPage && (
+            <nav className="hidden md:flex items-center space-x-2 lg:space-x-4 text-sm font-medium">
+                <Button variant="link" asChild className={linkClass}>
+                    <Link href="#features" onClick={(e) => { e.preventDefault(); scrolltoHash("#features"); }}>
+                        {t('header.features')}
+                    </Link>
+                </Button>
+                <Button variant="link" asChild className={linkClass}>
+                    <Link href="#about" onClick={(e) => { e.preventDefault(); scrolltoHash("#about"); }}>
+                        {t('header.about')}
+                    </Link>
+                </Button>
+                <Button variant="link" asChild className={linkClass}>
+                    <Link href="#contact" onClick={(e) => { e.preventDefault(); setContactOpen(true); }}>
+                        {t('header.contact')}
+                    </Link>
+                </Button>
+            </nav>
+        )}
         <div className="flex flex-1 items-center justify-end space-x-2">
-            <>
-                <Button variant="ghost" asChild className={buttonLinkClass}>
-                    <Link href="/dashboard">
-                        <LayoutDashboard className="mr-2 h-4 w-4"/>
-                        {t('header.dashboard')}
-                    </Link>
-                </Button>
-                 <Button variant="ghost" asChild className={buttonLinkClass}>
-                    <Link href="/predict">
-                        <BrainCircuit className="mr-2 h-4 w-4"/>
-                        {t('landing.hero.predictiveTools')}
-                    </Link>
-                </Button>
-                <Button variant="ghost" asChild className={buttonLinkClass}>
-                    <Link href="/settings">
-                        <Settings className="mr-2 h-4 w-4"/>
-                        {t('header.settings')}
-                    </Link>
-                </Button>
-            </>
-            <>
-              <LanguageSwitcher className={buttonLinkClass} />
-              <ThemeToggle />
-              <Button asChild size="sm">
+            <Button variant="ghost" asChild className={buttonLinkClass}>
+                <Link href="/dashboard">
+                    <LayoutDashboard className="mr-2 h-4 w-4"/>
+                    {t('header.dashboard')}
+                </Link>
+            </Button>
+            <Button variant="ghost" asChild className={buttonLinkClass}>
+                <Link href="/predict">
+                    <BrainCircuit className="mr-2 h-4 w-4"/>
+                    {t('landing.hero.predictiveTools')}
+                </Link>
+            </Button>
+            <Button variant="ghost" asChild className={buttonLinkClass}>
+                <Link href="/settings">
+                    <Settings className="mr-2 h-4 w-4"/>
+                    {t('header.settings')}
+                </Link>
+            </Button>
+            <LanguageSwitcher className={buttonLinkClass} />
+            <ThemeToggle />
+            {isLandingPage && (
+                <Button asChild size="sm">
                   <Link href="/dashboard">
                     <LogIn className="mr-2 h-4 w-4" />
                     {t('header.getStarted')}
                   </Link>
               </Button>
-            </>
+            )}
         </div>
       </div>
       <ContactSheet open={isContactOpen} onOpenChange={setContactOpen} />
