@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { Mountain, LayoutDashboard, Settings, LogIn, BrainCircuit } from "lucide-react";
+import { Mountain, LayoutDashboard, Settings, LogIn, BrainCircuit, Mail } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "./ui/button";
 import React, { useState, useEffect } from "react";
@@ -66,14 +66,10 @@ export function Header() {
             </Button>
             <LanguageSwitcher className={buttonLinkClass} />
             <ThemeToggle />
-            {isLandingPage && (
-                <Button asChild size="sm">
-                  <Link href="/dashboard">
-                    <LogIn className="mr-2 h-4 w-4" />
-                    {t('header.getStarted')}
-                  </Link>
-              </Button>
-            )}
+             <Button variant="secondary" size="sm" onClick={() => setContactOpen(true)}>
+                <Mail className="mr-2 h-4 w-4" />
+                {t('header.contact')}
+            </Button>
         </div>
       </div>
       <ContactSheet open={isContactOpen} onOpenChange={setContactOpen} />
