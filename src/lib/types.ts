@@ -11,7 +11,7 @@ export type ChatMessage = z.infer<typeof ChatMessageSchema>;
 
 export interface DataPoint {
   date: string; // Should be a date string that can be parsed by new Date()
-  value: number;
+  value: number | null;
 }
 
 export interface GroundTruthDataPoint {
@@ -85,4 +85,33 @@ export interface IrrigationSchedule {
     nextIrrigationDate: string;
     wateringDepthInches: number;
     notes: string;
+}
+
+// New Types for Land Cover Analysis
+export interface LandCoverStat {
+  area: number;
+}
+
+export interface LandCoverChangeStat {
+  startArea: number;
+  endArea: number;
+  absoluteChange: number;
+  percentageChange: number;
+}
+
+export interface LandCoverAnalysis {
+  vegetation: LandCoverChangeStat;
+  water: LandCoverChangeStat;
+  builtUp: LandCoverChangeStat;
+  other: LandCoverChangeStat;
+}
+
+export interface AnalysisResult {
+    timeSeries: {
+        NDVI: DataPoint[];
+        NDWI: DataPoint[];
+        NDBI: DataPoint[];
+        NBR: DataPoint[];
+    };
+    landCover: LandCoverAnalysis;
 }

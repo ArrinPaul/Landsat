@@ -12,7 +12,7 @@ import { scheduleIrrigation } from "@/ai/flows/schedule-irrigation";
 import { textToSpeech } from "@/ai/flows/text-to-speech";
 import { computeMetrics, type ComputeMetricsOutput } from "@/ai/flows/compute-metrics";
 
-import type { MetricData, SatellitePassData, WeatherData, CropPlan, IrrigationSchedule } from "@/lib/types";
+import type { MetricData, SatellitePassData, WeatherData, CropPlan, IrrigationSchedule, AnalysisResult } from "@/lib/types";
 import type { ChatbotInput, ChatbotOutput } from "@/ai/flows/chatbot";
 import type { TextToSpeechOutput } from "@/ai/flows/text-to-speech";
 
@@ -23,13 +23,13 @@ const getErrorMessage = (error: unknown): string => {
   return String(error);
 };
 
-export async function computeMetricsAction(input: { latitude: number; longitude: number; startDate: string; endDate: string; }): Promise<{data: ComputeMetricsOutput | null, error: string | null}> {
+export async function computeMetricsAction(input: { latitude: number; longitude: number; startDate: string; endDate: string; }): Promise<{data: AnalysisResult | null, error: string | null}> {
     try {
-        const result = await computeMetrics(input);
+        const result: ComputeMetricsOutput = await computeMetrics(input);
         return { data: result, error: null };
     } catch (error) {
         console.error("computeMetricsAction Error:", error);
-        return { data: null, error: `AI Error: ${getErrorMessage(error)}` };
+        return { data: null, error: getErrorMessage(error) };
     }
 }
 
