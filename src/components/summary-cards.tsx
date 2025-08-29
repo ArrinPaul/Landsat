@@ -19,11 +19,11 @@ const metricIcons: { [key: string]: React.ReactNode } = {
 function getMetricCardData(metrics: MetricData[]) {
     const ndvi = metrics.find(m => m.name === 'NDVI');
     const ndwi = metrics.find(m => m.name === 'NDWI');
-    const ndbi = metrics.find(m => m.name === 'NDBI');
+    const nbr = metrics.find(m => m.name === 'NBR');
     return [
-        { title: 'Vegetation Index (NDVI)', metric: ndvi },
-        { title: 'Water Index (NDWI)', metric: ndwi },
-        { title: 'Built-up Index (NDBI)', metric: ndbi },
+        { title: 'Vegetation (NDVI)', metric: ndvi },
+        { title: 'Water (NDWI)', metric: ndwi },
+        { title: 'Burn Ratio (NBR)', metric: nbr },
     ];
 }
 
