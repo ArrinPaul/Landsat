@@ -11,18 +11,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import {
-  ArrowUpDown,
-  FileText,
-  Download,
-  Wand2,
-  Loader2,
-  Leaf,
-  Droplets,
-  Building,
-  HelpCircle,
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { generateInsightAction, generateReportAction } from "@/lib/actions";
@@ -32,13 +20,12 @@ import type { AnalysisResult, MetricData } from '@/lib/types';
 
 type TableRowData = {
     name: string;
-    type: 'index' | 'landcover';
+    type: 'index' | 'landcover' | 'band';
     firstValue: number | null;
     lastValue: number | null;
     percentageChange: number | null;
     n: number | null;
     insight?: string;
-    icon?: React.ReactNode;
 };
 
 type SortKey = keyof TableRowData | '';
@@ -58,7 +45,7 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
   const [reportLoading, setReportLoading] = useState(false);
   
   const [tableData, setTableData] = useState<TableRowData[]>(() => {
-    const timeSeriesMetrics: TableRowData[] = Object.entries(analysisResult.timeSeries).map(([name, ts]) => {
+    const allMetrics: TableRowData[] = Object.entries(analysisResult.timeSeries).map(([name, ts]) => {
       const validPoints = ts.filter(d => d.value !== null && !isNaN(d.value));
       const firstValue = validPoints.length > 0 ? validPoints[0].value : null;
       const lastValue = validPoints.length > 0 ? validPoints[validPoints.length - 1].value : null;
@@ -68,7 +55,7 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
       }
       return {
         name,
-        type: 'index',
+        type: name.startsWith('B') ? 'band' : 'index',
         firstValue,
         lastValue,
         percentageChange,
@@ -77,10 +64,10 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
     });
 
     const landCoverMetrics: TableRowData[] = [
-      { name: 'Vegetation', key: 'vegetation', icon: <Leaf className="h-5 w-5 text-green-500" /> },
-      { name: 'Water', key: 'water', icon: <Droplets className="h-5 w-5 text-blue-500" /> },
-      { name: 'Built-up', key: 'builtUp', icon: <Building className="h-5 w-5 text-gray-500" /> },
-      { name: 'Other', key: 'other', icon: <HelpCircle className="h-5 w-5 text-orange-500" /> },
+      { name: 'Vegetation', key: 'vegetation' },
+      { name: 'Water', key: 'water' },
+      { name: 'Built-up', key: 'builtUp' },
+      { name: 'Other', key: 'other' },
     ].map(item => {
         const data = analysisResult.landCover[item.key as keyof typeof analysisResult.landCover];
         return {
@@ -90,11 +77,10 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
             lastValue: data.endArea,
             percentageChange: data.percentageChange,
             n: null,
-            icon: item.icon,
         }
     });
 
-    return [...timeSeriesMetrics, ...landCoverMetrics];
+    return [...allMetrics, ...landCoverMetrics];
   });
   
   const sortedMetrics = useMemo(() => {
@@ -172,7 +158,7 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
         lastValue: d.lastValue,
         percentageChange: d.percentageChange,
         points: d.n,
-        unit: d.type === 'landcover' ? 'km²' : 'index value'
+        unit: d.type === 'landcover' ? 'km²' : (d.type === 'band' ? 'reflectance' : 'index value')
     }));
 
     const result = await generateReportAction(JSON.stringify(metricsForReport, null, 2), location, dateRange);
@@ -186,7 +172,7 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
   };
 
   const renderSortIcon = (key: SortKey) => {
-    if (sortKey !== key) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />;
+    if (sortKey !== key) return '↕';
     return sortDirection === 'asc' ? '▲' : '▼';
   };
   
@@ -196,13 +182,12 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
         <div className="flex justify-between items-center">
           <div>
             <CardTitle>Computed Metrics</CardTitle>
-            <CardDescription>Detailed metrics including spectral indices and land cover statistics.</CardDescription>
+            <CardDescription>Detailed metrics including spectral indices, bands, and land cover statistics.</CardDescription>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleExportCsv}><Download className="mr-2 h-4 w-4" /> Export CSV</Button>
+            <Button variant="outline" onClick={handleExportCsv}>Export CSV</Button>
             <Button variant="outline" onClick={handleExportReport} disabled={reportLoading}>
-              {reportLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
-              Summary Report
+              {reportLoading ? 'Generating...' : 'Summary Report'}
             </Button>
           </div>
         </div>
@@ -212,19 +197,19 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
           <TableHeader>
             <TableRow>
               <TableHead onClick={() => handleSort('name')} className="cursor-pointer">
-                <div className="flex items-center">Metric {renderSortIcon('name')}</div>
+                <div className="flex items-center">Metric <span className="ml-2">{renderSortIcon('name')}</span></div>
               </TableHead>
               <TableHead onClick={() => handleSort('firstValue')} className="cursor-pointer text-right">
-                <div className="flex items-center justify-end">Start Value / Area (km²) {renderSortIcon('firstValue')}</div>
+                <div className="flex items-center justify-end">Start Value / Area <span className="ml-2">{renderSortIcon('firstValue')}</span></div>
               </TableHead>
               <TableHead onClick={() => handleSort('lastValue')} className="cursor-pointer text-right">
-                <div className="flex items-center justify-end">End Value / Area (km²) {renderSortIcon('lastValue')}</div>
+                <div className="flex items-center justify-end">End Value / Area <span className="ml-2">{renderSortIcon('lastValue')}</span></div>
               </TableHead>
               <TableHead onClick={() => handleSort('percentageChange')} className="cursor-pointer text-right">
-                <div className="flex items-center justify-end">Change (%) {renderSortIcon('percentageChange')}</div>
+                <div className="flex items-center justify-end">Change (%) <span className="ml-2">{renderSortIcon('percentageChange')}</span></div>
               </TableHead>
               <TableHead onClick={() => handleSort('n')} className="cursor-pointer text-right">
-                 <div className="flex items-center justify-end">Points (n) {renderSortIcon('n')}</div>
+                 <div className="flex items-center justify-end">Points (n) <span className="ml-2">{renderSortIcon('n')}</span></div>
               </TableHead>
               <TableHead className="text-center">AI Insight</TableHead>
             </TableRow>
@@ -232,7 +217,7 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
           <TableBody>
             {sortedMetrics.map((metric) => (
               <TableRow key={metric.name}>
-                <TableCell className="font-medium flex items-center gap-2">{metric.icon}{metric.name}</TableCell>
+                <TableCell className="font-medium">{metric.name}</TableCell>
                 <TableCell className="text-right">{metric.firstValue?.toFixed(4) ?? 'N/A'}</TableCell>
                 <TableCell className="text-right">{metric.lastValue?.toFixed(4) ?? 'N/A'}</TableCell>
                 <TableCell className={`text-right ${metric.percentageChange === null ? '' : metric.percentageChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -240,27 +225,29 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
                 </TableCell>
                 <TableCell className="text-right">{metric.n ?? 'N/A'}</TableCell>
                 <TableCell className="text-center">
+                  {metric.type !== 'landcover' && (
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button variant="ghost" size="icon" onClick={() => !metric.insight && getInsight(metric.name)} disabled={!!insightLoading}>
-                          {insightLoading === metric.name ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+                          {insightLoading === metric.name ? '...' : '✨'}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-80">
                         {insightLoading === metric.name ? (
                           <div className="flex items-center justify-center p-4">
-                            <Loader2 className="h-6 w-6 animate-spin" />
+                            <span>Generating...</span>
                           </div>
                         ) : (
                           <div className="grid gap-4">
                             <div className="space-y-2">
                               <h4 className="font-medium leading-none">AI Insight for {metric.name}</h4>
-                              <p className="text-sm text-muted-foreground">{metric.insight || "Click the wand to generate an AI insight for this metric."}</p>
+                              <p className="text-sm text-muted-foreground">{metric.insight || "Click the magic wand to generate an AI insight for this metric."}</p>
                             </div>
                           </div>
                         )}
                       </PopoverContent>
                     </Popover>
+                  )}
                 </TableCell>
               </TableRow>
             ))}

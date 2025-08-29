@@ -106,12 +106,28 @@ export interface LandCoverAnalysis {
   other: LandCoverChangeStat;
 }
 
+export interface TimeSeriesData {
+    NDVI: DataPoint[];
+    NDWI: DataPoint[];
+    NDBI: DataPoint[];
+    NBR: DataPoint[];
+    B1: DataPoint[];
+    B2: DataPoint[];
+    B3: DataPoint[];
+    B4: DataPoint[];
+    B5: DataPoint[];
+    B6: DataPoint[];
+    B7: DataPoint[];
+    B8: DataPoint[];
+    B8A: DataPoint[];
+    B9: DataPoint[];
+    B11: DataPoint[];
+    B12: DataPoint[];
+}
+
 export interface AnalysisResult {
-    timeSeries: {
-        NDVI: DataPoint[];
-        NDWI: DataPoint[];
-        NDBI: DataPoint[];
-        NBR: DataPoint[];
-    };
+    timeSeries: TimeSeriesData;
     landCover: LandCoverAnalysis;
 }
+
+    

@@ -11,7 +11,7 @@ import { Visualizations } from "@/components/visualizations";
 import { WeatherReport } from "@/components/weather-report";
 import { LandCoverAnalysis } from "@/components/land-cover-analysis";
 import { useToast } from "@/hooks/use-toast";
-import type { MetricData, GroundTruthDataPoint, SatellitePassData, WeatherData, HistoryEntry, DataPoint, AnalysisResult } from "@/lib/types";
+import type { GroundTruthDataPoint, SatellitePassData, WeatherData, HistoryEntry, AnalysisResult } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { predictSatellitePassAction, getWeatherReportAction, computeMetricsAction } from "@/lib/actions";
 
@@ -106,42 +106,6 @@ export function Dashboard() {
     setDateRange(entry.dateRange);
     toast({ title: "Loaded from history", description: `Loaded settings for ${entry.locationDesc}`});
   };
-
-  const processTimeSeries = (timeSeries: DataPoint[]): Omit<MetricData, 'name' | 'timeSeries' | 'groundTruth' | 'insight'> => {
-    const validPoints = timeSeries.filter(d => d.value !== null && !isNaN(d.value));
-    if (validPoints.length === 0) {
-        return { firstValue: null, lastValue: null, percentageChange: null, n: 0 };
-    }
-    const firstValue = validPoints.length > 0 ? validPoints[0].value : null;
-    const lastValue = validPoints.length > 0 ? validPoints[validPoints.length - 1].value : null;
-    
-    let percentageChange: number | null = null;
-    if (firstValue !== null && lastValue !== null && firstValue !== 0) {
-      percentageChange = ((lastValue - firstValue) / Math.abs(firstValue)) * 100;
-    }
-    
-    return {
-      firstValue,
-      lastValue,
-      percentageChange,
-      n: validPoints.length,
-    };
-  }
-
-  const metricsData: MetricData[] = analysisResult 
-    ? Object.entries(analysisResult.timeSeries).map(([name, ts]) => {
-        const processed = processTimeSeries(ts);
-        const metric: MetricData = {
-          name,
-          timeSeries: ts,
-          ...processed,
-        };
-        if (name === 'NDVI' && groundTruthData) {
-          metric.groundTruth = groundTruthData;
-        }
-        return metric;
-      })
-    : [];
 
   const handleCompute = useCallback(async () => {
     if (!lat || !lon) {
@@ -266,7 +230,8 @@ export function Dashboard() {
           />
 
           <Visualizations
-            metrics={metricsData}
+            analysisResult={analysisResult}
+            groundTruthData={groundTruthData}
             selectedMetric={selectedMetric}
             setSelectedMetric={setSelectedMetric}
           />
@@ -275,3 +240,5 @@ export function Dashboard() {
     </div>
   );
 }
+
+    
