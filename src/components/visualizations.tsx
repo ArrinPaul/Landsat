@@ -8,7 +8,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { MetricData, AnalysisResult } from '@/lib/types';
+import type { AnalysisResult } from '@/lib/types';
 import { format } from 'date-fns';
 
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -54,13 +54,27 @@ interface VisualizationsProps {
   setSelectedMetric: (metric: string) => void;
 }
 
+const metricOrder = [
+    // Bands
+    'B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B9', 'B11', 'B12',
+    // Indices
+    'NDVI', 'NDWI', 'NDBI', 'NBR'
+];
+
 export function Visualizations({ analysisResult, groundTruthData, selectedMetric, setSelectedMetric }: VisualizationsProps) {
   const chartRef = useRef(null);
   const scatterRef = useRef(null);
   const [brushStartIndex, setBrushStartIndex] = useState<number | undefined>();
   const [brushEndIndex, setBrushEndIndex] = useState<number | undefined>();
 
-  const metricNames = Object.keys(analysisResult.timeSeries);
+  const metricNames = Object.keys(analysisResult.timeSeries).sort((a,b) => {
+      const indexA = metricOrder.indexOf(a);
+      const indexB = metricOrder.indexOf(b);
+      if(indexA === -1) return 1;
+      if(indexB === -1) return -1;
+      return indexA - indexB;
+  });
+  
   const metric = analysisResult.timeSeries[selectedMetric as keyof typeof analysisResult.timeSeries];
   const comparisonData = combineAndSortData(analysisResult, groundTruthData);
 
@@ -147,5 +161,7 @@ export function Visualizations({ analysisResult, groundTruthData, selectedMetric
     </Card>
   );
 }
+
+    
 
     

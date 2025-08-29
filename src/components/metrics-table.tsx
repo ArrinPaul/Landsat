@@ -39,15 +39,24 @@ interface MetricsTableProps {
   dateRange: string;
 }
 
+const metricOrder = [
+    // Bands
+    'B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B9', 'B11', 'B12',
+    // Indices
+    'NDVI', 'NDWI', 'NDBI', 'NBR',
+    // Land Cover
+    'Vegetation', 'Water', 'Built-up', 'Other'
+];
+
 export function MetricsTable({ analysisResult, location, dateRange }: MetricsTableProps) {
   const { toast } = useToast();
-  const [sortKey, setSortKey] = useState<SortKey>('name');
+  const [sortKey, setSortKey] = useState<SortKey>('');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [insightLoading, setInsightLoading] = useState<string | null>(null);
   const [reportLoading, setReportLoading] = useState(false);
   
   const [tableData, setTableData] = useState<TableRowData[]>(() => {
-    const allMetrics: TableRowData[] = Object.entries(analysisResult.timeSeries).map(([name, ts]) => {
+    const timeSeriesMetrics: TableRowData[] = Object.entries(analysisResult.timeSeries).map(([name, ts]) => {
       const validPoints = ts.filter(d => d.value !== null && !isNaN(d.value));
       const firstValue = validPoints.length > 0 ? validPoints[0].value : null;
       const lastValue = validPoints.length > 0 ? validPoints[validPoints.length - 1].value : null;
@@ -82,7 +91,15 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
         }
     });
 
-    return [...allMetrics, ...landCoverMetrics];
+    const allMetrics = [...timeSeriesMetrics, ...landCoverMetrics];
+    
+    return allMetrics.sort((a, b) => {
+        const indexA = metricOrder.indexOf(a.name);
+        const indexB = metricOrder.indexOf(b.name);
+        if(indexA === -1) return 1;
+        if(indexB === -1) return -1;
+        return indexA - indexB;
+    });
   });
   
   const sortedMetrics = useMemo(() => {
@@ -227,7 +244,7 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
                 </TableCell>
                 <TableCell className="text-right">{metric.n ?? 'N/A'}</TableCell>
                 <TableCell className="text-center">
-                  {metric.type !== 'landcover' && (
+                  {metric.type !== 'landcover' ? (
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button variant="ghost" size="icon" onClick={() => !metric.insight && getInsight(metric.name)} disabled={!!insightLoading}>
@@ -250,7 +267,7 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
                         )}
                       </PopoverContent>
                     </Popover>
-                  )}
+                  ): <div className="w-10 h-10"></div>}
                 </TableCell>
               </TableRow>
             ))}
@@ -260,3 +277,5 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
     </Card>
   );
 }
+
+    
