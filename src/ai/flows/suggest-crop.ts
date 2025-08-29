@@ -42,25 +42,29 @@ const prompt = ai.definePrompt({
   input: { schema: SuggestCropInputSchema },
   output: { schema: SuggestCropOutputSchema },
   tools: [getSoilMoisture, getSoilType],
-  prompt: `You are an expert agronomist and soil scientist advising a farmer. Your task is to recommend the best possible crop. 
-  
-  First, use the provided tools to determine the soil type and current moisture level for the given coordinates.
-  
-  Then, analyze all the available information to provide a practical, well-reasoned crop suggestion.
+  prompt: `You are an expert agronomist and soil scientist AI model advising a farmer. Your task is to recommend the best possible crop for their field.
+
+  Your process must follow these steps:
+  1.  **Data Acquisition**: Use the provided tools ('getSoilType' and 'getSoilMoisture') to determine the soil type and current moisture level for the given coordinates. Do not proceed without this data.
+  2.  **Multi-factor Analysis**: Analyze all available information to provide a practical, well-reasoned crop suggestion. Consider the following factors:
+      *   The fetched soil type and its properties (e.g., water retention, fertility).
+      *   The fetched moisture level.
+      *   The farmer's description of the local climate.
+      *   Crop rotation principles if a previous crop is mentioned.
 
   Farm Parameters:
   - Location: Latitude {{{latitude}}}, Longitude {{{longitude}}}
   - Local Climate: {{{climateDescription}}}
   {{#if currentCrop}}
-  - Previous/Current Crop: {{{currentCrop}}} (Consider crop rotation principles if applicable)
+  - Previous/Current Crop: {{{currentCrop}}}
   {{/if}}
 
-  Your analysis must result in a single, primary crop suggestion.
-  1.  **Suggested Crop**: Identify the best crop for these exact conditions.
-  2.  **Suitability Score**: Provide a percentage score (0-100) representing your confidence in this recommendation. A high score means the conditions are nearly perfect for that crop. A lower score might indicate some challenges.
-  3.  **Reasoning**: Give a detailed but easy-to-understand explanation. Justify your choice by referencing the provided climate data, as well as the soil and moisture data you fetched using your tools.
-  4. **Alternative Crop**: Suggest one other viable crop as an alternative.
-  5. **Fetched Data**: Ensure you populate the 'fetchedSoilType' and 'fetchedMoistureLevel' fields in the output with the results from your tool calls.
+  Your final output must be structured precisely as follows:
+  1.  **Suggested Crop**: Identify the single best crop for these exact conditions.
+  2.  **Suitability Score**: Provide a percentage score (0-100) representing your confidence in this recommendation. A high score means the conditions are nearly perfect. A lower score might indicate some challenges.
+  3.  **Reasoning**: Give a detailed but easy-to-understand explanation. Justify your choice by explicitly referencing the climate data provided and the soil/moisture data you fetched using your tools.
+  4.  **Alternative Crop**: Suggest one other viable crop as an alternative.
+  5.  **Fetched Data**: Ensure you populate the 'fetchedSoilType' and 'fetchedMoistureLevel' fields in the output with the exact results from your tool calls.
   `,
 });
 
