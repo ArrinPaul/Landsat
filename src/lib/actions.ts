@@ -11,8 +11,11 @@ import { planCrops } from "@/ai/flows/plan-crops";
 import { scheduleIrrigation } from "@/ai/flows/schedule-irrigation";
 import { textToSpeech } from "@/ai/flows/text-to-speech";
 import { computeMetrics, type ComputeMetricsOutput } from "@/ai/flows/compute-metrics";
+import { predictSoilMoisture } from "@/ai/flows/predict-soil-moisture";
+import { predictCropYield } from "@/ai/flows/predict-crop-yield";
 
-import type { SatellitePassData, WeatherData, CropPlan, IrrigationSchedule, AnalysisResult } from "@/lib/types";
+
+import type { SatellitePassData, WeatherData, CropPlan, IrrigationSchedule, AnalysisResult, SoilMoisturePrediction, CropYieldPrediction } from "@/lib/types";
 import type { ChatbotInput, ChatbotOutput } from "@/ai/flows/chatbot";
 import type { TextToSpeechOutput } from "@/ai/flows/text-to-speech";
 import type { GenerateDataInsightsInput } from "@/ai/flows/generate-insights";
@@ -131,6 +134,26 @@ export async function textToSpeechAction(text: string): Promise<{ data: TextToSp
         return { data: result, error: null };
     } catch (error) {
         console.error("Text to speech action error:", error);
+        return { data: null, error: `AI Error: ${getErrorMessage(error)}` };
+    }
+}
+
+export async function predictSoilMoistureAction(input: { latitude: number; longitude: number; }): Promise<{ data: SoilMoisturePrediction | null; error: string | null; }> {
+    try {
+        const result = await predictSoilMoisture(input);
+        return { data: result, error: null };
+    } catch (error) {
+        console.error("Soil moisture prediction error:", error);
+        return { data: null, error: `AI Error: ${getErrorMessage(error)}` };
+    }
+}
+
+export async function predictCropYieldAction(input: { latitude: number; longitude: number; cropType?: string; }): Promise<{ data: CropYieldPrediction | null; error: string | null; }> {
+    try {
+        const result = await predictCropYield(input);
+        return { data: result, error: null };
+    } catch (error) {
+        console.error("Crop yield prediction error:", error);
         return { data: null, error: `AI Error: ${getErrorMessage(error)}` };
     }
 }
