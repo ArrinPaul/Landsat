@@ -7,10 +7,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Wand2, Loader2, Thermometer, Tractor, Droplets } from "lucide-react";
+import { Wand2, Loader2, Thermometer, Tractor, Droplets, LandPlot, BarChartBig } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { suggestCoordinatesAction, getWeatherReportAction, planCropsAction, scheduleIrrigationAction } from "@/lib/actions";
-import type { WeatherData, CropPlan, IrrigationSchedule } from "@/lib/types";
+import { 
+    suggestCoordinatesAction, 
+    getWeatherReportAction, 
+    planCropsAction, 
+    scheduleIrrigationAction,
+    predictSoilMoistureAction,
+    predictCropYieldAction
+} from "@/lib/actions";
+import type { WeatherData, CropPlan, IrrigationSchedule, SoilMoisturePrediction, CropYieldPrediction } from "@/lib/types";
 import { WeatherReport } from "@/components/weather-report";
 
 export default function PredictPage() {
@@ -24,8 +31,10 @@ export default function PredictPage() {
     const [weather, setWeather] = useState<WeatherData | null>(null);
     const [cropPlan, setCropPlan] = useState<CropPlan | null>(null);
     const [irrigationSchedule, setIrrigationSchedule] = useState<IrrigationSchedule | null>(null);
+    const [soilMoisture, setSoilMoisture] = useState<SoilMoisturePrediction | null>(null);
+    const [cropYield, setCropYield] = useState<CropYieldPrediction | null>(null);
 
-    type PredictionType = 'weather' | 'crops' | 'irrigation';
+    type PredictionType = 'weather' | 'crops' | 'irrigation' | 'soil' | 'yield';
 
     const handleSuggestCoordinates = async () => {
         if (!locationDesc) {
@@ -44,31 +53,47 @@ export default function PredictPage() {
         setIsSuggesting(false);
     };
 
+    const clearResults = () => {
+        setWeather(null);
+        setCropPlan(null);
+        setIrrigationSchedule(null);
+        setSoilMoisture(null);
+        setCropYield(null);
+    }
+
     const handlePrediction = async (type: PredictionType) => {
         if (!lat || !lon) {
             toast({ title: "Error", description: "Please provide valid coordinates.", variant: "destructive" });
             return;
         }
         setIsLoading(type);
-        setWeather(null);
-        setCropPlan(null);
-        setIrrigationSchedule(null);
+        clearResults();
 
         const coords = { latitude: parseFloat(lat), longitude: parseFloat(lon) };
         
         let result;
         try {
-            if (type === 'weather') {
-                result = await getWeatherReportAction(coords);
-                if (result.data) setWeather(result.data);
-            } else if (type === 'crops') {
-                result = await planCropsAction(coords);
-                if (result.data) setCropPlan(result.data);
-            } else if (type === 'irrigation') {
-                result = await scheduleIrrigationAction(coords);
-                 if (result.data) {
-                    setIrrigationSchedule(result.data);
-                 }
+            switch (type) {
+                case 'weather':
+                    result = await getWeatherReportAction(coords);
+                    if (result.data) setWeather(result.data);
+                    break;
+                case 'crops':
+                    result = await planCropsAction(coords);
+                    if (result.data) setCropPlan(result.data);
+                    break;
+                case 'irrigation':
+                    result = await scheduleIrrigationAction(coords);
+                    if (result.data) setIrrigationSchedule(result.data);
+                    break;
+                case 'soil':
+                    result = await predictSoilMoistureAction(coords);
+                    if (result.data) setSoilMoisture(result.data);
+                    break;
+                case 'yield':
+                    result = await predictCropYieldAction(coords);
+                    if (result.data) setCropYield(result.data);
+                    break;
             }
 
             if (result?.error) {
@@ -123,7 +148,7 @@ export default function PredictPage() {
                         </CardContent>
                     </Card>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2"><Thermometer/> Weather Forecast</CardTitle>
@@ -160,9 +185,33 @@ export default function PredictPage() {
                                 </Button>
                             </CardContent>
                         </Card>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2"><LandPlot/> Soil Moisture</CardTitle>
+                                <CardDescription>Predict the current volumetric water content in the soil.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Button onClick={() => handlePrediction('soil')} disabled={!!isLoading}>
+                                    {isLoading === 'soil' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
+                                    Predict Moisture
+                                </Button>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2"><BarChartBig/> Crop Yield</CardTitle>
+                                <CardDescription>Forecast potential crop yield for the selected location.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Button onClick={() => handlePrediction('yield')} disabled={!!isLoading}>
+                                    {isLoading === 'yield' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
+                                    Forecast Yield
+                                </Button>
+                            </CardContent>
+                        </Card>
                     </div>
 
-                    {isLoading && !weather && !cropPlan && !irrigationSchedule && (
+                    {isLoading && !weather && !cropPlan && !irrigationSchedule && !soilMoisture && !cropYield && (
                         <Card>
                             <CardContent className="pt-6">
                                 <div className="flex justify-center items-center h-48">
@@ -231,6 +280,51 @@ export default function PredictPage() {
                             </CardContent>
                         </Card>
                     )}
+                    
+                    {soilMoisture && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Soil Moisture Prediction</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div>
+                                    <h4 className="font-semibold">Volumetric Water Content</h4>
+                                    <p className="text-2xl font-bold text-primary">{soilMoisture.volumetricWaterContent.toFixed(1)}%</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold">Summary</h4>
+                                    <p className="text-muted-foreground">{soilMoisture.summary}</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold">Confidence</h4>
+                                    <p className="text-muted-foreground">{(soilMoisture.confidence * 100).toFixed(0)}%</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {cropYield && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Crop Yield Forecast: {cropYield.crop}</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div>
+                                    <h4 className="font-semibold">Predicted Yield</h4>
+                                    <p className="text-2xl font-bold text-primary">{cropYield.predictedYield.toFixed(2)} tons/hectare</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold">Notes</h4>
+                                    <p className="text-muted-foreground">{cropYield.notes}</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold">Confidence</h4>
+                                    <p className="text-muted-foreground">{(cropYield.confidence * 100).toFixed(0)}%</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
+
 
                 </div>
             </main>

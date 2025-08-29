@@ -87,6 +87,19 @@ export interface IrrigationSchedule {
     notes: string;
 }
 
+export interface SoilMoisturePrediction {
+    volumetricWaterContent: number;
+    summary: string;
+    confidence: number;
+}
+
+export interface CropYieldPrediction {
+    predictedYield: number;
+    crop: string;
+    confidence: number;
+    notes: string;
+}
+
 // New Types for Land Cover Analysis
 export interface LandCoverStat {
   area: number;
