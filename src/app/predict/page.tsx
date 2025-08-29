@@ -66,7 +66,9 @@ export default function PredictPage() {
                 if (result.data) setCropPlan(result.data);
             } else if (type === 'irrigation') {
                 result = await scheduleIrrigationAction(coords);
-                 if (result.data) setIrrigationSchedule(result.data);
+                 if (result.data) {
+                    setIrrigationSchedule(result.data);
+                 }
             }
 
             if (result?.error) {
