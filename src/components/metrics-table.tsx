@@ -16,6 +16,8 @@ import { useToast } from "@/hooks/use-toast";
 import { generateInsightAction, generateReportAction } from "@/lib/actions";
 import { generateCsv, downloadFile } from "@/lib/csv";
 import type { AnalysisResult, MetricData } from '@/lib/types';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Loader2, Wand2 } from 'lucide-react';
 
 
 type TableRowData = {
@@ -172,7 +174,7 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
   };
 
   const renderSortIcon = (key: SortKey) => {
-    if (sortKey !== key) return '↕';
+    if (sortKey !== key) return null;
     return sortDirection === 'asc' ? '▲' : '▼';
   };
   
@@ -197,19 +199,19 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
           <TableHeader>
             <TableRow>
               <TableHead onClick={() => handleSort('name')} className="cursor-pointer">
-                <div className="flex items-center">Metric <span className="ml-2">{renderSortIcon('name')}</span></div>
+                <div className="flex items-center">Metric <span className="ml-2 text-xs">{renderSortIcon('name')}</span></div>
               </TableHead>
               <TableHead onClick={() => handleSort('firstValue')} className="cursor-pointer text-right">
-                <div className="flex items-center justify-end">Start Value / Area <span className="ml-2">{renderSortIcon('firstValue')}</span></div>
+                <div className="flex items-center justify-end">Start Value / Area <span className="ml-2 text-xs">{renderSortIcon('firstValue')}</span></div>
               </TableHead>
               <TableHead onClick={() => handleSort('lastValue')} className="cursor-pointer text-right">
-                <div className="flex items-center justify-end">End Value / Area <span className="ml-2">{renderSortIcon('lastValue')}</span></div>
+                <div className="flex items-center justify-end">End Value / Area <span className="ml-2 text-xs">{renderSortIcon('lastValue')}</span></div>
               </TableHead>
               <TableHead onClick={() => handleSort('percentageChange')} className="cursor-pointer text-right">
-                <div className="flex items-center justify-end">Change (%) <span className="ml-2">{renderSortIcon('percentageChange')}</span></div>
+                <div className="flex items-center justify-end">Change (%) <span className="ml-2 text-xs">{renderSortIcon('percentageChange')}</span></div>
               </TableHead>
               <TableHead onClick={() => handleSort('n')} className="cursor-pointer text-right">
-                 <div className="flex items-center justify-end">Points (n) <span className="ml-2">{renderSortIcon('n')}</span></div>
+                 <div className="flex items-center justify-end">Points (n) <span className="ml-2 text-xs">{renderSortIcon('n')}</span></div>
               </TableHead>
               <TableHead className="text-center">AI Insight</TableHead>
             </TableRow>
@@ -229,13 +231,14 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button variant="ghost" size="icon" onClick={() => !metric.insight && getInsight(metric.name)} disabled={!!insightLoading}>
-                          {insightLoading === metric.name ? '...' : '✨'}
+                          {insightLoading === metric.name ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-80">
                         {insightLoading === metric.name ? (
                           <div className="flex items-center justify-center p-4">
-                            <span>Generating...</span>
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                            <span className="ml-2">Generating...</span>
                           </div>
                         ) : (
                           <div className="grid gap-4">
@@ -257,5 +260,3 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
     </Card>
   );
 }
-
-    
