@@ -91,7 +91,7 @@ export default function PredictPage() {
                     if (result.data) setSoilMoisture(result.data);
                     break;
                 case 'yield':
-                    result = await predictCropYieldAction(coords);
+                    result = await predictCropYieldAction({ ...coords, cropType: 'Maize' });
                     if (result.data) setCropYield(result.data);
                     break;
             }
