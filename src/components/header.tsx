@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { Mountain, LayoutDashboard, Settings, LogIn } from "lucide-react";
+import { Mountain, LayoutDashboard, Settings, LogIn, Wheat } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "./ui/button";
 import React, { useState, useEffect } from "react";
@@ -63,8 +63,6 @@ export function Header() {
                     if (isLandingPage) {
                         e.preventDefault();
                         scrolltoHash("#features");
-                    } else {
-                        router.push('/#features');
                     }
                 }}>
                     {t('header.features')}
@@ -75,8 +73,6 @@ export function Header() {
                      if (isLandingPage) {
                         e.preventDefault();
                         scrolltoHash("#about");
-                    } else {
-                        router.push('/#about');
                     }
                 }}>
                     {t('header.about')}
@@ -97,6 +93,12 @@ export function Header() {
                     <Link href="/dashboard">
                         <LayoutDashboard className="mr-2 h-4 w-4"/>
                         {t('header.dashboard')}
+                    </Link>
+                </Button>
+                 <Button variant="ghost" asChild className={buttonLinkClass}>
+                    <Link href="/crop-advisor">
+                        <Wheat className="mr-2 h-4 w-4"/>
+                        Crop Advisor
                     </Link>
                 </Button>
                 <Button variant="ghost" asChild className={buttonLinkClass}>
