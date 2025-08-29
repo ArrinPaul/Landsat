@@ -89,13 +89,16 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
                 .filterDate(input.startDate, input.endDate)
                 .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20));
 
+            // First, evaluate the size of the collection.
             collection.size().evaluate((size, error) => {
-                if (error) return reject(new Error(`Earth Engine Error: ${error}`));
+                if (error) {
+                    return reject(new Error(`Earth Engine Error during size evaluation: ${error}`));
+                }
                 if (size === 0) {
                     return reject(new Error("No valid satellite imagery found for the selected location, date range, and cloud cover settings. Try expanding the date range or choosing a different area."));
                 }
                 
-                // Time-series analysis
+                // If we have images, proceed with the analysis.
                 const withMetrics = collection.map(image => {
                     const ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI');
                     const ndwi = image.normalizedDifference(['B3', 'B8']).rename('NDWI');
@@ -160,7 +163,7 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
                     landCoverEnd: landCoverEnd
                 }).evaluate((result, error) => {
                     if (error) {
-                        return reject(new Error(`Earth Engine Error: ${error}`));
+                        return reject(new Error(`Earth Engine Error during final evaluation: ${error}`));
                     }
                     if (!result || !result.timeSeries || !result.timeSeries.features) {
                         return reject(new Error("No time-series data returned from Earth Engine."));
@@ -173,7 +176,7 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
             });
 
         } catch (e) {
-            console.error('Error during Earth Engine processing:', e);
+            console.error('Error during Earth Engine processing setup:', e);
             reject(e);
         }
     });
