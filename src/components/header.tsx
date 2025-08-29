@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { Mountain, LayoutDashboard, Settings, LogIn, BrainCircuit, Mail } from "lucide-react";
+import { Mountain, LayoutDashboard, Settings, BrainCircuit, Mail } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "./ui/button";
 import React, { useState, useEffect } from "react";
@@ -39,13 +39,14 @@ export function Header() {
   return (
     <header className={navClass}>
       <div className="container flex h-16 items-center">
-        <div className="mr-8 flex items-center">
+        <div className="mr-auto flex items-center">
           <Link href="/" className="flex items-center gap-2">
             <Mountain className="h-6 w-6" />
             <span className="font-bold text-lg">{t('header.title')}</span>
           </Link>
         </div>
-        <div className="flex flex-1 items-center justify-end space-x-2">
+        
+        <nav className="hidden md:flex items-center space-x-2">
             <Button variant="ghost" asChild className={buttonLinkClass}>
                 <Link href="/dashboard">
                     <LayoutDashboard className="mr-2 h-4 w-4"/>
@@ -64,13 +65,14 @@ export function Header() {
                     {t('header.settings')}
                 </Link>
             </Button>
+        </nav>
+
+        <div className="flex flex-1 items-center justify-end space-x-2">
             <LanguageSwitcher className={buttonLinkClass} />
             <ThemeToggle />
-             <Button asChild variant="secondary" size="sm">
-                <Link href="/login">
-                    <LogIn className="mr-2 h-4 w-4" />
-                    Login
-                </Link>
+             <Button variant="secondary" size="sm" onClick={() => setContactOpen(true)}>
+                <Mail className="mr-2 h-4 w-4" />
+                {t('header.contact')}
             </Button>
         </div>
       </div>
