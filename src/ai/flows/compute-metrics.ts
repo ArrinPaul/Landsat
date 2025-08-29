@@ -89,16 +89,17 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
                 .filterDate(input.startDate, input.endDate)
                 .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20));
 
-            // First, evaluate the size of the collection.
+            // First, evaluate the size of the collection. This is the critical step.
             collection.size().evaluate((size, error) => {
                 if (error) {
                     return reject(new Error(`Earth Engine Error during size evaluation: ${error}`));
                 }
                 if (size === 0) {
+                    // If there are no images, reject the promise immediately with a user-friendly error.
                     return reject(new Error("No valid satellite imagery found for the selected location, date range, and cloud cover settings. Try expanding the date range or choosing a different area."));
                 }
                 
-                // If we have images, proceed with the analysis.
+                // If we have images, proceed with the full analysis.
                 const withMetrics = collection.map(image => {
                     const ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI');
                     const ndwi = image.normalizedDifference(['B3', 'B8']).rename('NDWI');
@@ -157,15 +158,17 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
                 const landCoverStart = calculateLandCover(firstImage);
                 const landCoverEnd = calculateLandCover(lastImage);
 
+                // Now evaluate the full results.
                 ee.Dictionary({
-                    timeSeries: chartData,
+                    timeSeries: chartData.toList(chartData.size()),
                     landCoverStart: landCoverStart,
                     landCoverEnd: landCoverEnd
                 }).evaluate((result, error) => {
                     if (error) {
                         return reject(new Error(`Earth Engine Error during final evaluation: ${error}`));
                     }
-                    if (!result || !result.timeSeries || !result.timeSeries.features) {
+                    // Add more robust checks for the final result object.
+                    if (!result || !result.timeSeries || !Array.isArray(result.timeSeries)) {
                         return reject(new Error("No time-series data returned from Earth Engine."));
                     }
                      if (!result.landCoverStart || !result.landCoverEnd) {
@@ -197,7 +200,7 @@ const computeMetricsFlow = ai.defineFlow(
     const ndbiSeries: z.infer<typeof DataPointSchema>[] = [];
     const nbrSeries: z.infer<typeof DataPointSchema>[] = [];
 
-    eeData.timeSeries.features.forEach((feature: any) => {
+    eeData.timeSeries.forEach((feature: any) => {
       const date = new Date(feature.properties['system:time_start']).toISOString();
       ndviSeries.push({ date, value: feature.properties.NDVI });
       ndwiSeries.push({ date, value: feature.properties.NDWI });
