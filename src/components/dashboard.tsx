@@ -189,22 +189,6 @@ export function Dashboard() {
 
   }, [lat, lon, locationDesc, dateRange, toast]);
   
-  
-  const onMetricsUpdate = (updatedMetrics: MetricData[]) => {
-    if (!analysisResult) return;
-
-    const newTimeSeries = { ...analysisResult.timeSeries };
-    updatedMetrics.forEach(metric => {
-        if (metric.name in newTimeSeries) {
-            // This is tricky, we only update the insight, not the timeseries data itself
-            // The logic should be handled carefully, maybe insight generation is separate
-        }
-    });
-
-    // We are not really updating the core analysis result here, just insights on metric data
-    // This part of the logic may need review if we allow deeper metric updates
-  }
-  
   const dateRangeString = dateRange?.from && dateRange?.to 
     ? `${format(dateRange.from, "LLL dd, y")} - ${format(dateRange.to, "LLL dd, y")}`
     : "N/A";
@@ -276,8 +260,7 @@ export function Dashboard() {
           <LandCoverAnalysis landCover={analysisResult.landCover} />
 
           <MetricsTable 
-            metrics={metricsData} 
-            onMetricsUpdate={onMetricsUpdate} 
+            analysisResult={analysisResult} 
             location={`${lat}, ${lon}`}
             dateRange={dateRangeString}
           />

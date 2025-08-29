@@ -12,9 +12,10 @@ import { scheduleIrrigation } from "@/ai/flows/schedule-irrigation";
 import { textToSpeech } from "@/ai/flows/text-to-speech";
 import { computeMetrics, type ComputeMetricsOutput } from "@/ai/flows/compute-metrics";
 
-import type { MetricData, SatellitePassData, WeatherData, CropPlan, IrrigationSchedule, AnalysisResult } from "@/lib/types";
+import type { SatellitePassData, WeatherData, CropPlan, IrrigationSchedule, AnalysisResult } from "@/lib/types";
 import type { ChatbotInput, ChatbotOutput } from "@/ai/flows/chatbot";
 import type { TextToSpeechOutput } from "@/ai/flows/text-to-speech";
+import type { GenerateDataInsightsInput } from "@/ai/flows/generate-insights";
 
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) {
@@ -45,15 +46,15 @@ export async function suggestCoordinatesAction(locationDescription: string) {
 }
 
 export async function generateInsightAction(
-  metric: Omit<MetricData, "timeSeries" | "groundTruth" | "insight">
+  metric: Omit<GenerateDataInsightsInput, 'insight'>
 ) {
   try {
     const result = await generateDataInsights({
-      metricName: metric.name,
+      metricName: metric.metricName,
       firstValue: metric.firstValue ?? 0,
       lastValue: metric.lastValue ?? 0,
       percentageChange: metric.percentageChange ?? 0,
-      numberOfValidPoints: metric.n,
+      numberOfValidPoints: metric.numberOfValidPoints,
     });
     return { data: result.insight };
   } catch (error) {
@@ -63,21 +64,13 @@ export async function generateInsightAction(
 }
 
 export async function generateReportAction(
-  metricsData: MetricData[],
+  metricsData: any[],
   location: string,
   dateRange: string
 ) {
   try {
-    const simplifiedMetrics = metricsData.map(d => ({
-        name: d.name,
-        firstValue: d.firstValue,
-        lastValue: d.lastValue,
-        percentageChange: d.percentageChange,
-        n: d.n
-    }));
-
     const result = await generateReportSummary({
-      metricsData: JSON.stringify(simplifiedMetrics, null, 2),
+      metricsData: JSON.stringify(metricsData, null, 2),
       location,
       dateRange,
     });
