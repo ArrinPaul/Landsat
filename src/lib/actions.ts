@@ -46,17 +46,11 @@ export async function suggestCoordinatesAction(locationDescription: string) {
 }
 
 export async function generateInsightAction(
-  metric: Omit<GenerateDataInsightsInput, 'insight'>
+  input: GenerateDataInsightsInput
 ) {
   try {
-    const result = await generateDataInsights({
-      metricName: metric.metricName,
-      firstValue: metric.firstValue ?? 0,
-      lastValue: metric.lastValue ?? 0,
-      percentageChange: metric.percentageChange ?? 0,
-      numberOfValidPoints: metric.numberOfValidPoints,
-    });
-    return { data: result.insight };
+    const result = await generateDataInsights(input);
+    return { data: result };
   } catch (error) {
     console.error("generateInsightAction Error:", error);
     return { error: `AI Error: ${getErrorMessage(error)}` };
@@ -64,17 +58,17 @@ export async function generateInsightAction(
 }
 
 export async function generateReportAction(
-  metricsData: any[],
+  metricsData: string,
   location: string,
   dateRange: string
 ) {
   try {
     const result = await generateReportSummary({
-      metricsData: JSON.stringify(metricsData, null, 2),
+      metricsData,
       location,
       dateRange,
     });
-    return { data: result.summaryReport };
+    return { data: result };
   } catch (error) {
     console.error("generateReportAction Error:", error);
     return { error: `AI Error: ${getErrorMessage(error)}` };
