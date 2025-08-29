@@ -7,13 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Lightbulb, Loader2, Wheat } from "lucide-react";
+import { Lightbulb, Loader2, Wheat, Droplets, LandPlot } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { suggestCropAction } from "@/lib/actions";
 import type { SuggestCropOutput } from "@/lib/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 
 export default function CropAdvisorPage() {
     const { toast } = useToast();
@@ -22,8 +22,6 @@ export default function CropAdvisorPage() {
 
     const [lat, setLat] = useState("28.6139");
     const [lon, setLon] = useState("77.2090");
-    const [soilType, setSoilType] = useState("Alluvial soil");
-    const [moistureLevel, setMoistureLevel] = useState<"Dry" | "Optimal" | "Wet">("Optimal");
     const [climate, setClimate] = useState("Subtropical, with a hot summer and a cool, dry winter.");
     const [currentCrop, setCurrentCrop] = useState("Wheat");
 
@@ -36,8 +34,6 @@ export default function CropAdvisorPage() {
         const formData = {
             latitude: parseFloat(lat),
             longitude: parseFloat(lon),
-            soilType,
-            moistureLevel,
             climateDescription: climate,
             currentCrop,
         };
@@ -62,7 +58,7 @@ export default function CropAdvisorPage() {
                         <CardHeader>
                             <CardTitle>AI Crop Advisor</CardTitle>
                             <CardDescription>
-                                Fill in your farm's details to get a data-driven crop recommendation from our AI agronomist.
+                                Fill in your farm's location and climate to get a data-driven crop recommendation. Soil and moisture data will be fetched automatically.
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -78,27 +74,8 @@ export default function CropAdvisorPage() {
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="soil-type">Soil Type</Label>
-                                    <Input id="soil-type" placeholder="e.g., Sandy Loam, Black Clay" value={soilType} onChange={e => setSoilType(e.target.value)} required />
-                                </div>
-                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="moisture-level">Soil Moisture Level</Label>
-                                        <Select value={moistureLevel} onValueChange={(value: "Dry" | "Optimal" | "Wet") => setMoistureLevel(value)} required>
-                                            <SelectTrigger id="moisture-level">
-                                                <SelectValue placeholder="Select moisture level" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="Dry">Dry</SelectItem>
-                                                <SelectItem value="Optimal">Optimal</SelectItem>
-                                                <SelectItem value="Wet">Wet</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="current-crop">Current or Previous Crop (Optional)</Label>
-                                        <Input id="current-crop" placeholder="e.g., Corn, Fallow" value={currentCrop} onChange={e => setCurrentCrop(e.target.value)} />
-                                    </div>
+                                    <Label htmlFor="current-crop">Current or Previous Crop (Optional)</Label>
+                                    <Input id="current-crop" placeholder="e.g., Corn, Fallow" value={currentCrop} onChange={e => setCurrentCrop(e.target.value)} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="climate">Local Climate Description</Label>
@@ -122,10 +99,21 @@ export default function CropAdvisorPage() {
                         <Card>
                             <CardHeader>
                                 <CardTitle>AI Recommendation</CardTitle>
-                                <CardDescription>Based on the data you provided, here is our suggestion.</CardDescription>
+                                <CardDescription>Based on your input and real-time satellite data, here is our suggestion.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6">
-                                <div className="text-center space-y-2">
+                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                     <Card className="p-4">
+                                        <CardDescription className="flex items-center gap-2 mb-2"><LandPlot /> Fetched Soil Type</CardDescription>
+                                        <Badge variant="outline" className="text-lg">{result.fetchedSoilType}</Badge>
+                                    </Card>
+                                     <Card className="p-4">
+                                        <CardDescription className="flex items-center gap-2 mb-2"><Droplets /> Fetched Moisture</CardDescription>
+                                        <Badge variant="outline" className="text-lg">{result.fetchedMoistureLevel}</Badge>
+                                    </Card>
+                                </div>
+
+                                <div className="text-center space-y-2 pt-4">
                                     <p className="text-muted-foreground">Suggested Crop</p>
                                     <h3 className="text-4xl font-bold text-primary">{result.suggestedCrop}</h3>
                                 </div>

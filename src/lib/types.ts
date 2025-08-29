@@ -103,8 +103,6 @@ export interface CropYieldPrediction {
 export interface SuggestCropInput {
     latitude: number;
     longitude: number;
-    soilType: string;
-    moistureLevel: 'Dry' | 'Optimal' | 'Wet';
     climateDescription: string;
     currentCrop?: string;
 }
@@ -114,6 +112,8 @@ export interface SuggestCropOutput {
     suitabilityScore: number;
     reasoning: string;
     alternativeCrop?: string;
+    fetchedSoilType: string;
+    fetchedMoistureLevel: 'Dry' | 'Optimal' | 'Wet';
 }
 
 
