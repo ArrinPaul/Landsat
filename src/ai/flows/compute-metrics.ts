@@ -76,13 +76,8 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
     }
     const privateKey = JSON.parse(creds);
 
-    console.log('Authenticating with Earth Engine...');
     await authenticate(privateKey);
-    console.log('Earth Engine Authenticated.');
-    
-    console.log('Initializing Earth Engine...');
     await initialize();
-    console.log('Earth Engine Initialized.');
 
     return new Promise((resolve, reject) => {
         try {
@@ -192,9 +187,7 @@ const computeMetricsFlow = ai.defineFlow(
     outputSchema: ComputeMetricsOutputSchema,
   },
   async (input) => {
-    console.log('Starting Earth Engine analysis...');
     const eeData = await runEeAnalysis(input);
-    console.log('Earth Engine analysis complete.');
 
     const ndviSeries: z.infer<typeof DataPointSchema>[] = [];
     const ndwiSeries: z.infer<typeof DataPointSchema>[] = [];
@@ -250,3 +243,5 @@ const computeMetricsFlow = ai.defineFlow(
      };
   }
 );
+
+    
