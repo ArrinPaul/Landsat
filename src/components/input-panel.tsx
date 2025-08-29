@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { format } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Calendar as CalendarIcon, Upload, Wand2, Cpu, Loader2, History } from "lucide-react";
+import { Calendar as CalendarIcon, Upload, Wand2, Cpu, Loader2, History, Wheat } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { parseCsv } from "@/lib/csv";
@@ -206,6 +207,12 @@ export function InputPanel({
             </Popover>
 
             <div className="flex gap-2">
+                <Button variant="secondary" asChild>
+                    <Link href={`/crop-advisor?lat=${lat}&lon=${lon}`}>
+                        <Wheat className="mr-2 h-4 w-4" />
+                        Crop Advisor
+                    </Link>
+                </Button>
                 <Button onClick={onCompute} disabled={isComputing}>
                 {isComputing ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
