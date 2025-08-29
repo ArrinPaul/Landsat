@@ -14,6 +14,8 @@ import { useToast } from "@/hooks/use-toast";
 import type { GroundTruthDataPoint, SatellitePassData, WeatherData, HistoryEntry, AnalysisResult } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { predictSatellitePassAction, getWeatherReportAction, computeMetricsAction } from "@/lib/actions";
+import { Card, CardContent } from "./ui/card";
+import { BarChart, Search, SlidersHorizontal } from "lucide-react";
 
 export function Dashboard() {
   const { toast } = useToast();
@@ -189,9 +191,35 @@ export function Dashboard() {
       )}
       
       {!activeComputation && !isComputing && (
-          <div className="text-center py-16 text-muted-foreground">
-              <p>Enter coordinates and click "Compute Metrics" to get started.</p>
-          </div>
+          <Card className="text-center py-16">
+              <CardContent className="max-w-2xl mx-auto">
+                 <BarChart className="h-16 w-16 mx-auto text-primary" />
+                 <h2 className="text-2xl font-bold mt-4">Welcome to the Earth Insights Dashboard</h2>
+                 <p className="text-muted-foreground mt-2 mb-6">
+                    Analyze environmental data anywhere on Earth. Here’s how to get started:
+                 </p>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                    <div className="flex gap-4 items-start">
+                        <div className="flex-shrink-0 bg-primary/10 text-primary rounded-full h-10 w-10 flex items-center justify-center">
+                            <SlidersHorizontal className="h-5 w-5"/>
+                        </div>
+                        <div>
+                            <h3 className="font-semibold">1. Set Parameters</h3>
+                            <p className="text-sm text-muted-foreground">Enter coordinates (or a description for an AI suggestion) and select a date range.</p>
+                        </div>
+                    </div>
+                     <div className="flex gap-4 items-start">
+                        <div className="flex-shrink-0 bg-primary/10 text-primary rounded-full h-10 w-10 flex items-center justify-center">
+                            <Search className="h-5 w-5"/>
+                        </div>
+                        <div>
+                            <h3 className="font-semibold">2. Compute Metrics</h3>
+                            <p className="text-sm text-muted-foreground">Click "Compute Metrics" to fetch and analyze satellite data for your selected area and time.</p>
+                        </div>
+                    </div>
+                 </div>
+              </CardContent>
+          </Card>
       )}
 
       {activeComputation && !isComputing && !analysisResult && (
@@ -240,5 +268,3 @@ export function Dashboard() {
     </div>
   );
 }
-
-    
