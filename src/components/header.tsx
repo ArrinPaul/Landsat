@@ -66,9 +66,11 @@ export function Header() {
             </Button>
             <LanguageSwitcher className={buttonLinkClass} />
             <ThemeToggle />
-             <Button variant="secondary" size="sm" onClick={() => setContactOpen(true)}>
-                <Mail className="mr-2 h-4 w-4" />
-                {t('header.contact')}
+             <Button asChild variant="secondary" size="sm">
+                <Link href="/login">
+                    <LogIn className="mr-2 h-4 w-4" />
+                    Login
+                </Link>
             </Button>
         </div>
       </div>
