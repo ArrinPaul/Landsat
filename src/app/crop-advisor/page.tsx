@@ -1,7 +1,8 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from 'next/navigation';
 import { Header } from "@/components/header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,8 +16,9 @@ import type { SuggestCropOutput } from "@/lib/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 
-export default function CropAdvisorPage() {
+function CropAdvisorContent() {
     const { toast } = useToast();
+    const searchParams = useSearchParams();
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState<SuggestCropOutput | null>(null);
 
@@ -25,6 +27,16 @@ export default function CropAdvisorPage() {
     const [climate, setClimate] = useState("Subtropical, with a hot summer and a cool, dry winter.");
     const [currentCrop, setCurrentCrop] = useState("Wheat");
 
+    useEffect(() => {
+        const latParam = searchParams.get('lat');
+        const lonParam = searchParams.get('lon');
+        if (latParam) {
+            setLat(latParam);
+        }
+        if (lonParam) {
+            setLon(lonParam);
+        }
+    }, [searchParams]);
 
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
@@ -150,4 +162,12 @@ export default function CropAdvisorPage() {
             </main>
         </div>
     );
+}
+
+export default function CropAdvisorPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <CropAdvisorContent />
+        </Suspense>
+    )
 }

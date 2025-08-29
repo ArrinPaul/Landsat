@@ -208,7 +208,7 @@ export function InputPanel({
 
             <div className="flex gap-2">
                  <Button asChild variant="outline">
-                    <Link href="/crop-advisor">
+                    <Link href={`/crop-advisor?lat=${lat}&lon=${lon}`}>
                         <Wheat className="mr-2 h-4 w-4" />
                         Crop Advisor
                     </Link>
