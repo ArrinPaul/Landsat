@@ -3,13 +3,14 @@
 
 import React, { useRef, useState } from 'react';
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ScatterChart, Scatter, Label, Brush
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ScatterChart, Scatter, Label, Brush, BarChart, Bar
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { AnalysisResult } from '@/lib/types';
 import { format } from 'date-fns';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -77,6 +78,17 @@ export function Visualizations({ analysisResult, groundTruthData, selectedMetric
   
   const metric = analysisResult.timeSeries[selectedMetric as keyof typeof analysisResult.timeSeries];
   const comparisonData = combineAndSortData(analysisResult, groundTruthData);
+  
+  const landCoverChartData = [
+    { name: "Vegetation", startArea: analysisResult.landCover.vegetation.startArea, endArea: analysisResult.landCover.vegetation.endArea },
+    { name: "Water", startArea: analysisResult.landCover.water.startArea, endArea: analysisResult.landCover.water.endArea },
+    { name: "Built-up", startArea: analysisResult.landCover.builtUp.startArea, endArea: analysisResult.landCover.builtUp.endArea },
+  ];
+
+  const landCoverChartConfig = {
+    startArea: { label: "Start Area", color: "hsl(var(--secondary))" },
+    endArea: { label: "End Area", color: "hsl(var(--primary))" },
+  }
 
   const handleBrushChange = (range: any) => {
     setBrushStartIndex(range.startIndex);
@@ -91,8 +103,9 @@ export function Visualizations({ analysisResult, groundTruthData, selectedMetric
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="time-series">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="time-series">Time-Series Plots</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="time-series">Time-Series</TabsTrigger>
+            <TabsTrigger value="land-cover">Land Cover</TabsTrigger>
             <TabsTrigger value="comparison" disabled={!groundTruthData}>
                 Satellite vs. Ground
                 {!groundTruthData && <span className="text-xs ml-2">(CSV required)</span>}
@@ -137,6 +150,32 @@ export function Visualizations({ analysisResult, groundTruthData, selectedMetric
               </div>
             )}
           </TabsContent>
+          <TabsContent value="land-cover" className="mt-4">
+             <CardDescription className="text-center mb-4">Comparison of land cover area at the start and end of the period.</CardDescription>
+             <div className="h-[400px]">
+                <ChartContainer config={landCoverChartConfig} className="h-full w-full">
+                    <BarChart data={landCoverChartData} accessibilityLayer>
+                        <CartesianGrid vertical={false} />
+                        <XAxis
+                            dataKey="name"
+                            tickLine={false}
+                            tickMargin={10}
+                            axisLine={false}
+                        />
+                        <YAxis 
+                            tickFormatter={(value) => `${value} km²`}
+                        />
+                         <ChartTooltip
+                            cursor={false}
+                            content={<ChartTooltipContent indicator="dot" />}
+                         />
+                        <Legend />
+                        <Bar dataKey="startArea" fill="var(--color-startArea)" radius={4} />
+                        <Bar dataKey="endArea" fill="var(--color-endArea)" radius={4} />
+                    </BarChart>
+                </ChartContainer>
+            </div>
+          </TabsContent>
           <TabsContent value="comparison" className="mt-4">
             <CardDescription className="text-center mb-2">Comparison of Satellite NDVI vs. Ground Truth Data</CardDescription>
              <div ref={scatterRef} className="h-[400px] w-full">
@@ -161,7 +200,3 @@ export function Visualizations({ analysisResult, groundTruthData, selectedMetric
     </Card>
   );
 }
-
-    
-
-    
