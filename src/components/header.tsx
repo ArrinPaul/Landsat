@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { Mountain, LayoutDashboard, Settings, BrainCircuit, Mail } from "lucide-react";
+import { Globe2, LayoutDashboard, Settings, BrainCircuit, Mail } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "./ui/button";
 import React, { useState, useEffect } from "react";
@@ -41,7 +41,7 @@ export function Header() {
       <div className="container flex h-16 items-center">
         <div className="mr-auto flex items-center">
           <Link href="/" className="flex items-center gap-2">
-            <Mountain className="h-6 w-6" />
+            <Globe2 className="h-6 w-6" />
             <span className="font-bold text-lg">{t('header.title')}</span>
           </Link>
         </div>
