@@ -45,13 +45,17 @@ export default function LoginPage() {
           </CardHeader>
           <CardContent className="grid gap-4">
             <div className="grid grid-cols-2 gap-2">
-                <Button variant="outline" disabled={isLoading}>
-                    <Icons.google className="mr-2 h-4 w-4" />
-                    Google
+                <Button variant="outline" disabled={isLoading} asChild>
+                    <Link href="https://accounts.google.com/">
+                        <Icons.google className="mr-2 h-4 w-4" />
+                        Google
+                    </Link>
                 </Button>
-                <Button variant="outline" disabled={isLoading}>
-                    <Icons.gitHub className="mr-2 h-4 w-4" />
-                    GitHub
+                <Button variant="outline" disabled={isLoading} asChild>
+                    <Link href="https://github.com/login">
+                        <Icons.gitHub className="mr-2 h-4 w-4" />
+                        GitHub
+                    </Link>
                 </Button>
             </div>
              <div className="relative">
