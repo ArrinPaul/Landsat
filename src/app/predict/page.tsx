@@ -126,7 +126,7 @@ export default function PredictPage() {
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2"><Thermometer/> Weather Forecast</CardTitle>
                                 <CardDescription>Get the current weather and a 24-hour forecast.</CardDescription>
-                            </CardHeader>
+                            </Header>
                             <CardContent>
                                 <Button onClick={() => handlePrediction('weather')} disabled={!!isLoading}>
                                     {isLoading === 'weather' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
@@ -178,7 +178,7 @@ export default function PredictPage() {
                         <Card>
                             <CardHeader>
                                 <CardTitle>Crop Plan Recommendation</CardTitle>
-                            </CardHeader>
+                            </Header>
                             <CardContent className="space-y-4">
                                 <div>
                                     <h4 className="font-semibold">Planting Window</h4>
@@ -206,7 +206,7 @@ export default function PredictPage() {
                         <Card>
                             <CardHeader>
                                 <CardTitle>Irrigation Schedule Recommendation</CardTitle>
-                            </CardHeader>
+                            </Header>
                             <CardContent className="space-y-4">
                                 <div>
                                     <h4 className="font-semibold">Recommendation</h4>
