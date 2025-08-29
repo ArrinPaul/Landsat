@@ -8,7 +8,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { MetricData } from '@/lib/types';
+import type { MetricData, AnalysisResult } from '@/lib/types';
 import { format } from 'date-fns';
 
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -26,13 +26,13 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-function combineAndSortData(metric: MetricData) {
-    if (!metric.groundTruth) return [];
+function combineAndSortData(analysisResult: AnalysisResult, groundTruth: any) {
+    if (!groundTruth) return [];
 
-    const satelliteDataMap = new Map(metric.timeSeries.map(d => [format(new Date(d.date), 'yyyy-MM-dd'), d.value]));
+    const satelliteDataMap = new Map(analysisResult.timeSeries.NDVI.map(d => [format(new Date(d.date), 'yyyy-MM-dd'), d.value]));
 
-    return metric.groundTruth
-        .map(gt => {
+    return groundTruth
+        .map((gt: any) => {
             const dateStr = format(new Date(gt.date), 'yyyy-MM-dd');
             const satelliteValue = satelliteDataMap.get(dateStr);
             if (satelliteValue !== undefined) {
@@ -43,25 +43,26 @@ function combineAndSortData(metric: MetricData) {
             }
             return null;
         })
-        .filter(d => d !== null);
+        .filter((d: any) => d !== null);
 }
 
 
 interface VisualizationsProps {
-  metrics: MetricData[];
+  analysisResult: AnalysisResult;
+  groundTruthData: any;
   selectedMetric: string;
   setSelectedMetric: (metric: string) => void;
 }
 
-export function Visualizations({ metrics, selectedMetric, setSelectedMetric }: VisualizationsProps) {
+export function Visualizations({ analysisResult, groundTruthData, selectedMetric, setSelectedMetric }: VisualizationsProps) {
   const chartRef = useRef(null);
   const scatterRef = useRef(null);
   const [brushStartIndex, setBrushStartIndex] = useState<number | undefined>();
   const [brushEndIndex, setBrushEndIndex] = useState<number | undefined>();
 
-  const metric = metrics.find(m => m.name === selectedMetric);
-  const ndviMetric = metrics.find(m => m.name === 'NDVI');
-  const comparisonData = ndviMetric ? combineAndSortData(ndviMetric) : [];
+  const metricNames = Object.keys(analysisResult.timeSeries);
+  const metric = analysisResult.timeSeries[selectedMetric as keyof typeof analysisResult.timeSeries];
+  const comparisonData = combineAndSortData(analysisResult, groundTruthData);
 
   const handleBrushChange = (range: any) => {
     setBrushStartIndex(range.startIndex);
@@ -72,32 +73,32 @@ export function Visualizations({ metrics, selectedMetric, setSelectedMetric }: V
     <Card>
       <CardHeader>
         <CardTitle>Data Visualization</CardTitle>
-        <CardDescription>Interactive plots of environmental metrics.</CardDescription>
+        <CardDescription>Interactive plots of environmental metrics and spectral bands.</CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="time-series">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="time-series">Time-Series Plots</TabsTrigger>
-            <TabsTrigger value="comparison" disabled={!ndviMetric?.groundTruth}>
+            <TabsTrigger value="comparison" disabled={!groundTruthData}>
                 Satellite vs. Ground
-                {!ndviMetric?.groundTruth && <span className="text-xs ml-2">(CSV required)</span>}
+                {!groundTruthData && <span className="text-xs ml-2">(CSV required)</span>}
             </TabsTrigger>
           </TabsList>
           <TabsContent value="time-series" className="mt-4">
             <div className="flex justify-end mb-4">
                 <Select value={selectedMetric} onValueChange={setSelectedMetric}>
                     <SelectTrigger className="w-[280px]">
-                        <SelectValue placeholder="Select a metric" />
+                        <SelectValue placeholder="Select a metric or band" />
                     </SelectTrigger>
                     <SelectContent>
-                        {metrics.map(m => <SelectItem key={m.name} value={m.name}>{m.name}</SelectItem>)}
+                        {metricNames.map(name => <SelectItem key={name} value={name}>{name}</SelectItem>)}
                     </SelectContent>
                 </Select>
             </div>
             {metric && (
               <div ref={chartRef} className="h-[400px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={metric.timeSeries} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                  <LineChart data={metric} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis 
                         dataKey="date" 
@@ -107,7 +108,7 @@ export function Visualizations({ metrics, selectedMetric, setSelectedMetric }: V
                     <YAxis domain={['auto', 'auto']} tickFormatter={(val) => typeof val === 'number' ? val.toFixed(2) : val} />
                     <Tooltip content={<CustomTooltip />} />
                     <Legend />
-                    <Line type="monotone" dataKey="value" name={metric.name} stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="value" name={selectedMetric} stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
                      <Brush 
                         dataKey="date" 
                         height={30} 
@@ -146,3 +147,5 @@ export function Visualizations({ metrics, selectedMetric, setSelectedMetric }: V
     </Card>
   );
 }
+
+    

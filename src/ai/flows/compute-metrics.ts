@@ -39,13 +39,27 @@ const ComputeMetricsInputSchema = z.object({
 });
 export type ComputeMetricsInput = z.infer<typeof ComputeMetricsInputSchema>;
 
+const timeSeriesSchema = z.object({
+    NDVI: z.array(DataPointSchema).describe('The computed time-series data for NDVI.'),
+    NDWI: z.array(DataPointSchema).describe('The computed time-series data for NDWI.'),
+    NDBI: z.array(DataPointSchema).describe('The computed time-series data for NDBI.'),
+    NBR: z.array(DataPointSchema).describe('The computed time-series data for NBR.'),
+    B1: z.array(DataPointSchema),
+    B2: z.array(DataPointSchema),
+    B3: z.array(DataPointSchema),
+    B4: z.array(DataPointSchema),
+    B5: z.array(DataPointSchema),
+    B6: z.array(DataPointSchema),
+    B7: z.array(DataPointSchema),
+    B8: z.array(DataPointSchema),
+    B8A: z.array(DataPointSchema),
+    B9: z.array(DataPointSchema),
+    B11: z.array(DataPointSchema),
+    B12: z.array(DataPointSchema),
+});
+
 const ComputeMetricsOutputSchema = z.object({
-    timeSeries: z.object({
-        NDVI: z.array(DataPointSchema).describe('The computed time-series data for NDVI.'),
-        NDWI: z.array(DataPointSchema).describe('The computed time-series data for NDWI.'),
-        NDBI: z.array(DataPointSchema).describe('The computed time-series data for NDBI.'),
-        NBR: z.array(DataPointSchema).describe('The computed time-series data for NBR.'),
-    }),
+    timeSeries: timeSeriesSchema,
     landCover: z.object({
         vegetation: LandCoverChangeStatSchema,
         water: LandCoverChangeStatSchema,
@@ -99,6 +113,8 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
                     return reject(new Error("No valid satellite imagery found for the selected location, date range, and cloud cover settings. Try expanding the date range or choosing a different area."));
                 }
                 
+                const allBands = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B9', 'B11', 'B12'];
+
                 // If we have images, proceed with the full analysis.
                 const withMetrics = collection.map(image => {
                     const ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI');
@@ -108,20 +124,24 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
                     return image.addBands([ndvi, ndwi, ndbi, nbr]);
                 });
 
-                const chartData = withMetrics.select(['NDVI', 'NDWI', 'NDBI', 'NBR']).map(image => {
+                const chartData = withMetrics.select(['NDVI', 'NDWI', 'NDBI', 'NBR', ...allBands]).map(image => {
                     const mean = image.reduceRegion({
                         reducer: ee.Reducer.mean(),
                         geometry: point,
                         scale: 10,
                         maxPixels: 1e9
                     });
-                    return ee.Feature(null, {
+                    const featureProps: any = {
                         'system:time_start': image.get('system:time_start'),
                         'NDVI': mean.get('NDVI'),
                         'NDWI': mean.get('NDWI'),
                         'NDBI': mean.get('NDBI'),
                         'NBR': mean.get('NBR'),
+                    };
+                    allBands.forEach(band => {
+                        featureProps[band] = mean.get(band);
                     });
+                    return ee.Feature(null, featureProps);
                 });
 
                 // Land cover analysis
@@ -195,17 +215,26 @@ const computeMetricsFlow = ai.defineFlow(
   async (input) => {
     const eeData = await runEeAnalysis(input);
 
-    const ndviSeries: z.infer<typeof DataPointSchema>[] = [];
-    const ndwiSeries: z.infer<typeof DataPointSchema>[] = [];
-    const ndbiSeries: z.infer<typeof DataPointSchema>[] = [];
-    const nbrSeries: z.infer<typeof DataPointSchema>[] = [];
+    const allBands = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B9', 'B11', 'B12'];
+
+    const timeSeriesResult: any = {
+        NDVI: [], NDWI: [], NDBI: [], NBR: [],
+        ...Object.fromEntries(allBands.map(band => [band, []]))
+    };
 
     eeData.timeSeries.forEach((feature: any) => {
       const date = new Date(feature.properties['system:time_start']).toISOString();
-      ndviSeries.push({ date, value: feature.properties.NDVI });
-      ndwiSeries.push({ date, value: feature.properties.NDWI });
-      ndbiSeries.push({ date, value: feature.properties.NDBI });
-      nbrSeries.push({ date, value: feature.properties.NBR });
+      timeSeriesResult.NDVI.push({ date, value: feature.properties.NDVI });
+      timeSeriesResult.NDWI.push({ date, value: feature.properties.NDWI });
+      timeSeriesResult.NDBI.push({ date, value: feature.properties.NDBI });
+      timeSeriesResult.NBR.push({ date, value: feature.properties.NBR });
+      allBands.forEach(band => {
+        timeSeriesResult[band].push({ date, value: feature.properties[band] });
+      });
+    });
+
+    Object.keys(timeSeriesResult).forEach(key => {
+        timeSeriesResult[key].sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
     });
     
     const start = eeData.landCoverStart;
@@ -239,13 +268,10 @@ const computeMetricsFlow = ai.defineFlow(
     };
 
     return { 
-        timeSeries: {
-            NDVI: ndviSeries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
-            NDWI: ndwiSeries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
-            NDBI: ndbiSeries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
-            NBR: nbrSeries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
-        },
+        timeSeries: timeSeriesResult,
         landCover: landCoverAnalysis,
      };
   }
 );
+
+    
