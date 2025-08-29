@@ -28,6 +28,7 @@ const ComputeMetricsOutputSchema = z.object({
     NDVI: z.array(DataPointSchema).describe('The computed time-series data for NDVI.'),
     NDWI: z.array(DataPointSchema).describe('The computed time-series data for NDWI.'),
     NDBI: z.array(DataPointSchema).describe('The computed time-series data for NDBI.'),
+    NBR: z.array(DataPointSchema).describe('The computed time-series data for NBR.'),
 });
 export type ComputeMetricsOutput = z.infer<typeof ComputeMetricsOutputSchema>;
 
@@ -73,12 +74,13 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
                 const ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI');
                 const ndwi = image.normalizedDifference(['B3', 'B8']).rename('NDWI');
                 const ndbi = image.normalizedDifference(['B11', 'B8']).rename('NDBI');
-                return image.addBands([ndvi, ndwi, ndbi]);
+                const nbr = image.normalizedDifference(['B8A', 'B12']).rename('NBR');
+                return image.addBands([ndvi, ndwi, ndbi, nbr]);
             });
             
             const reducer = ee.Reducer.mean();
 
-            const chartData = withMetrics.select(['NDVI', 'NDWI', 'NDBI']).map(image => {
+            const chartData = withMetrics.select(['NDVI', 'NDWI', 'NDBI', 'NBR']).map(image => {
                 const mean = image.reduceRegion({
                     reducer: reducer,
                     geometry: point,
@@ -90,6 +92,7 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
                     'NDVI': mean.get('NDVI'),
                     'NDWI': mean.get('NDWI'),
                     'NDBI': mean.get('NDBI'),
+                    'NBR': mean.get('NBR'),
                 });
             });
             
@@ -130,18 +133,21 @@ const computeMetricsFlow = ai.defineFlow(
     const ndviSeries: z.infer<typeof DataPointSchema>[] = [];
     const ndwiSeries: z.infer<typeof DataPointSchema>[] = [];
     const ndbiSeries: z.infer<typeof DataPointSchema>[] = [];
+    const nbrSeries: z.infer<typeof DataPointSchema>[] = [];
 
     eeData.features.forEach((feature: any) => {
       const date = new Date(feature.properties['system:time_start']).toISOString();
       ndviSeries.push({ date, value: feature.properties.NDVI });
       ndwiSeries.push({ date, value: feature.properties.NDWI });
       ndbiSeries.push({ date, value: feature.properties.NDBI });
+      nbrSeries.push({ date, value: feature.properties.NBR });
     });
 
     return { 
         NDVI: ndviSeries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
         NDWI: ndwiSeries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
         NDBI: ndbiSeries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
+        NBR: nbrSeries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
      };
   }
 );

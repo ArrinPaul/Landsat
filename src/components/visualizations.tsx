@@ -1,9 +1,9 @@
 
 "use client";
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ScatterChart, Scatter, Label
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ScatterChart, Scatter, Label, Brush
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -56,10 +56,17 @@ interface VisualizationsProps {
 export function Visualizations({ metrics, selectedMetric, setSelectedMetric }: VisualizationsProps) {
   const chartRef = useRef(null);
   const scatterRef = useRef(null);
+  const [brushStartIndex, setBrushStartIndex] = useState<number | undefined>();
+  const [brushEndIndex, setBrushEndIndex] = useState<number | undefined>();
 
   const metric = metrics.find(m => m.name === selectedMetric);
   const ndviMetric = metrics.find(m => m.name === 'NDVI');
   const comparisonData = ndviMetric ? combineAndSortData(ndviMetric) : [];
+
+  const handleBrushChange = (range: any) => {
+    setBrushStartIndex(range.startIndex);
+    setBrushEndIndex(range.endIndex);
+  };
 
   return (
     <Card>
@@ -101,6 +108,15 @@ export function Visualizations({ metrics, selectedMetric, setSelectedMetric }: V
                     <Tooltip content={<CustomTooltip />} />
                     <Legend />
                     <Line type="monotone" dataKey="value" name={metric.name} stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+                     <Brush 
+                        dataKey="date" 
+                        height={30} 
+                        stroke="hsl(var(--primary))"
+                        tickFormatter={(str) => format(new Date(str), 'MMM d')}
+                        startIndex={brushStartIndex}
+                        endIndex={brushEndIndex}
+                        onChange={handleBrushChange}
+                     />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
