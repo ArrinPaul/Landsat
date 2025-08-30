@@ -3,14 +3,13 @@
 
 import React, { useRef, useState } from 'react';
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ScatterChart, Scatter, Label, Brush, BarChart, Bar
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ScatterChart, Scatter, Label, Brush
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { AnalysisResult } from '@/lib/types';
+import type { AnalysisResult, GroundTruthDataPoint } from '@/lib/types';
 import { format } from 'date-fns';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -27,16 +26,16 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-function combineAndSortData(analysisResult: AnalysisResult, groundTruth: any) {
+function combineAndSortData(analysisResult: AnalysisResult, groundTruth: GroundTruthDataPoint[] | null) {
     if (!groundTruth) return [];
 
     const satelliteDataMap = new Map(analysisResult.timeSeries.NDVI.map(d => [format(new Date(d.date), 'yyyy-MM-dd'), d.value]));
 
     return groundTruth
-        .map((gt: any) => {
+        .map((gt) => {
             const dateStr = format(new Date(gt.date), 'yyyy-MM-dd');
             const satelliteValue = satelliteDataMap.get(dateStr);
-            if (satelliteValue !== undefined) {
+            if (satelliteValue !== undefined && satelliteValue !== null && !isNaN(gt.value)) {
                 return {
                     ground: gt.value,
                     satellite: satelliteValue,
@@ -44,22 +43,20 @@ function combineAndSortData(analysisResult: AnalysisResult, groundTruth: any) {
             }
             return null;
         })
-        .filter((d: any) => d !== null);
+        .filter((d): d is { ground: number, satellite: number } => d !== null);
 }
 
 
 interface VisualizationsProps {
   analysisResult: AnalysisResult;
-  groundTruthData: any;
+  groundTruthData: GroundTruthDataPoint[] | null;
   selectedMetric: string;
   setSelectedMetric: (metric: string) => void;
 }
 
 const metricOrder = [
-    // Bands
+    'NDVI', 'NDWI', 'NDBI', 'NBR',
     'B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B9', 'B11', 'B12',
-    // Indices
-    'NDVI', 'NDWI', 'NDBI', 'NBR'
 ];
 
 export function Visualizations({ analysisResult, groundTruthData, selectedMetric, setSelectedMetric }: VisualizationsProps) {
@@ -79,17 +76,6 @@ export function Visualizations({ analysisResult, groundTruthData, selectedMetric
   const metric = analysisResult.timeSeries[selectedMetric as keyof typeof analysisResult.timeSeries];
   const comparisonData = combineAndSortData(analysisResult, groundTruthData);
   
-  const landCoverChartData = [
-    { name: "Vegetation", startArea: analysisResult.landCover.vegetation.startArea, endArea: analysisResult.landCover.vegetation.endArea },
-    { name: "Water", startArea: analysisResult.landCover.water.startArea, endArea: analysisResult.landCover.water.endArea },
-    { name: "Built-up", startArea: analysisResult.landCover.builtUp.startArea, endArea: analysisResult.landCover.builtUp.endArea },
-  ];
-
-  const landCoverChartConfig = {
-    startArea: { label: "Start Area", color: "hsl(var(--secondary))" },
-    endArea: { label: "End Area", color: "hsl(var(--primary))" },
-  }
-
   const handleBrushChange = (range: any) => {
     setBrushStartIndex(range.startIndex);
     setBrushEndIndex(range.endIndex);
@@ -103,9 +89,8 @@ export function Visualizations({ analysisResult, groundTruthData, selectedMetric
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="time-series">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="time-series">Time-Series</TabsTrigger>
-            <TabsTrigger value="land-cover">Land Cover</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="time-series">Time-Series Analysis</TabsTrigger>
             <TabsTrigger value="comparison" disabled={!groundTruthData}>
                 Satellite vs. Ground
                 {!groundTruthData && <span className="text-xs ml-2">(CSV required)</span>}
@@ -150,32 +135,6 @@ export function Visualizations({ analysisResult, groundTruthData, selectedMetric
               </div>
             )}
           </TabsContent>
-          <TabsContent value="land-cover" className="mt-4">
-             <CardDescription className="text-center mb-4">Comparison of land cover area at the start and end of the period.</CardDescription>
-             <div className="h-[400px]">
-                <ChartContainer config={landCoverChartConfig} className="h-full w-full">
-                    <BarChart data={landCoverChartData} accessibilityLayer>
-                        <CartesianGrid vertical={false} />
-                        <XAxis
-                            dataKey="name"
-                            tickLine={false}
-                            tickMargin={10}
-                            axisLine={false}
-                        />
-                        <YAxis 
-                            tickFormatter={(value) => `${value} km²`}
-                        />
-                         <ChartTooltip
-                            cursor={false}
-                            content={<ChartTooltipContent indicator="dot" />}
-                         />
-                        <Legend />
-                        <Bar dataKey="startArea" fill="var(--color-startArea)" radius={4} />
-                        <Bar dataKey="endArea" fill="var(--color-endArea)" radius={4} />
-                    </BarChart>
-                </ChartContainer>
-            </div>
-          </TabsContent>
           <TabsContent value="comparison" className="mt-4">
             <CardDescription className="text-center mb-2">Comparison of Satellite NDVI vs. Ground Truth Data</CardDescription>
              <div ref={scatterRef} className="h-[400px] w-full">
@@ -190,7 +149,7 @@ export function Visualizations({ analysisResult, groundTruthData, selectedMetric
                         </YAxis>
                         <Tooltip cursor={{ strokeDasharray: '3 3' }} />
                         <Legend verticalAlign="top" height={36}/>
-                        <Scatter name="Comparison" data={comparisonData as any[]} fill="hsl(var(--primary))" />
+                        <Scatter name="Comparison" data={comparisonData} fill="hsl(var(--primary))" />
                     </ScatterChart>
                  </ResponsiveContainer>
             </div>
