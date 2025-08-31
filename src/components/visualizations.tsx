@@ -144,10 +144,10 @@ export function Visualizations({ analysisResult, groundTruthData, selectedMetric
                  <ResponsiveContainer width="100%" height="100%">
                     <ScatterChart margin={{ top: 20, right: 20, bottom: 40, left: 20 }}>
                         <CartesianGrid />
-                        <XAxis type="number" dataKey="ground" name="Ground Truth">
+                        <XAxis type="number" dataKey="ground" name="Ground Truth" domain={['auto', 'auto']}>
                            <Label value="Ground Truth Value" offset={-25} position="insideBottom" />
                         </XAxis>
-                        <YAxis type="number" dataKey="satellite" name="Satellite Value">
+                        <YAxis type="number" dataKey="satellite" name="Satellite Value" domain={['auto', 'auto']}>
                              <Label value="Satellite Value" angle={-90} offset={-10} position="insideLeft" style={{ textAnchor: 'middle' }} />
                         </YAxis>
                         <Tooltip cursor={{ strokeDasharray: '3 3' }} />
