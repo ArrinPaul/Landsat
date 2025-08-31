@@ -2,15 +2,16 @@
 'use server';
 
 /**
- * @fileOverview An AI tool to get the soil moisture level for a given location.
+ * @fileOverview An AI tool to get the soil moisture level for a given location using a real-time API.
  */
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { getSoilAndWeatherData, getMoistureLevel } from '@/services/open-meteo';
 
 export const getSoilMoisture = ai.defineTool(
   {
     name: 'getSoilMoisture',
-    description: 'Returns the current soil moisture level (Dry, Optimal, or Wet) for a specific latitude and longitude based on recent satellite and weather data.',
+    description: 'Returns the current soil moisture level (Dry, Optimal, or Wet) for a specific latitude and longitude by fetching real-time data from a weather and soil API.',
     inputSchema: z.object({
       latitude: z.number().describe('The latitude of the location.'),
       longitude: z.number().describe('The longitude of the location.'),
@@ -20,23 +21,19 @@ export const getSoilMoisture = ai.defineTool(
     }),
   },
   async ({ latitude, longitude }) => {
-    // In a real application, this would involve a complex model using satellite data (e.g., SMAP, Sentinel-1)
-    // and weather data. For this prototype, we'll simulate it based on location.
-    
-    // Simulate moisture based on latitude and longitude (more varied than before)
-    if (latitude > 20 && latitude < 35 && longitude > 68 && longitude < 97) { // Indian subcontinent
-        return { moistureLevel: 'Optimal' }; // Monsoon influence
-    } else if (latitude > 30 && latitude < 50 && longitude > -125 && longitude < -95) { // Western US
-        return { moistureLevel: 'Dry' };
-    } else if (Math.abs(latitude) < 10 && longitude > -80 && longitude < -50) { // Amazon
-        return { moistureLevel: 'Wet' };
-    } else if (latitude > 35 && latitude < 55 && longitude > 0 && longitude < 30) { // Europe
-        return { moistureLevel: 'Optimal' };
-    } else if (latitude > 20 && latitude < 35 && longitude > 15 && longitude < 55) { // Sahara/Middle East
-        return { moistureLevel: 'Dry' };
-    }
+    try {
+      // Fetch real data from the Open-Meteo service
+      const data = await getSoilAndWeatherData(latitude, longitude);
+      
+      // Use the helper function to determine the moisture level
+      const moisture = getMoistureLevel(data.current.soil_moisture_0_to_1cm);
+      
+      return { moistureLevel: moisture };
 
-    // Default fallback
-    return { moistureLevel: 'Optimal' };
+    } catch (error) {
+        console.error("Error in getSoilMoisture tool:", error);
+        // Provide a fallback value in case of API failure to ensure the flow can continue.
+        return { moistureLevel: 'Optimal' };
+    }
   }
 );
