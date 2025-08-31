@@ -7,7 +7,7 @@ import { ThemeProvider } from "@/components/providers";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "Earth Insights",
+  title: "Earth Insights ",
   description: "Analyze environmental data with cutting-edge insights.",
 };
 
