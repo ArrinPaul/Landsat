@@ -101,7 +101,7 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
             const collection = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
                 .filterBounds(areaOfInterest)
                 .filterDate(input.startDate, input.endDate)
-                .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20));
+                .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 75));
 
             // First, evaluate the size of the collection. This is the critical step.
             collection.size().evaluate((size, error) => {
