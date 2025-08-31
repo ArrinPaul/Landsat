@@ -24,8 +24,8 @@ export type SuggestCropInput = z.infer<typeof SuggestCropInputSchema>;
 
 const SuggestCropOutputSchema = z.object({
     suggestedCrop: z.string().describe("The single most suitable crop for the given conditions."),
-    suitabilityScore: z.number().min(0).max(100).describe("A percentage score (0-100) indicating how suitable the suggested crop is for the provided conditions."),
-    reasoning: z.string().describe("A clear, concise explanation for the crop recommendation, detailing how factors like soil, climate, and moisture influenced the decision."),
+    suitabilityScore: z.number().min(0).max(100).describe("A percentage score (0-100) indicating how suitable the suggested crop is for the provided conditions. This should be based on how well the crop's needs align with the fetched, real-world data."),
+    reasoning: z.string().describe("A clear, concise explanation for the crop recommendation, detailing how factors like soil, climate, and moisture influenced the decision. You MUST explicitly reference the real-world data returned by your tools."),
     alternativeCrop: z.string().optional().describe("A secondary, alternative crop suggestion."),
     fetchedSoilType: z.string().describe("The soil type automatically determined by the AI tools."),
     fetchedMoistureLevel: z.enum(['Dry', 'Optimal', 'Wet']).describe("The soil moisture level automatically determined by the AI tools."),
@@ -42,13 +42,13 @@ const prompt = ai.definePrompt({
   input: { schema: SuggestCropInputSchema },
   output: { schema: SuggestCropOutputSchema },
   tools: [getSoilMoisture, getSoilType],
-  prompt: `You are an expert agronomist and soil scientist AI model advising a farmer. Your task is to recommend the best possible crop for their field.
+  prompt: `You are an expert agronomist and soil scientist AI model advising a farmer. Your task is to recommend the best possible crop for their field based on real-time, location-specific data.
 
   Your process must follow these steps:
-  1.  **Data Acquisition**: Use the provided tools ('getSoilType' and 'getSoilMoisture') to determine the soil type and current moisture level for the given coordinates. Do not proceed without this data.
-  2.  **Multi-factor Analysis**: Analyze all available information to provide a practical, well-reasoned crop suggestion. Consider the following factors:
-      *   The fetched soil type and its properties (e.g., water retention, fertility).
-      *   The fetched moisture level.
+  1.  **Data Acquisition**: Use the provided tools ('getSoilType' and 'getSoilMoisture') to determine the soil type and current moisture level for the given coordinates. You must use these tools; do not guess or use generalized knowledge.
+  2.  **Multi-factor Analysis**: Synthesize all available information to provide a practical, well-reasoned crop suggestion. Consider the following factors:
+      *   The fetched real-world soil type and its properties (e.g., water retention, fertility).
+      *   The fetched real-world moisture level.
       *   The farmer's description of the local climate.
       *   Crop rotation principles if a previous crop is mentioned.
 
@@ -61,8 +61,8 @@ const prompt = ai.definePrompt({
 
   Your final output must be structured precisely as follows:
   1.  **Suggested Crop**: Identify the single best crop for these exact conditions.
-  2.  **Suitability Score**: Provide a percentage score (0-100) representing your confidence in this recommendation. A high score means the conditions are nearly perfect. A lower score might indicate some challenges.
-  3.  **Reasoning**: Give a detailed but easy-to-understand explanation. Justify your choice by explicitly referencing the climate data provided and the soil/moisture data you fetched using your tools.
+  2.  **Suitability Score**: Provide a percentage score (0-100) representing your confidence. Base this score on how perfectly the crop's needs match the specific, real-world data you fetched.
+  3.  **Reasoning**: Give a detailed but easy-to-understand explanation. Justify your choice by explicitly referencing the climate description and, most importantly, the soil and moisture data you fetched using your tools.
   4.  **Alternative Crop**: Suggest one other viable crop as an alternative.
   5.  **Fetched Data**: Ensure you populate the 'fetchedSoilType' and 'fetchedMoistureLevel' fields in the output with the exact results from your tool calls.
   `,
