@@ -13,12 +13,15 @@ import { format } from 'date-fns';
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
-    const formattedLabel = format(new Date(label), 'MMM d, yyyy');
+    const formattedLabel = label ? format(new Date(label), 'PPP') : 'No date';
     return (
       <div className="bg-background/80 backdrop-blur-sm p-2 border border-border rounded-md shadow-lg">
-        <p className="label font-bold">{`${formattedLabel}`}</p>
+        <p className="label font-bold">{formattedLabel}</p>
         {payload.map((pld: any, index: number) => (
-           <p key={index} style={{ color: pld.color }}>{`${pld.name}: ${pld.value.toFixed(4)}`}</p>
+           <p key={index} style={{ color: pld.color }}>
+               {`${pld.name}: `}
+               {pld.value !== null && pld.value !== undefined ? pld.value.toFixed(4) : 'N/A'}
+            </p>
         ))}
       </div>
     );
@@ -120,7 +123,7 @@ export function Visualizations({ analysisResult, groundTruthData, selectedMetric
                     <YAxis domain={['auto', 'auto']} tickFormatter={(val) => typeof val === 'number' ? val.toFixed(2) : val} />
                     <Tooltip content={<CustomTooltip />} />
                     <Legend />
-                    <Line type="monotone" dataKey="value" name={selectedMetric} stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="value" name={selectedMetric} stroke="hsl(var(--primary))" strokeWidth={2} dot={false} connectNulls />
                      <Brush 
                         dataKey="date" 
                         height={30} 
