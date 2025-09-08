@@ -9,6 +9,7 @@ import { Header } from "@/components/header";
 import { ContactSheet } from "@/components/contact-sheet";
 import { useLanguage } from "@/hooks/use-language";
 import { GeometricBackground } from "@/components/geometric-background";
+import { Chatbot } from "@/components/chatbot";
 
 
 export default function LandingPage() {
@@ -146,6 +147,7 @@ export default function LandingPage() {
         </nav>
       </footer>
       <ContactSheet open={isContactOpen} onOpenChange={setContactOpen} />
+      <Chatbot />
     </div>
   );
 }
