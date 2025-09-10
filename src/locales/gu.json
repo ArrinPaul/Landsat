@@ -48,10 +48,10 @@
     "footer.about": "અમારા વિશે",
     "footer.contact": "સંપર્ક",
     "predict.title": "પૂર્વસૂચક આંતરદૃષ્ટિ",
-    "predict.description": "તમારા સ્થાન માટે AI-સંચાલિત આગાહીઓ મેળવો. સ્થાન વર્ણન અથવા કોઓર્ડિਨੇટ્સ દાખલ કરીને પ્રારંભ કરો.",
+    "predict.description": "તમારા સ્થાન માટે AI-સંચાલિત આગાહીઓ મેળવો. સ્થાન વર્ણન અથવા કોઓર્ડિનેટ્સ દાખલ કરીને પ્રારંભ કરો.",
     "predict.locationDesc": "સ્થાન વર્ણન",
     "predict.locationDescPlaceholder": "દા.ત., નાઇલ નદી ડેલ્ટા",
-    "predict.suggestCoordinates": "કોઓર્ડિਨੇટ્સ સૂચવો",
+    "predict.suggestCoordinates": "કોઓર્ડિનેટ્સ સૂચવો",
     "predict.latitude": "અક્ષાંશ",
     "predict.longitude": "રેખાંશ",
     "predict.weather.title": "હવામાન આગાહી",
@@ -123,7 +123,7 @@
     "dashboard.history.toast.description": "{location} માટે સેટિંગ્સ લોડ થયેલ",
     "dashboard.csv.error.title": "CSV પાર્સિંગ ભૂલ",
     "dashboard.csv.error.columns": "CSV માં 'date' અને 'value' કૉલમ હોવા આવશ્યક છે.",
-    "dashboard.csv.error.parse": "CSV ફાઇલ પાર્સ કરવામાં નિષ્ફળ। કૃપા કરીને ફોર્મેટ તપાસો।",
+    "dashboard.csv.error.parse": "CSV ફાઇલ પાર્સ કરવામાં નિષ્ફળ. કૃપા કરીને ફોર્મેટ તપાસો.",
     "dashboard.csv.success.title": "સફળતા",
     "dashboard.csv.success.description": "{count} ગ્રાઉન્ડ ટ્રુથ પોઇન્ટ લોડ થયા.",
     "dashboard.welcome.title": "અર્થ ઇનસાઇટ્સમાં આપનું સ્વાગત છે",
@@ -196,7 +196,7 @@
     "settings.notifications.success.description": "સૂચનાઓ સક્ષમ કરવામાં આવી છે.",
     "settings.notifications.blocked.title": "અવરોધિત",
     "settings.notifications.blocked.info": "તમે સૂચનાઓને અવરોધિત કરી છે.",
-    "settings.notifications.blocked.description": "તમે અગાઉ સૂચના પરવાનગીઓ નકારી છે। કૃપા કરીને તેમને તમારા બ્રાઉઝર સેટિંગ્સમાં સક્ષમ કરો।",
+    "settings.notifications.blocked.description": "તમે અગાઉ સૂચના પરવાનગીઓ નકારી છે. કૃપા કરીને તેમને તમારા બ્રાઉઝર સેટિંગ્સમાં સક્ષમ કરો.",
     "settings.notifications.disabled.title": "માહિતી",
     "settings.notifications.disabled.description": "સૂચનાઓ અક્ષમ કરવામાં આવી છે.",
     "chatbot.title": "અર્થ ઇનસાઇટ્સ સહાયક",
@@ -207,9 +207,9 @@
     "chatbot.error.unsupported.description": "આ બ્રાઉઝર વાણી ઓળખને સમર્થન કરતું નથી.",
     "chatbot.error.audio.title": "ઓડિયો ભૂલ",
     "chatbot.error.audio.description": "ઓડિયો જનરેટ કરી શકાયો નથી.",
-    "chatbot.error.connection": "માફ કરશો, મને કનેક્ટ કરવામાં સમસ્યા આવી રહી છે। કૃપા કરીને ਬਾਅਦ ਵਿੱਚ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+    "chatbot.error.connection": "માફ કરશો, મને કનેક્ટ કરવામાં સમસ્યા આવી રહી છે. કૃપા ਕਰਕੇ ਬਾਅਦ ਵਿੱਚ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
     "cropAdvisor.title": "AI પાક સલાહકાર",
-    "cropAdvisor.description": "ડેટા-આધારિત પાકની ભલામણ મેળવવા માટે તમારા ખેતરનું સ્થાન અને આબોહવા ભરો। જમીન અને ભેજનો ડેટા આપમેળે મેળવવામાં આવશે।",
+    "cropAdvisor.description": "ડેટા-આધારિત પાકની ભલામણ મેળવવા માટે તમારા ખેતરનું સ્થાન અને આબોહવા ભરો. જમીન અને ભેજનો ડેટા આપમેળે મેળવવામાં આવશે.",
     "cropAdvisor.currentCrop.label": "વર્તમાન અથવા અગાઉનો પાક (વૈકલ્પિક)",
     "cropAdvisor.currentCrop.placeholder": "દા.ત., મકાઈ, પડતર",
     "cropAdvisor.climate.label": "સ્થાનિક આબોહવા વર્ણન",
@@ -228,3 +228,5 @@
     "cropAdvisor.result.alternative": "વૈકલ્પિક સૂચન",
     "cropAdvisor.result.alternativeDesc": "તમારી પરિસ્થિતિઓ માટે બીજો સારો વિકલ્પ <strong>{crop}</strong> હોઈ શકે છે."
 }
+
+    
