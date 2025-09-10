@@ -12,6 +12,7 @@ import type { ChatMessage } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/hooks/use-language';
 
 let SpeechRecognition: any = null;
 if (typeof window !== 'undefined') {
@@ -20,6 +21,7 @@ if (typeof window !== 'undefined') {
 
 
 export function Chatbot() {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -34,10 +36,10 @@ export function Chatbot() {
   useEffect(() => {
     if (isOpen && messages.length === 0) {
       setMessages([
-        { role: 'model', content: "Hello! I'm the Earth Insights assistant. How can I help you today?" }
+        { role: 'model', content: t('chatbot.greeting') }
       ]);
     }
-  }, [isOpen, messages.length]);
+  }, [isOpen, messages.length, t]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -63,7 +65,7 @@ export function Chatbot() {
       handleSend(transcript);
     };
     recognition.onerror = (event: any) => {
-       toast({ title: "Voice Error", description: event.error, variant: "destructive"});
+       toast({ title: t('chatbot.error.voice.title'), description: event.error, variant: "destructive"});
        setIsRecording(false);
     };
     recognition.onend = () => {
@@ -71,11 +73,11 @@ export function Chatbot() {
     };
 
     recognitionRef.current = recognition;
-  }, [toast]);
+  }, [toast, t]);
 
   const handleVoiceInput = () => {
     if (!SpeechRecognition) {
-       toast({ title: "Unsupported", description: "This browser does not support speech recognition.", variant: "destructive" });
+       toast({ title: t('chatbot.error.unsupported.title'), description: t('chatbot.error.unsupported.description'), variant: "destructive" });
        return;
     }
     if (isRecording) {
@@ -97,7 +99,7 @@ export function Chatbot() {
     setAudioStates(prev => ({...prev, [index]: 'loading'}));
     const result = await textToSpeechAction(text);
     if(result.error || !result.data) {
-        toast({ title: "Audio Error", description: result.error || "Could not generate audio.", variant: "destructive" });
+        toast({ title: t('chatbot.error.audio.title'), description: result.error || t('chatbot.error.audio.description'), variant: "destructive" });
         setAudioStates(prev => ({...prev, [index]: 'idle'}));
         return;
     }
@@ -128,7 +130,7 @@ export function Chatbot() {
     setIsLoading(false);
 
     if (result.error) {
-      const errorMessage: ChatMessage = { role: 'model', content: "Sorry, I'm having trouble connecting. Please try again later." };
+      const errorMessage: ChatMessage = { role: 'model', content: t('chatbot.error.connection') };
       setMessages(prev => [...prev, errorMessage]);
     } else if (result.data) {
       const modelMessage: ChatMessage = { role: 'model', content: result.data.response };
@@ -152,7 +154,7 @@ export function Chatbot() {
           <CardHeader className="flex flex-row items-center justify-between p-4 border-b">
             <div className="flex items-center gap-2">
                 <Bot className="h-6 w-6 text-primary" />
-                <CardTitle className="text-lg">Earth Insights Assistant</CardTitle>
+                <CardTitle className="text-lg">{t('chatbot.title')}</CardTitle>
             </div>
             <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
               <X className="h-4 w-4" />
@@ -202,7 +204,7 @@ export function Chatbot() {
           <CardFooter className="p-4 border-t">
             <div className="flex w-full items-center space-x-2">
               <Input
-                placeholder="Type or speak..."
+                placeholder={t('chatbot.placeholder')}
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
@@ -229,3 +231,5 @@ export function Chatbot() {
     </>
   );
 }
+
+    

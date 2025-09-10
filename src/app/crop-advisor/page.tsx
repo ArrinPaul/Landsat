@@ -15,9 +15,11 @@ import { suggestCropAction } from "@/lib/actions";
 import type { SuggestCropOutput } from "@/lib/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { useLanguage } from "@/hooks/use-language";
 
 function CropAdvisorContent() {
     const { toast } = useToast();
+    const { t } = useLanguage();
     const searchParams = useSearchParams();
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState<SuggestCropOutput | null>(null);
@@ -53,10 +55,10 @@ function CropAdvisorContent() {
         const response = await suggestCropAction(formData);
         
         if (response.error) {
-            toast({ title: "Error", description: response.error, variant: "destructive" });
+            toast({ title: t('predict.error.aiError.title'), description: response.error, variant: "destructive" });
         } else if (response.data) {
             setResult(response.data);
-            toast({ title: "Recommendation Generated", description: "Your crop recommendation is ready." });
+            toast({ title: t('cropAdvisor.toast.success.title'), description: t('cropAdvisor.toast.success.description') });
         }
         setIsLoading(false);
     };
@@ -68,34 +70,32 @@ function CropAdvisorContent() {
                 <div className="container mx-auto space-y-8 max-w-4xl">
                     <Card>
                         <CardHeader>
-                            <CardTitle>AI Crop Advisor</CardTitle>
-                            <CardDescription>
-                                Fill in your farm's location and climate to get a data-driven crop recommendation. Soil and moisture data will be fetched automatically.
-                            </CardDescription>
+                            <CardTitle>{t('cropAdvisor.title')}</CardTitle>
+                            <CardDescription>{t('cropAdvisor.description')}</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
-                                        <Label htmlFor="latitude">Latitude</Label>
+                                        <Label htmlFor="latitude">{t('predict.latitude')}</Label>
                                         <Input id="latitude" value={lat} onChange={e => setLat(e.target.value)} required />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="longitude">Longitude</Label>
+                                        <Label htmlFor="longitude">{t('predict.longitude')}</Label>
                                         <Input id="longitude" value={lon} onChange={e => setLon(e.target.value)} required />
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="current-crop">Current or Previous Crop (Optional)</Label>
-                                    <Input id="current-crop" placeholder="e.g., Corn, Fallow" value={currentCrop} onChange={e => setCurrentCrop(e.target.value)} />
+                                    <Label htmlFor="current-crop">{t('cropAdvisor.currentCrop.label')}</Label>
+                                    <Input id="current-crop" placeholder={t('cropAdvisor.currentCrop.placeholder')} value={currentCrop} onChange={e => setCurrentCrop(e.target.value)} />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="climate">Local Climate Description</Label>
-                                    <Textarea id="climate" placeholder="Describe the typical weather, e.g., 'Temperate with four seasons'" value={climate} onChange={e => setClimate(e.target.value)} required />
+                                    <Label htmlFor="climate">{t('cropAdvisor.climate.label')}</Label>
+                                    <Textarea id="climate" placeholder={t('cropAdvisor.climate.placeholder')} value={climate} onChange={e => setClimate(e.target.value)} required />
                                 </div>
                                 <Button type="submit" disabled={isLoading} className="w-full">
                                     {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wheat className="mr-2" />}
-                                    Get Recommendation
+                                    {t('cropAdvisor.button.getRecommendation')}
                                 </Button>
                             </form>
                         </CardContent>
@@ -110,36 +110,36 @@ function CropAdvisorContent() {
                     {result && (
                         <Card>
                             <CardHeader>
-                                <CardTitle>AI Recommendation</CardTitle>
-                                <CardDescription>Based on your input and real-time satellite data, here is our suggestion.</CardDescription>
+                                <CardTitle>{t('cropAdvisor.result.title')}</CardTitle>
+                                <CardDescription>{t('cropAdvisor.result.description')}</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6">
                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                      <Card className="p-4">
-                                        <CardDescription className="flex items-center gap-2 mb-2"><LandPlot /> Fetched Soil Type</CardDescription>
+                                        <CardDescription className="flex items-center gap-2 mb-2"><LandPlot /> {t('cropAdvisor.result.soilType')}</CardDescription>
                                         <Badge variant="outline" className="text-lg">{result.fetchedSoilType}</Badge>
                                     </Card>
                                      <Card className="p-4">
-                                        <CardDescription className="flex items-center gap-2 mb-2"><Droplets /> Fetched Moisture</CardDescription>
+                                        <CardDescription className="flex items-center gap-2 mb-2"><Droplets /> {t('cropAdvisor.result.moisture')}</CardDescription>
                                         <Badge variant="outline" className="text-lg">{result.fetchedMoistureLevel}</Badge>
                                     </Card>
                                 </div>
 
                                 <div className="text-center space-y-2 pt-4">
-                                    <p className="text-muted-foreground">Suggested Crop</p>
+                                    <p className="text-muted-foreground">{t('cropAdvisor.result.suggestedCrop')}</p>
                                     <h3 className="text-4xl font-bold text-primary">{result.suggestedCrop}</h3>
                                 </div>
                                 <div className="text-center space-y-2">
-                                     <p className="text-muted-foreground">Suitability Score</p>
+                                     <p className="text-muted-foreground">{t('cropAdvisor.result.suitability')}</p>
                                       <div className="relative h-8 w-full bg-muted rounded-full overflow-hidden">
                                         <div className="absolute top-0 left-0 h-full bg-green-500 rounded-full" style={{ width: `${result.suitabilityScore}%` }} />
-                                        <span className="absolute inset-0 flex items-center justify-center text-sm font-medium text-white mix-blend-difference">{result.suitabilityScore}% Suitable</span>
+                                        <span className="absolute inset-0 flex items-center justify-center text-sm font-medium text-white mix-blend-difference">{result.suitabilityScore}% {t('cropAdvisor.result.suitable')}</span>
                                     </div>
                                 </div>
                                 
                                 <Alert>
                                     <Lightbulb className="h-4 w-4" />
-                                    <AlertTitle>Reasoning</AlertTitle>
+                                    <AlertTitle>{t('cropAdvisor.result.reasoning')}</AlertTitle>
                                     <AlertDescription>
                                        {result.reasoning}
                                     </AlertDescription>
@@ -148,9 +148,9 @@ function CropAdvisorContent() {
                                 {result.alternativeCrop && (
                                      <Alert variant="default">
                                         <Wheat className="h-4 w-4" />
-                                        <AlertTitle>Alternative Suggestion</AlertTitle>
+                                        <AlertTitle>{t('cropAdvisor.result.alternative')}</AlertTitle>
                                         <AlertDescription>
-                                          Another good option for your conditions could be <strong>{result.alternativeCrop}</strong>.
+                                          {t('cropAdvisor.result.alternativeDesc', { crop: result.alternativeCrop })}
                                         </AlertDescription>
                                     </Alert>
                                 )}
@@ -171,3 +171,5 @@ export default function CropAdvisorPage() {
         </Suspense>
     )
 }
+
+    
