@@ -86,10 +86,10 @@
     "predict.result.irrigation.title": "நீர்ப்பாசன அட்டவணைப் பரிந்துரை",
     "predict.result.irrigation.recommendation": "பரிந்துரை",
     "predict.result.irrigation.nextDate": "அடுத்த பரிந்துரைக்கப்பட்ட நீர்ப்பாசனம்",
-    "predict.result.irrigation.wateringDepth": "నీరు త్రాగే లోతు",
+    "predict.result.irrigation.wateringDepth": "நீர்ப்பாசன ஆழம்",
     "predict.result.irrigation.notes": "குறிப்புகள்",
     "predict.result.soil.title": "மண் ஈரப்பதம் கணிப்பு",
-    "predict.result.soil.vwc": "వాల్యూమెట్రిక్ నీటి కంటెంట్",
+    "predict.result.soil.vwc": "கன அளவு நீர் உள்ளடக்கம்",
     "predict.result.soil.summary": "சுருக்கம்",
     "predict.result.soil.confidence": "நம்பிக்கை",
     "predict.result.yield.title": "பயிர் விளைச்சல் முன்னறிவிப்பு",
@@ -228,3 +228,5 @@
     "cropAdvisor.result.alternative": "மாற்றுப் பரிந்துரை",
     "cropAdvisor.result.alternativeDesc": "உங்கள் நிலைமைகளுக்கு மற்றொரு நல்ல விருப்பம் <strong>{crop}</strong> ஆக இருக்கலாம்."
 }
+
+    
