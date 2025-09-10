@@ -149,9 +149,9 @@ function CropAdvisorContent() {
                                      <Alert variant="default">
                                         <Wheat className="h-4 w-4" />
                                         <AlertTitle>{t('cropAdvisor.result.alternative')}</AlertTitle>
-                                        <AlertDescription>
-                                          {t('cropAdvisor.result.alternativeDesc', { crop: result.alternativeCrop })}
-                                        </AlertDescription>
+                                        <AlertDescription
+                                            dangerouslySetInnerHTML={{ __html: t('cropAdvisor.result.alternativeDesc', { crop: `<strong>${result.alternativeCrop}</strong>` }) }}
+                                        />
                                     </Alert>
                                 )}
 
@@ -171,5 +171,3 @@ export default function CropAdvisorPage() {
         </Suspense>
     )
 }
-
-    
