@@ -126,19 +126,8 @@
     "dashboard.csv.error.parse": "CSV फ़ाइल पार्स करने में विफल। कृपया प्रारूप की जाँच करें।",
     "dashboard.csv.success.title": "सफलता",
     "dashboard.csv.success.description": "{count} ग्राउंड ट्रुथ पॉइंट लोड किए गए।",
-    "dashboard.poi.title": "रुचि के बिंदु",
-    "dashboard.poi.description": "अन्वेषण शुरू करने के लिए एक पूर्वनिर्धारित स्थान चुनें।",
-    "dashboard.poi.analyze": "विश्लेषण करें",
-    "dashboard.poi.toast.title": "स्थान लोड किया गया",
-    "dashboard.poi.toast.description": "{location} के लिए सेटिंग्स लोड की गईं। गणना शुरू हो रही है...",
-    "dashboard.poi.amazon.name": "अमेज़ॅन वर्षावन",
-    "dashboard.poi.amazon.description": "दुनिया के सबसे बड़े उष्णकटिबंधीय वर्षावन की हरी-भरी हरियाली का अन्वेषण करें।",
-    "dashboard.poi.sahara.name": "सहारा रेगिस्तान",
-    "dashboard.poi.sahara.description": "अफ्रीका में फैले विशाल रेगिस्तान की शुष्क स्थितियों की निगरानी करें।",
-    "dashboard.poi.nile.name": "नील नदी डेल्टा",
-    "dashboard.poi.nile.description": "भूमध्य सागर में बहने वाले इस उपजाऊ नदी डेल्टा की कृषि भूमि का विश्लेषण करें।",
-    "dashboard.poi.himalayas.name": "हिमालय",
-    "dashboard.poi.himalayas.description": "माउंट एवरेस्ट का घर, दुनिया की सबसे ऊंची पर्वत श्रृंखला की बर्फ और हिम देखें।",
+    "dashboard.welcome.title": "अर्थ इनसाइट्स में आपका स्वागत है",
+    "dashboard.welcome.description": "अपना विश्लेषण शुरू करने के लिए ऊपर निर्देशांक या स्थान विवरण दर्ज करें और एक दिनांक सीमा चुनें।",
     "dashboard.compute.success.title": "सफलता",
     "dashboard.compute.success.description": "मेट्रिक्स और भूमि कवर विश्लेषण पूरा हुआ।",
     "dashboard.compute.failure": "मेट्रिक्स की गणना नहीं की जा सकी। कृपया अपने इनपुट की जाँच करें और पुनः प्रयास करें।",
@@ -239,5 +228,3 @@
     "cropAdvisor.result.alternative": "वैकल्पिक सुझाव",
     "cropAdvisor.result.alternativeDesc": "आपकी स्थितियों के लिए एक और अच्छा विकल्प <strong>{crop}</strong> हो सकता है।"
 }
-
-    

@@ -126,19 +126,8 @@
     "dashboard.csv.error.parse": "Failed to parse CSV file. Please check the format.",
     "dashboard.csv.success.title": "Success",
     "dashboard.csv.success.description": "{count} ground truth points loaded.",
-    "dashboard.poi.title": "Points of Interest",
-    "dashboard.poi.description": "Select a pre-defined location to start exploring.",
-    "dashboard.poi.analyze": "Analyze",
-    "dashboard.poi.toast.title": "Location Loaded",
-    "dashboard.poi.toast.description": "Loaded settings for {location}. Starting computation...",
-    "dashboard.poi.amazon.name": "Amazon Rainforest",
-    "dashboard.poi.amazon.description": "Explore the lush greenery of the world's largest tropical rainforest.",
-    "dashboard.poi.sahara.name": "Sahara Desert",
-    "dashboard.poi.sahara.description": "Monitor the arid conditions of the vast desert spanning across Africa.",
-    "dashboard.poi.nile.name": "Nile River Delta",
-    "dashboard.poi.nile.description": "Analyze the agricultural lands of this fertile river delta flowing into the Mediterranean.",
-    "dashboard.poi.himalayas.name": "Himalayas",
-    "dashboard.poi.himalayas.description": "View the snow and ice of the world's highest mountain range, home to Mount Everest.",
+    "dashboard.welcome.title": "Welcome to Earth Insights",
+    "dashboard.welcome.description": "Enter coordinates or a location description above and select a date range to begin your analysis.",
     "dashboard.compute.success.title": "Success",
     "dashboard.compute.success.description": "Metrics and land cover analysis complete.",
     "dashboard.compute.failure": "Could not compute metrics. Please check your inputs and try again.",
@@ -239,5 +228,3 @@
     "cropAdvisor.result.alternative": "Alternative Suggestion",
     "cropAdvisor.result.alternativeDesc": "Another good option for your conditions could be <strong>{crop}</strong>."
 }
-
-    

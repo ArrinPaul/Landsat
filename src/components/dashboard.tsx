@@ -14,9 +14,8 @@ import { useToast } from "@/hooks/use-toast";
 import type { GroundTruthDataPoint, SatellitePassData, WeatherData, HistoryEntry, AnalysisResult } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { predictSatellitePassAction, getWeatherReportAction, computeMetricsAction } from "@/lib/actions";
-import { Card, CardContent } from "./ui/card";
-import { BarChart, Search, SlidersHorizontal } from "lucide-react";
-import { PointsOfInterest } from "./points-of-interest";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
+import { BarChart, Search, SlidersHorizontal, Map } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
 
 export function Dashboard() {
@@ -112,15 +111,6 @@ export function Dashboard() {
     toast({ title: t('dashboard.history.toast.title'), description: t('dashboard.history.toast.description', { location: entry.locationDesc })});
   };
   
-  const handlePoiSelect = (poi: { name: string; lat: string; lon: string; dateRange: { from: Date; to: Date; } }) => {
-    setLat(poi.lat);
-    setLon(poi.lon);
-    setLocationDesc(poi.name);
-    setDateRange(poi.dateRange);
-    toast({ title: t('dashboard.poi.toast.title'), description: t('dashboard.poi.toast.description', { location: poi.name }) });
-    handleCompute();
-  };
-
   const handleCompute = useCallback(async () => {
     if (!lat || !lon) {
       toast({ title: t('dashboard.error.invalidCoords.title'), description: t('dashboard.error.invalidCoords.description'), variant: "destructive" });
@@ -147,6 +137,10 @@ export function Dashboard() {
     };
     setHistory(prev => [newHistoryEntry, ...prev.slice(0, 9)]);
 
+    // Fetch ancillary data in parallel with the main computation
+    fetchNextPass();
+    fetchWeather();
+
     const result = await computeMetricsAction({
         latitude: parseFloat(lat),
         longitude: parseFloat(lon),
@@ -165,7 +159,7 @@ export function Dashboard() {
     
     setIsComputing(false);
 
-  }, [lat, lon, locationDesc, dateRange, toast, t]);
+  }, [lat, lon, locationDesc, dateRange, toast, t, fetchNextPass, fetchWeather]);
   
   const dateRangeString = dateRange?.from && dateRange?.to 
     ? `${format(dateRange.from, "LLL dd, y")} - ${format(dateRange.to, "LLL dd, y")}`
@@ -203,7 +197,15 @@ export function Dashboard() {
       )}
       
       {!activeComputation && !isComputing && (
-          <PointsOfInterest onSelect={handlePoiSelect} />
+          <Card className="text-center py-16">
+            <CardHeader>
+                <div className="mx-auto bg-primary/10 text-primary p-3 rounded-full w-fit">
+                    <Map className="h-10 w-10" />
+                </div>
+                <CardTitle>{t('dashboard.welcome.title')}</CardTitle>
+                <CardDescription className="max-w-md mx-auto">{t('dashboard.welcome.description')}</CardDescription>
+            </CardHeader>
+          </Card>
       )}
 
       {activeComputation && !isComputing && !analysisResult && (
