@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { AnalysisResult, GroundTruthDataPoint } from '@/lib/types';
 import { format } from 'date-fns';
+import { useLanguage } from '@/hooks/use-language';
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -63,6 +64,7 @@ const metricOrder = [
 ];
 
 export function Visualizations({ analysisResult, groundTruthData, selectedMetric, setSelectedMetric }: VisualizationsProps) {
+  const { t } = useLanguage();
   const chartRef = useRef(null);
   const scatterRef = useRef(null);
   const [brushStartIndex, setBrushStartIndex] = useState<number | undefined>();
@@ -87,23 +89,23 @@ export function Visualizations({ analysisResult, groundTruthData, selectedMetric
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Data Visualization</CardTitle>
-        <CardDescription>Interactive plots of environmental metrics and spectral bands.</CardDescription>
+        <CardTitle>{t('dashboard.viz.title')}</CardTitle>
+        <CardDescription>{t('dashboard.viz.description')}</CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="time-series">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="time-series">Time-Series Analysis</TabsTrigger>
+            <TabsTrigger value="time-series">{t('dashboard.viz.tabs.timeSeries')}</TabsTrigger>
             <TabsTrigger value="comparison" disabled={!groundTruthData}>
-                Satellite vs. Ground
-                {!groundTruthData && <span className="text-xs ml-2">(CSV required)</span>}
+                {t('dashboard.viz.tabs.comparison')}
+                {!groundTruthData && <span className="text-xs ml-2">({t('dashboard.viz.tabs.csvRequired')})</span>}
             </TabsTrigger>
           </TabsList>
           <TabsContent value="time-series" className="mt-4">
             <div className="flex justify-end mb-4">
                 <Select value={selectedMetric} onValueChange={setSelectedMetric}>
                     <SelectTrigger className="w-[280px]">
-                        <SelectValue placeholder="Select a metric or band" />
+                        <SelectValue placeholder={t('dashboard.viz.selectPlaceholder')} />
                     </SelectTrigger>
                     <SelectContent>
                         {metricNames.map(name => <SelectItem key={name} value={name}>{name}</SelectItem>)}
@@ -139,20 +141,20 @@ export function Visualizations({ analysisResult, groundTruthData, selectedMetric
             )}
           </TabsContent>
           <TabsContent value="comparison" className="mt-4">
-            <CardDescription className="text-center mb-2">Comparison of Satellite NDVI vs. Ground Truth Data</CardDescription>
+            <CardDescription className="text-center mb-2">{t('dashboard.viz.comparisonDescription')}</CardDescription>
              <div ref={scatterRef} className="h-[400px] w-full">
                  <ResponsiveContainer width="100%" height="100%">
                     <ScatterChart margin={{ top: 20, right: 20, bottom: 40, left: 20 }}>
                         <CartesianGrid />
-                        <XAxis type="number" dataKey="ground" name="Ground Truth" domain={['auto', 'auto']}>
-                           <Label value="Ground Truth Value" offset={-25} position="insideBottom" />
+                        <XAxis type="number" dataKey="ground" name={t('dashboard.viz.groundTruth')}>
+                           <Label value={t('dashboard.viz.groundTruth')} offset={-25} position="insideBottom" />
                         </XAxis>
-                        <YAxis type="number" dataKey="satellite" name="Satellite Value" domain={['auto', 'auto']}>
-                             <Label value="Satellite Value" angle={-90} offset={-10} position="insideLeft" style={{ textAnchor: 'middle' }} />
+                        <YAxis type="number" dataKey="satellite" name={t('dashboard.viz.satelliteValue')}>
+                             <Label value={t('dashboard.viz.satelliteValue')} angle={-90} offset={-10} position="insideLeft" style={{ textAnchor: 'middle' }} />
                         </YAxis>
                         <Tooltip cursor={{ strokeDasharray: '3 3' }} />
                         <Legend verticalAlign="top" height={36}/>
-                        <Scatter name="Comparison" data={comparisonData} fill="hsl(var(--primary))" />
+                        <Scatter name={t('dashboard.viz.comparisonLegend')} data={comparisonData} fill="hsl(var(--primary))" />
                     </ScatterChart>
                  </ResponsiveContainer>
             </div>

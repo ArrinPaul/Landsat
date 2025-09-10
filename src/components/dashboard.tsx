@@ -16,8 +16,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { predictSatellitePassAction, getWeatherReportAction, computeMetricsAction } from "@/lib/actions";
 import { Card, CardContent } from "./ui/card";
 import { BarChart, Search, SlidersHorizontal } from "lucide-react";
+import { PointsOfInterest } from "./points-of-interest";
+import { useLanguage } from "@/hooks/use-language";
 
 export function Dashboard() {
+  const { t } = useLanguage();
   const { toast } = useToast();
   const [lat, setLat] = useState("40.7128");
   const [lon, setLon] = useState("-74.0060");
@@ -71,51 +74,60 @@ export function Dashboard() {
 
   const fetchNextPass = useCallback(async () => {
       if (!lat || !lon) {
-           toast({ title: "Coordinates missing", description: "Please enter latitude and longitude.", variant: "destructive" });
+           toast({ title: t('dashboard.error.noCoords.title'), description: t('dashboard.error.noCoords.description'), variant: "destructive" });
            return;
       }
       setIsFetchingPass(true);
       const result = await predictSatellitePassAction({ latitude: parseFloat(lat), longitude: parseFloat(lon) });
       if (result.error) {
-          toast({ title: "AI Error", description: result.error, variant: "destructive" });
+          toast({ title: t('predict.error.aiError.title'), description: result.error, variant: "destructive" });
           setNextPass(null);
       } else if (result.data) {
           setNextPass(result.data);
       }
       setIsFetchingPass(false);
-  }, [lat, lon, toast]);
+  }, [lat, lon, toast, t]);
 
   const fetchWeather = useCallback(async () => {
     if (!lat || !lon) {
-        toast({ title: "Coordinates missing", description: "Please enter latitude and longitude.", variant: "destructive" });
+        toast({ title: t('dashboard.error.noCoords.title'), description: t('dashboard.error.noCoords.description'), variant: "destructive" });
         return;
     }
     setIsFetchingWeather(true);
     const result = await getWeatherReportAction({ latitude: parseFloat(lat), longitude: parseFloat(lon) });
     if (result.error) {
-      toast({ title: "AI Error", description: result.error, variant: "destructive" });
+      toast({ title: t('predict.error.aiError.title'), description: result.error, variant: "destructive" });
       setWeather(null);
     } else if (result.data) {
       setWeather(result.data);
     }
     setIsFetchingWeather(false);
-  }, [lat, lon, toast]);
+  }, [lat, lon, toast, t]);
   
   const handleHistorySelect = (entry: HistoryEntry) => {
     setLat(entry.lat);
     setLon(entry.lon);
     setLocationDesc(entry.locationDesc);
     setDateRange(entry.dateRange);
-    toast({ title: "Loaded from history", description: `Loaded settings for ${entry.locationDesc}`});
+    toast({ title: t('dashboard.history.toast.title'), description: t('dashboard.history.toast.description', { location: entry.locationDesc })});
+  };
+  
+  const handlePoiSelect = (poi: { name: string; lat: string; lon: string; dateRange: { from: Date; to: Date; } }) => {
+    setLat(poi.lat);
+    setLon(poi.lon);
+    setLocationDesc(poi.name);
+    setDateRange(poi.dateRange);
+    toast({ title: t('dashboard.poi.toast.title'), description: t('dashboard.poi.toast.description', { location: poi.name }) });
+    handleCompute();
   };
 
   const handleCompute = useCallback(async () => {
     if (!lat || !lon) {
-      toast({ title: "Error", description: "Please provide valid latitude and longitude.", variant: "destructive" });
+      toast({ title: t('dashboard.error.invalidCoords.title'), description: t('dashboard.error.invalidCoords.description'), variant: "destructive" });
       return;
     }
     if (!dateRange || !dateRange.from || !dateRange.to) {
-      toast({ title: "Error", description: "Please select a valid date range.", variant: "destructive" });
+      toast({ title: t('dashboard.error.noDate.title'), description: t('dashboard.error.noDate.description'), variant: "destructive" });
       return;
     }
 
@@ -143,17 +155,17 @@ export function Dashboard() {
     });
 
     if (result.error || !result.data) {
-        toast({ title: "Error Computing Metrics", description: result.error || "An unknown error occurred.", variant: "destructive" });
+        toast({ title: t('dashboard.error.compute.title'), description: result.error || t('dashboard.error.compute.description'), variant: "destructive" });
         setAnalysisResult(null);
     } else {
         setAnalysisResult(result.data);
         setSelectedMetric('NDVI');
-        toast({ title: "Success", description: "Metrics and land cover analysis complete." });
+        toast({ title: t('dashboard.compute.success.title'), description: t('dashboard.compute.success.description') });
     }
     
     setIsComputing(false);
 
-  }, [lat, lon, locationDesc, dateRange, toast]);
+  }, [lat, lon, locationDesc, dateRange, toast, t]);
   
   const dateRangeString = dateRange?.from && dateRange?.to 
     ? `${format(dateRange.from, "LLL dd, y")} - ${format(dateRange.to, "LLL dd, y")}`
@@ -191,41 +203,15 @@ export function Dashboard() {
       )}
       
       {!activeComputation && !isComputing && (
-          <Card className="text-center py-16">
-              <CardContent className="max-w-2xl mx-auto">
-                 <BarChart className="h-16 w-16 mx-auto text-primary" />
-                 <h2 className="text-2xl font-bold mt-4">Welcome to the Earth Insights Dashboard</h2>
-                 <p className="text-muted-foreground mt-2 mb-6">
-                    Analyze environmental data anywhere on Earth. Here’s how to get started:
-                 </p>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
-                    <div className="flex gap-4 items-start">
-                        <div className="flex-shrink-0 bg-primary/10 text-primary rounded-full h-10 w-10 flex items-center justify-center">
-                            <SlidersHorizontal className="h-5 w-5"/>
-                        </div>
-                        <div>
-                            <h3 className="font-semibold">1. Set Parameters</h3>
-                            <p className="text-sm text-muted-foreground">Enter coordinates (or a description for an AI suggestion) and select a date range.</p>
-                        </div>
-                    </div>
-                     <div className="flex gap-4 items-start">
-                        <div className="flex-shrink-0 bg-primary/10 text-primary rounded-full h-10 w-10 flex items-center justify-center">
-                            <Search className="h-5 w-5"/>
-                        </div>
-                        <div>
-                            <h3 className="font-semibold">2. Compute Metrics</h3>
-                            <p className="text-sm text-muted-foreground">Click "Compute Metrics" to fetch and analyze satellite data for your selected area and time.</p>
-                        </div>
-                    </div>
-                 </div>
-              </CardContent>
-          </Card>
+          <PointsOfInterest onSelect={handlePoiSelect} />
       )}
 
       {activeComputation && !isComputing && !analysisResult && (
-          <div className="text-center py-16 text-muted-foreground">
-              <p>Could not compute metrics. Please check your inputs and try again.</p>
-          </div>
+          <Card className="text-center py-16">
+            <CardContent>
+                <p className="text-muted-foreground">{t('dashboard.compute.failure')}</p>
+            </CardContent>
+          </Card>
       )}
 
       {analysisResult && !isComputing && (

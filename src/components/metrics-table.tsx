@@ -18,6 +18,7 @@ import { generateCsv, downloadFile } from "@/lib/csv";
 import type { AnalysisResult, MetricData } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Loader2, Wand2 } from 'lucide-react';
+import { useLanguage } from '@/hooks/use-language';
 
 
 type TableRowData = {
@@ -49,6 +50,7 @@ const metricOrder = [
 ];
 
 export function MetricsTable({ analysisResult, location, dateRange }: MetricsTableProps) {
+  const { t } = useLanguage();
   const { toast } = useToast();
   const [sortKey, setSortKey] = useState<SortKey>('');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
@@ -145,7 +147,7 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
       });
 
       if (result.error) {
-        toast({ title: "AI Error", description: result.error, variant: "destructive" });
+        toast({ title: t('predict.error.aiError.title'), description: result.error, variant: "destructive" });
       } else if (result.data) {
         setTableData(prevData => prevData.map(m => m.name === metricName ? { ...m, insight: result.data.insight } : m));
       }
@@ -154,7 +156,6 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
   };
   
   const handleExportCsv = () => {
-    // This needs to be adapted to handle the new unified data structure
     const metricsToExport: MetricData[] = tableData.map(row => ({
         name: row.name,
         firstValue: row.firstValue,
@@ -163,9 +164,9 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
         n: row.n ?? 0,
         timeSeries: [], // Not needed for this CSV
     }));
-    const csvData = generateCsv(metricsToExport);
+    const csvData = generateCsv(metricsToExport, t);
     downloadFile(csvData, 'earth-insights-metrics.csv', 'text/csv');
-    toast({ title: 'Success', description: 'Metrics exported to CSV.' });
+    toast({ title: t('dashboard.metrics.export.csvSuccess.title'), description: t('dashboard.metrics.export.csvSuccess.description') });
   }
 
   const handleExportReport = async () => {
@@ -183,10 +184,10 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
     const result = await generateReportAction(JSON.stringify(metricsForReport, null, 2), location, dateRange);
     setReportLoading(false);
     if (result.error) {
-      toast({ title: 'Report Generation Error', description: result.error, variant: 'destructive' });
+      toast({ title: t('dashboard.metrics.export.reportError.title'), description: result.error, variant: 'destructive' });
     } else if (result.data) {
       downloadFile(result.data.summaryReport, 'summary-report.txt', 'text/plain');
-      toast({ title: 'Success', description: 'Summary report generated and downloaded.' });
+      toast({ title: t('dashboard.metrics.export.reportSuccess.title'), description: t('dashboard.metrics.export.reportSuccess.description') });
     }
   };
 
@@ -200,13 +201,13 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle>Computed Metrics</CardTitle>
-            <CardDescription>Detailed metrics including spectral indices, bands, and land cover statistics.</CardDescription>
+            <CardTitle>{t('dashboard.metrics.title')}</CardTitle>
+            <CardDescription>{t('dashboard.metrics.description')}</CardDescription>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleExportCsv}>Export CSV</Button>
+            <Button variant="outline" onClick={handleExportCsv}>{t('dashboard.metrics.export.csv')}</Button>
             <Button variant="outline" onClick={handleExportReport} disabled={reportLoading}>
-              {reportLoading ? 'Generating...' : 'Summary Report'}
+              {reportLoading ? t('dashboard.metrics.export.generating') : t('dashboard.metrics.export.report')}
             </Button>
           </div>
         </div>
@@ -216,21 +217,21 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
           <TableHeader>
             <TableRow>
               <TableHead onClick={() => handleSort('name')} className="cursor-pointer">
-                <div className="flex items-center">Metric <span className="ml-2 text-xs">{renderSortIcon('name')}</span></div>
+                <div className="flex items-center">{t('dashboard.metrics.table.metric')} <span className="ml-2 text-xs">{renderSortIcon('name')}</span></div>
               </TableHead>
               <TableHead onClick={() => handleSort('firstValue')} className="cursor-pointer text-right">
-                <div className="flex items-center justify-end">Start Value / Area <span className="ml-2 text-xs">{renderSortIcon('firstValue')}</span></div>
+                <div className="flex items-center justify-end">{t('dashboard.metrics.table.start')} <span className="ml-2 text-xs">{renderSortIcon('firstValue')}</span></div>
               </TableHead>
               <TableHead onClick={() => handleSort('lastValue')} className="cursor-pointer text-right">
-                <div className="flex items-center justify-end">End Value / Area <span className="ml-2 text-xs">{renderSortIcon('lastValue')}</span></div>
+                <div className="flex items-center justify-end">{t('dashboard.metrics.table.end')} <span className="ml-2 text-xs">{renderSortIcon('lastValue')}</span></div>
               </TableHead>
               <TableHead onClick={() => handleSort('percentageChange')} className="cursor-pointer text-right">
-                <div className="flex items-center justify-end">Change (%) <span className="ml-2 text-xs">{renderSortIcon('percentageChange')}</span></div>
+                <div className="flex items-center justify-end">{t('dashboard.metrics.table.change')} <span className="ml-2 text-xs">{renderSortIcon('percentageChange')}</span></div>
               </TableHead>
               <TableHead onClick={() => handleSort('n')} className="cursor-pointer text-right">
-                 <div className="flex items-center justify-end">Points (n) <span className="ml-2 text-xs">{renderSortIcon('n')}</span></div>
+                 <div className="flex items-center justify-end">{t('dashboard.metrics.table.points')} <span className="ml-2 text-xs">{renderSortIcon('n')}</span></div>
               </TableHead>
-              <TableHead className="text-center">AI Insight</TableHead>
+              <TableHead className="text-center">{t('dashboard.metrics.table.insight')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -255,13 +256,13 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
                         {insightLoading === metric.name ? (
                           <div className="flex items-center justify-center p-4">
                             <Loader2 className="h-5 w-5 animate-spin" />
-                            <span className="ml-2">Generating...</span>
+                            <span className="ml-2">{t('dashboard.metrics.export.generating')}</span>
                           </div>
                         ) : (
                           <div className="grid gap-4">
                             <div className="space-y-2">
-                              <h4 className="font-medium leading-none">AI Insight for {metric.name}</h4>
-                              <p className="text-sm text-muted-foreground">{metric.insight || "Click the magic wand to generate an AI insight for this metric."}</p>
+                              <h4 className="font-medium leading-none">{t('dashboard.metrics.table.insightTitle', { metric: metric.name })}</h4>
+                              <p className="text-sm text-muted-foreground">{metric.insight || t('dashboard.metrics.table.insightPlaceholder')}</p>
                             </div>
                           </div>
                         )}
@@ -277,5 +278,3 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
     </Card>
   );
 }
-
-    

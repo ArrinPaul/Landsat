@@ -7,6 +7,7 @@ import type { LandCoverAnalysis, SatellitePassData } from "@/lib/types";
 import { format, formatDistanceToNow } from 'date-fns';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "./ui/button";
+import { useLanguage } from "@/hooks/use-language";
 
 interface SummaryCardsProps {
     landCover: LandCoverAnalysis;
@@ -16,6 +17,7 @@ interface SummaryCardsProps {
 }
 
 const ChangeIndicator = ({ value }: { value: number }) => {
+    const { t } = useLanguage();
     if (value === 0) return null;
     const isPositive = value > 0;
     return (
@@ -24,19 +26,20 @@ const ChangeIndicator = ({ value }: { value: number }) => {
             <span className={isPositive ? "text-green-500" : "text-red-500"}>
                 {value.toFixed(2)}%
             </span>
-            &nbsp;change
+            &nbsp;{t('dashboard.summary.change')}
         </p>
     );
 };
 
 export function SummaryCards({ landCover, nextPass, isFetchingPass, onFetchPass }: SummaryCardsProps) {
-  
+  const { t } = useLanguage();
+
   const renderNextPass = () => {
     if (isFetchingPass) {
         return (
             <div className="flex items-center text-sm text-muted-foreground h-[92px]">
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                <span>Fetching pass time...</span>
+                <span>{t('dashboard.summary.fetchingPass')}</span>
             </div>
         )
     }
@@ -49,11 +52,11 @@ export function SummaryCards({ landCover, nextPass, isFetchingPass, onFetchPass 
                     {formatDistanceToNow(passDate, { addSuffix: true })}
                 </p>
                 <div className="flex items-center justify-between text-xs">
-                    <span className="flex items-center gap-1"><CircleDotDashed className="h-3 w-3" />Status:</span>
+                    <span className="flex items-center gap-1"><CircleDotDashed className="h-3 w-3" />{t('dashboard.summary.status')}:</span>
                     <Badge variant={nextPass.status.toLowerCase() === 'active' ? 'default' : 'secondary'}>{nextPass.status}</Badge>
                 </div>
                  <div className="flex items-center justify-between text-xs">
-                    <span className="flex items-center gap-1"><Rocket className="h-3 w-3" />Speed:</span>
+                    <span className="flex items-center gap-1"><Rocket className="h-3 w-3" />{t('dashboard.summary.speed')}:</span>
                     <span>{nextPass.speed.toFixed(2)} km/s</span>
                 </div>
              </div>
@@ -61,9 +64,9 @@ export function SummaryCards({ landCover, nextPass, isFetchingPass, onFetchPass 
     }
     return (
         <div className="flex flex-col items-center justify-center text-center h-[92px]">
-            <p className="text-sm text-muted-foreground mb-2">Fetch satellite pass data.</p>
+            <p className="text-sm text-muted-foreground mb-2">{t('dashboard.summary.fetchPrompt')}</p>
             <Button onClick={onFetchPass} size="sm" variant="outline">
-                <RefreshCw className="mr-2 h-4 w-4" /> Fetch Next Pass
+                <RefreshCw className="mr-2 h-4 w-4" /> {t('dashboard.summary.fetchButton')}
             </Button>
         </div>
     )
@@ -73,7 +76,7 @@ export function SummaryCards({ landCover, nextPass, isFetchingPass, onFetchPass 
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Built-up Area Growth</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('dashboard.summary.builtUp')}</CardTitle>
             <Building className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -86,7 +89,7 @@ export function SummaryCards({ landCover, nextPass, isFetchingPass, onFetchPass 
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Vegetation Area Change</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('dashboard.summary.vegetation')}</CardTitle>
             <AreaChart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -99,7 +102,7 @@ export function SummaryCards({ landCover, nextPass, isFetchingPass, onFetchPass 
         </Card>
       <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Next Satellite Pass</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('dashboard.summary.nextPass')}</CardTitle>
             <Satellite className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
