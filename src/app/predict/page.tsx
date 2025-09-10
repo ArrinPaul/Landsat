@@ -19,9 +19,11 @@ import {
 } from "@/lib/actions";
 import type { WeatherData, CropPlan, IrrigationSchedule, SoilMoisturePrediction, CropYieldPrediction } from "@/lib/types";
 import { WeatherReport } from "@/components/weather-report";
+import { useLanguage } from "@/hooks/use-language";
 
 export default function PredictPage() {
     const { toast } = useToast();
+    const { t } = useLanguage();
     const [lat, setLat] = useState("40.7128");
     const [lon, setLon] = useState("-74.0060");
     const [locationDesc, setLocationDesc] = useState("New York City");
@@ -38,17 +40,17 @@ export default function PredictPage() {
 
     const handleSuggestCoordinates = async () => {
         if (!locationDesc) {
-          toast({ title: "Error", description: "Please enter a location description.", variant: "destructive" });
+          toast({ title: t('predict.error.noLocation.title'), description: t('predict.error.noLocation.description'), variant: "destructive" });
           return;
         }
         setIsSuggesting(true);
         const result = await suggestCoordinatesAction(locationDesc);
         if (result.error) {
-          toast({ title: "AI Error", description: result.error, variant: "destructive" });
+          toast({ title: t('predict.error.aiError.title'), description: result.error, variant: "destructive" });
         } else if (result.data) {
           setLat(result.data.latitude.toFixed(4));
           setLon(result.data.longitude.toFixed(4));
-          toast({ title: "Coordinates Suggested", description: `Confidence: ${(result.data.confidence * 100).toFixed(0)}%` });
+          toast({ title: t('predict.coordinatesSuggested.title'), description: `${t('predict.coordinatesSuggested.confidence')}: ${(result.data.confidence * 100).toFixed(0)}%` });
         }
         setIsSuggesting(false);
     };
@@ -63,7 +65,7 @@ export default function PredictPage() {
 
     const handlePrediction = async (type: PredictionType) => {
         if (!lat || !lon) {
-            toast({ title: "Error", description: "Please provide valid coordinates.", variant: "destructive" });
+            toast({ title: t('predict.error.noCoords.title'), description: t('predict.error.noCoords.description'), variant: "destructive" });
             return;
         }
         setIsLoading(type);
@@ -91,16 +93,16 @@ export default function PredictPage() {
                     if (result.data) setSoilMoisture(result.data);
                     break;
                 case 'yield':
-                    result = await predictCropYieldAction({ ...coords, cropType: 'Maize' });
+                    result = await predictCropYieldAction({ ...coords, cropType: 'Maize' }); // Note: Crop type is hardcoded for now
                     if (result.data) setCropYield(result.data);
                     break;
             }
 
             if (result?.error) {
-                toast({ title: "Prediction Error", description: result.error, variant: "destructive" });
+                toast({ title: t('predict.error.predictionError.title'), description: result.error, variant: "destructive" });
             }
         } catch (error) {
-            toast({ title: "Error", description: "An unexpected error occurred.", variant: "destructive" });
+            toast({ title: t('predict.error.unexpected.title'), description: t('predict.error.unexpected.description'), variant: "destructive" });
         }
 
         setIsLoading(null);
@@ -113,35 +115,35 @@ export default function PredictPage() {
                 <div className="container mx-auto space-y-8">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Predictive Insights</CardTitle>
+                            <CardTitle>{t('predict.title')}</CardTitle>
                             <CardDescription>
-                                Get AI-powered predictions for your location. Start by entering a location description or coordinates.
+                                {t('predict.description')}
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="location-desc">Location Description</Label>
+                                <Label htmlFor="location-desc">{t('predict.locationDesc')}</Label>
                                 <div className="flex gap-2">
                                 <Input
                                     id="location-desc"
-                                    placeholder="e.g., Nile River Delta"
+                                    placeholder={t('predict.locationDescPlaceholder')}
                                     value={locationDesc}
                                     onChange={(e) => setLocationDesc(e.target.value)}
                                     disabled={isSuggesting}
                                 />
                                 <Button onClick={handleSuggestCoordinates} disabled={isSuggesting || !locationDesc} size="icon">
                                     {isSuggesting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-                                    <span className="sr-only">Suggest Coordinates</span>
+                                    <span className="sr-only">{t('predict.suggestCoordinates')}</span>
                                 </Button>
                                 </div>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="latitude">Latitude</Label>
+                                    <Label htmlFor="latitude">{t('predict.latitude')}</Label>
                                     <Input id="latitude" placeholder="e.g., 30.83" value={lat} onChange={(e) => setLat(e.target.value)} />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="longitude">Longitude</Label>
+                                    <Label htmlFor="longitude">{t('predict.longitude')}</Label>
                                     <Input id="longitude" placeholder="e.g., 31.07" value={lon} onChange={(e) => setLon(e.target.value)} />
                                 </div>
                             </div>
@@ -151,61 +153,61 @@ export default function PredictPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <Card>
                             <CardHeader>
-                                <CardTitle className="flex items-center gap-2"><Thermometer/> Weather Forecast</CardTitle>
-                                <CardDescription>Get the current weather and a 24-hour forecast.</CardDescription>
+                                <CardTitle className="flex items-center gap-2"><Thermometer/> {t('predict.weather.title')}</CardTitle>
+                                <CardDescription>{t('predict.weather.description')}</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <Button onClick={() => handlePrediction('weather')} disabled={!!isLoading}>
                                     {isLoading === 'weather' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
-                                    Predict Weather
+                                    {t('predict.weather.button')}
                                 </Button>
                             </CardContent>
                         </Card>
                          <Card>
                             <CardHeader>
-                                <CardTitle className="flex items-center gap-2"><Tractor/> Crop Planning</CardTitle>
-                                <CardDescription>Receive recommendations on suitable crops and planting schedules.</CardDescription>
+                                <CardTitle className="flex items-center gap-2"><Tractor/> {t('predict.crop.title')}</CardTitle>
+                                <CardDescription>{t('predict.crop.description')}</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <Button onClick={() => handlePrediction('crops')} disabled={!!isLoading}>
                                      {isLoading === 'crops' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
-                                    Plan Crops
+                                    {t('predict.crop.button')}
                                 </Button>
                             </CardContent>
                         </Card>
                          <Card>
                             <CardHeader>
-                                <CardTitle className="flex items-center gap-2"><Droplets/> Irrigation Schedule</CardTitle>
-                                <CardDescription>Get AI-based advice on when and how much to water your fields.</CardDescription>
+                                <CardTitle className="flex items-center gap-2"><Droplets/> {t('predict.irrigation.title')}</CardTitle>
+                                <CardDescription>{t('predict.irrigation.description')}</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <Button onClick={() => handlePrediction('irrigation')} disabled={!!isLoading}>
                                     {isLoading === 'irrigation' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
-                                    Schedule Irrigation
+                                    {t('predict.irrigation.button')}
                                 </Button>
                             </CardContent>
                         </Card>
                         <Card>
                             <CardHeader>
-                                <CardTitle className="flex items-center gap-2"><LandPlot/> Soil Moisture</CardTitle>
-                                <CardDescription>Predict the current volumetric water content in the soil.</CardDescription>
+                                <CardTitle className="flex items-center gap-2"><LandPlot/> {t('predict.soil.title')}</CardTitle>
+                                <CardDescription>{t('predict.soil.description')}</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <Button onClick={() => handlePrediction('soil')} disabled={!!isLoading}>
                                     {isLoading === 'soil' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
-                                    Predict Moisture
+                                    {t('predict.soil.button')}
                                 </Button>
                             </CardContent>
                         </Card>
                         <Card>
                             <CardHeader>
-                                <CardTitle className="flex items-center gap-2"><BarChartBig/> Crop Yield</CardTitle>
-                                <CardDescription>Forecast potential crop yield for the selected location.</CardDescription>
+                                <CardTitle className="flex items-center gap-2"><BarChartBig/> {t('predict.yield.title')}</CardTitle>
+                                <CardDescription>{t('predict.yield.description')}</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <Button onClick={() => handlePrediction('yield')} disabled={!!isLoading}>
                                     {isLoading === 'yield' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
-                                    Forecast Yield
+                                    {t('predict.yield.button')}
                                 </Button>
                             </CardContent>
                         </Card>
@@ -228,15 +230,15 @@ export default function PredictPage() {
                     {cropPlan && (
                         <Card>
                             <CardHeader>
-                                <CardTitle>Crop Plan Recommendation</CardTitle>
+                                <CardTitle>{t('predict.result.cropPlan.title')}</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div>
-                                    <h4 className="font-semibold">Planting Window</h4>
+                                    <h4 className="font-semibold">{t('predict.result.cropPlan.plantingWindow')}</h4>
                                     <p className="text-muted-foreground">{cropPlan.plantingWindow.start} to {cropPlan.plantingWindow.end}</p>
                                 </div>
                                 <div>
-                                    <h4 className="font-semibold">Suitable Crops</h4>
+                                    <h4 className="font-semibold">{t('predict.result.cropPlan.suitableCrops')}</h4>
                                     <ul className="list-disc pl-5 mt-2 space-y-2">
                                         {cropPlan.suitableCrops.map(crop => (
                                             <li key={crop.name}>
@@ -246,7 +248,7 @@ export default function PredictPage() {
                                     </ul>
                                 </div>
                                  <div>
-                                    <h4 className="font-semibold">Cooperative Farming Suggestion</h4>
+                                    <h4 className="font-semibold">{t('predict.result.cropPlan.cooperativeFarming')}</h4>
                                     <p className="text-muted-foreground">{cropPlan.cooperativeFarmingSuggestion}</p>
                                 </div>
                             </CardContent>
@@ -256,25 +258,25 @@ export default function PredictPage() {
                     {irrigationSchedule && (
                         <Card>
                             <CardHeader>
-                                <CardTitle>Irrigation Schedule Recommendation</CardTitle>
+                                <CardTitle>{t('predict.result.irrigation.title')}</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div>
-                                    <h4 className="font-semibold">Recommendation</h4>
+                                    <h4 className="font-semibold">{t('predict.result.irrigation.recommendation')}</h4>
                                     <p className="text-2xl font-bold text-primary">{irrigationSchedule.recommendation}</p>
 
                                 </div>
                                 <div>
-                                    <h4 className="font-semibold">Next Recommended Irrigation</h4>
+                                    <h4 className="font-semibold">{t('predict.result.irrigation.nextDate')}</h4>
                                     <p className="text-muted-foreground">{new Date(irrigationSchedule.nextIrrigationDate).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
 
                                 </div>
                                  <div>
-                                    <h4 className="font-semibold">Watering Depth</h4>
+                                    <h4 className="font-semibold">{t('predict.result.irrigation.wateringDepth')}</h4>
                                     <p className="text-muted-foreground">{irrigationSchedule.wateringDepthInches} inches</p>
                                 </div>
                                 <div>
-                                    <h4 className="font-semibold">Notes</h4>
+                                    <h4 className="font-semibold">{t('predict.result.irrigation.notes')}</h4>
                                     <p className="text-muted-foreground">{irrigationSchedule.notes}</p>
                                 </div>
                             </CardContent>
@@ -284,19 +286,19 @@ export default function PredictPage() {
                     {soilMoisture && (
                         <Card>
                             <CardHeader>
-                                <CardTitle>Soil Moisture Prediction</CardTitle>
+                                <CardTitle>{t('predict.result.soil.title')}</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div>
-                                    <h4 className="font-semibold">Volumetric Water Content</h4>
+                                    <h4 className="font-semibold">{t('predict.result.soil.vwc')}</h4>
                                     <p className="text-2xl font-bold text-primary">{soilMoisture.volumetricWaterContent.toFixed(1)}%</p>
                                 </div>
                                 <div>
-                                    <h4 className="font-semibold">Summary</h4>
+                                    <h4 className="font-semibold">{t('predict.result.soil.summary')}</h4>
                                     <p className="text-muted-foreground">{soilMoisture.summary}</p>
                                 </div>
                                 <div>
-                                    <h4 className="font-semibold">Confidence</h4>
+                                    <h4 className="font-semibold">{t('predict.result.soil.confidence')}</h4>
                                     <p className="text-muted-foreground">{(soilMoisture.confidence * 100).toFixed(0)}%</p>
                                 </div>
                             </CardContent>
@@ -306,19 +308,19 @@ export default function PredictPage() {
                     {cropYield && (
                         <Card>
                             <CardHeader>
-                                <CardTitle>Crop Yield Forecast: {cropYield.crop}</CardTitle>
+                                <CardTitle>{t('predict.result.yield.title')}: {cropYield.crop}</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div>
-                                    <h4 className="font-semibold">Predicted Yield</h4>
-                                    <p className="text-2xl font-bold text-primary">{cropYield.predictedYield.toFixed(2)} tons/hectare</p>
+                                    <h4 className="font-semibold">{t('predict.result.yield.predictedYield')}</h4>
+                                    <p className="text-2xl font-bold text-primary">{cropYield.predictedYield.toFixed(2)} {t('predict.result.yield.unit')}</p>
                                 </div>
                                 <div>
-                                    <h4 className="font-semibold">Notes</h4>
+                                    <h4 className="font-semibold">{t('predict.result.yield.notes')}</h4>
                                     <p className="text-muted-foreground">{cropYield.notes}</p>
                                 </div>
                                 <div>
-                                    <h4 className="font-semibold">Confidence</h4>
+                                    <h4 className="font-semibold">{t('predict.result.yield.confidence')}</h4>
                                     <p className="text-muted-foreground">{(cropYield.confidence * 100).toFixed(0)}%</p>
                                 </div>
                             </CardContent>
@@ -331,3 +333,5 @@ export default function PredictPage() {
         </div>
     );
 }
+
+    

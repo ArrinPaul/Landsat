@@ -1,3 +1,4 @@
+
 {
     "header.title": "अर्थ इनसाइट्स",
     "header.features": "विशेषताएँ",
@@ -16,7 +17,7 @@
     "landing.features.coordinateInput": "निर्देशांक इनपुट",
     "landing.features.coordinateInputDesc": "पृथ्वी पर किसी भी क्षेत्र का विश्लेषण करने के लिए अक्षांश/देशांतर दर्ज करें।",
     "landing.features.metricComputation": "मीट्रिक गणना",
-    "landing.features.metricComputationDesc": "NDVI, NDWI, और NDBI جیسے प्रमुख वर्णक्रमीय सूचकांकों की गणना करें।",
+    "landing.features.metricComputationDesc": "NDVI, NDWI, और NDBI जैसे प्रमुख वर्णक्रमीय सूचकांकों की गणना करें।",
     "landing.features.interactiveVisuals": "इंटरैक्टिव विज़ुअल्स",
     "landing.features.interactiveVisualsDesc": "समय-श्रृंखला चार्ट और सैटेलाइट बनाम ग्राउंड ट्रुथ स्कैटर प्लॉट।",
     "landing.features.exportEasily": "आसानी से निर्यात करें",
@@ -45,5 +46,68 @@
     "contact.submitted.close": "बंद करें",
     "footer.copyright": "© 2025 अर्थ इनसाइट्स। सर्वाधिकार सुरक्षित। | टीम: लूनरएक्स",
     "footer.about": "हमारे बारे में",
-    "footer.contact": "संपर्क करें"
+    "footer.contact": "संपर्क करें",
+
+    "predict.title": "भविष्य कहनेवाला अंतर्दृष्टि",
+    "predict.description": "अपने स्थान के लिए AI-संचालित भविष्यवाणियाँ प्राप्त करें। स्थान विवरण या निर्देशांक दर्ज करके प्रारंभ करें।",
+    "predict.locationDesc": "स्थान विवरण",
+    "predict.locationDescPlaceholder": "उदा., नील नदी डेल्टा",
+    "predict.suggestCoordinates": "निर्देशांक सुझाएं",
+    "predict.latitude": "अक्षांश",
+    "predict.longitude": "देशांतर",
+
+    "predict.weather.title": "मौसम पूर्वानुमान",
+    "predict.weather.description": "वर्तमान मौसम और 24 घंटे का पूर्वानुमान प्राप्त करें।",
+    "predict.weather.button": "मौसम की भविष्यवाणी करें",
+
+    "predict.crop.title": "फसल योजना",
+    "predict.crop.description": "उपयुक्त फसलों और रोपण कार्यक्रमों पर सिफारिशें प्राप्त करें।",
+    "predict.crop.button": "फसलों की योजना बनाएं",
+
+    "predict.irrigation.title": "सिंचाई अनुसूची",
+    "predict.irrigation.description": "अपने खेतों में कब और कितना पानी देना है, इस पर AI-आधारित सलाह प्राप्त करें।",
+    "predict.irrigation.button": "सिंचाई का शेड्यूल बनाएं",
+
+    "predict.soil.title": "मिट्टी की नमी",
+    "predict.soil.description": "मिट्टी में वर्तमान वॉल्यूमेट्रिक पानी की मात्रा की भविष्यवाणी करें।",
+    "predict.soil.button": "नमी की भविष्यवाणी करें",
+
+    "predict.yield.title": "फसल की उपज",
+    "predict.yield.description": "चयनित स्थान के लिए संभावित फसल उपज का पूर्वानुमान करें।",
+    "predict.yield.button": "उपज का पूर्वानुमान",
+
+    "predict.error.noLocation.title": "त्रुटि",
+    "predict.error.noLocation.description": "कृपया स्थान विवरण दर्ज करें।",
+    "predict.error.aiError.title": "AI त्रुटि",
+    "predict.error.noCoords.title": "त्रुटि",
+    "predict.error.noCoords.description": "कृपया मान्य निर्देशांक प्रदान करें।",
+    "predict.error.predictionError.title": "भविष्यवाणी त्रुटि",
+    "predict.error.unexpected.title": "त्रुटि",
+    "predict.error.unexpected.description": "एक अप्रत्याशित त्रुटि हुई।",
+    "predict.coordinatesSuggested.title": "सुझाए गए निर्देशांक",
+    "predict.coordinatesSuggested.confidence": "आत्मविश्वास",
+
+    "predict.result.cropPlan.title": "फसल योजना की सिफारिश",
+    "predict.result.cropPlan.plantingWindow": "रोपण खिड़की",
+    "predict.result.cropPlan.suitableCrops": "उपयुक्त फसलें",
+    "predict.result.cropPlan.cooperativeFarming": "सहकारी खेती का सुझाव",
+
+    "predict.result.irrigation.title": "सिंचाई अनुसूची की सिफारिश",
+    "predict.result.irrigation.recommendation": "सिफारिश",
+    "predict.result.irrigation.nextDate": "अगली अनुशंसित सिंचाई",
+    "predict.result.irrigation.wateringDepth": "पानी की गहराई",
+    "predict.result.irrigation.notes": "टिप्पणियाँ",
+
+    "predict.result.soil.title": "मृदा नमी की भविष्यवाणी",
+    "predict.result.soil.vwc": "वॉल्यूमेट्रिक जल सामग्री",
+    "predict.result.soil.summary": "सारांश",
+    "predict.result.soil.confidence": "आत्मविश्वास",
+
+    "predict.result.yield.title": "फसल उपज का पूर्वानुमान",
+    "predict.result.yield.predictedYield": "अनुमानित उपज",
+    "predict.result.yield.unit": "टन/हेक्टेयर",
+    "predict.result.yield.notes": "टिप्पणियाँ",
+    "predict.result.yield.confidence": "आत्मविश्वास"
 }
+
+    

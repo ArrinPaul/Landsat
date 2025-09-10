@@ -1,3 +1,4 @@
+
 {
     "header.title": "ਅਰਥ ਇਨਸਾਈਟਸ",
     "header.features": "ਵਿਸ਼ੇਸ਼ਤਾਵਾਂ",
@@ -45,5 +46,68 @@
     "contact.submitted.close": "ਬੰद ਕਰੋ",
     "footer.copyright": "© 2025 ਅਰਥ ਇਨਸਾਈਟਸ। ਸਾਰੇ ਹੱਕ ਰਾਖਵੇਂ ਹਨ। | ਟੀਮ: ਲੂਨਾਰਐਕਸ",
     "footer.about": "ਸਾਡੇ ਬਾਰੇ",
-    "footer.contact": "ਸੰਪਰਕ ਕਰੋ"
+    "footer.contact": "ਸੰਪਰਕ ਕਰੋ",
+
+    "predict.title": "ਭਵਿੱਖਬਾਣੀ ਸੰਬੰਧੀ ਸੂਝ",
+    "predict.description": "ਆਪਣੇ ਸਥਾਨ ਲਈ AI-ਸੰਚਾਲਿਤ ਭਵਿੱਖਬਾਣੀਆਂ ਪ੍ਰਾਪਤ ਕਰੋ। ਸਥਾਨ ਵੇਰਵਾ ਜਾਂ ਕੋਆਰਡੀਨੇਟ ਦਾਖਲ ਕਰਕੇ ਸ਼ੁਰੂ ਕਰੋ।",
+    "predict.locationDesc": "ਸਥਾਨ ਵੇਰਵਾ",
+    "predict.locationDescPlaceholder": "ਜਿਵੇਂ, ਨੀਲ ਦਰਿਆ ਡੈਲਟਾ",
+    "predict.suggestCoordinates": "ਕੋਆਰਡੀਨੇਟਸ ਸੁਝਾਓ",
+    "predict.latitude": "ਅਕਸ਼ਾਂਸ਼",
+    "predict.longitude": "ਦੇਸ਼ਾਂਤਰ",
+
+    "predict.weather.title": "ਮੌਸਮ ਦੀ ਭਵਿੱਖਬਾਣੀ",
+    "predict.weather.description": "ਮੌਜੂਦਾ ਮੌਸਮ ਅਤੇ 24-ਘੰਟੇ ਦੀ ਭਵਿੱਖਬਾਣੀ ਪ੍ਰਾਪਤ ਕਰੋ।",
+    "predict.weather.button": "ਮੌਸਮ ਦੀ ਭਵਿੱਖਬਾਣੀ ਕਰੋ",
+
+    "predict.crop.title": "ਫਸਲ ਦੀ ਯੋਜਨਾਬੰਦੀ",
+    "predict.crop.description": "ਉਚਿਤ ਫਸਲਾਂ ਅਤੇ ਬਿਜਾਈ ਦੇ ਕਾਰਜਕ੍ਰਮਾਂ ਬਾਰੇ ਸਿਫਾਰਸ਼ਾਂ ਪ੍ਰਾਪਤ ਕਰੋ।",
+    "predict.crop.button": "ਫਸਲਾਂ ਦੀ ਯੋਜਨਾ ਬਣਾਓ",
+
+    "predict.irrigation.title": "ਸਿੰਚਾਈ ਦਾ ਕਾਰਜਕ੍ਰਮ",
+    "predict.irrigation.description": "ਆਪਣੇ ਖੇਤਾਂ ਨੂੰ ਕਦੋਂ ਅਤੇ ਕਿੰਨਾ ਪਾਣੀ ਦੇਣਾ ਹੈ ਇਸ ਬਾਰੇ AI-ਅਧਾਰਤ ਸਲਾਹ ਪ੍ਰਾਪਤ ਕਰੋ।",
+    "predict.irrigation.button": "ਸਿੰਚਾਈ ਦਾ ਸਮਾਂ-ਸਾਰਣੀ ਬਣਾਓ",
+
+    "predict.soil.title": "ਮਿੱਟੀ ਦੀ ਨਮੀ",
+    "predict.soil.description": "ਮਿੱਟੀ ਵਿੱਚ ਮੌਜੂਦਾ ਵਾਲੀਊਮੈਟ੍ਰਿਕ ਪਾਣੀ ਦੀ ਮਾਤਰਾ ਦੀ ਭਵਿੱਖਬਾਣੀ ਕਰੋ।",
+    "predict.soil.button": "ਨਮੀ ਦੀ ਭਵਿੱਖਬਾਣੀ ਕਰੋ",
+
+    "predict.yield.title": "ਫਸਲ ਦਾ ਝਾੜ",
+    "predict.yield.description": "ਚੁਣੇ ਗਏ ਸਥਾਨ ਲਈ ਸੰਭਾਵੀ ਫਸਲ ਦੇ ਝਾੜ ਦੀ ਭਵਿੱਖਬਾਣੀ ਕਰੋ।",
+    "predict.yield.button": "ਝਾੜ ਦੀ ਭਵਿੱਖਬਾਣੀ ਕਰੋ",
+
+    "predict.error.noLocation.title": "ਗਲਤੀ",
+    "predict.error.noLocation.description": "ਕਿਰਪਾ ਕਰਕੇ ਇੱਕ ਸਥਾਨ ਵੇਰਵਾ ਦਾਖਲ ਕਰੋ।",
+    "predict.error.aiError.title": "AI ਗਲਤੀ",
+    "predict.error.noCoords.title": "ਗਲਤੀ",
+    "predict.error.noCoords.description": "ਕਿਰਪਾ ਕਰਕੇ ਪ੍ਰਮਾਣਿਕ ਕੋਆਰਡੀਨੇਟ ਪ੍ਰਦਾਨ ਕਰੋ।",
+    "predict.error.predictionError.title": "ਭਵਿੱਖਬਾਣੀ ਗਲਤੀ",
+    "predict.error.unexpected.title": "ਗਲਤੀ",
+    "predict.error.unexpected.description": "ਇੱਕ ਅਚਾਨਕ ਗਲਤੀ ਆਈ।",
+    "predict.coordinatesSuggested.title": "ਸੁਝਾਏ ਗਏ ਕੋਆਰਡੀਨੇਟਸ",
+    "predict.coordinatesSuggested.confidence": "ਆਤਮ-ਵਿਸ਼ਵਾਸ",
+
+    "predict.result.cropPlan.title": "ਫਸਲ ਯੋਜਨਾ ਸਿਫਾਰਸ਼",
+    "predict.result.cropPlan.plantingWindow": "ਬਿਜਾਈ ਵਿੰਡੋ",
+    "predict.result.cropPlan.suitableCrops": "ਉਚਿਤ ਫਸਲਾਂ",
+    "predict.result.cropPlan.cooperativeFarming": "ਸਹਿਕਾਰੀ ਖੇਤੀ ਸੁਝਾਅ",
+
+    "predict.result.irrigation.title": "ਸਿੰਚਾਈ ਅਨੁਸੂਚੀ ਸਿਫਾਰਸ਼",
+    "predict.result.irrigation.recommendation": "ਸਿਫਾਰਸ਼",
+    "predict.result.irrigation.nextDate": "ਅਗਲੀ ਸਿਫਾਰਸ਼ ਕੀਤੀ ਸਿੰਚਾਈ",
+    "predict.result.irrigation.wateringDepth": "ਪਾਣੀ ਦੀ ਡੂੰਘਾਈ",
+    "predict.result.irrigation.notes": "ਨੋਟਸ",
+
+    "predict.result.soil.title": "ਮਿੱਟੀ ਨਮੀ ਦੀ ਭਵਿੱਖਬਾਣੀ",
+    "predict.result.soil.vwc": "ਵਾਲੀਊਮੈਟ੍ਰਿਕ ਪਾਣੀ ਦੀ ਸਮੱਗਰੀ",
+    "predict.result.soil.summary": "ਸੰਖੇਪ",
+    "predict.result.soil.confidence": "ਆਤਮ-ਵਿਸ਼ਵਾਸ",
+
+    "predict.result.yield.title": "ਫਸਲ ਝਾੜ ਦੀ ਭਵਿੱਖਬਾਣੀ",
+    "predict.result.yield.predictedYield": "ਅਨੁਮਾਨਿਤ ਝਾੜ",
+    "predict.result.yield.unit": "ਟਨ/ਹੈਕਟੇਅਰ",
+    "predict.result.yield.notes": "ਨੋਟਸ",
+    "predict.result.yield.confidence": "ਆਤਮ-ਵਿਸ਼ਵਾਸ"
 }
+
+    
