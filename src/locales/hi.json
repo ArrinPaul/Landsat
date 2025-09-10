@@ -16,7 +16,7 @@
     "landing.features.coordinateInput": "निर्देशांक इनपुट",
     "landing.features.coordinateInputDesc": "पृथ्वी पर किसी भी क्षेत्र का विश्लेषण करने के लिए अक्षांश/देशांतर दर्ज करें।",
     "landing.features.metricComputation": "मीट्रिक गणना",
-    "landing.features.metricComputationDesc": "NDVI, NDWI, और NDBI जैसे प्रमुख वर्णक्रमीय सूचकांकों की गणना करें।",
+    "landing.features.metricComputationDesc": "NDVI, NDWI, और NDBI جیسے प्रमुख वर्णक्रमीय सूचकांकों की गणना करें।",
     "landing.features.interactiveVisuals": "इंटरैक्टिव विज़ुअल्स",
     "landing.features.interactiveVisualsDesc": "समय-श्रृंखला चार्ट और सैटेलाइट बनाम ग्राउंड ट्रुथ स्कैटर प्लॉट।",
     "landing.features.exportEasily": "आसानी से निर्यात करें",
