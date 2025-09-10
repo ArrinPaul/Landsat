@@ -5,8 +5,10 @@ import { Dashboard } from "@/components/dashboard";
 import { Header } from "@/components/header";
 import { Chatbot } from "@/components/chatbot";
 import { PointsOfInterest } from "@/components/points-of-interest";
+import { useLanguage } from "@/hooks/use-language";
 
 export default function DashboardPage() {
+  const { t } = useLanguage();
   return (
     <div className="flex flex-col min-h-screen bg-muted/20">
       <Header />
@@ -16,8 +18,9 @@ export default function DashboardPage() {
       <Chatbot />
       <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
         <p className="text-xs text-muted-foreground whitespace-nowrap">
-          &copy; 2025 Earth Insights. All rights reserved. | Team: LunarX
+          {t('footer.copyright')}
         </p>
       </footer>
     </div>
   );
+}

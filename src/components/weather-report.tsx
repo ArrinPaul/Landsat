@@ -8,6 +8,7 @@ import type { WeatherData, HourlyForecast } from "@/lib/types";
 import { ScrollArea, ScrollBar } from "./ui/scroll-area";
 import { Button } from "./ui/button";
 import { RefreshCw } from "lucide-react";
+import { useLanguage } from "@/hooks/use-language";
 
 interface WeatherReportProps {
     weather: WeatherData | null;
@@ -27,6 +28,8 @@ const Icon = ({ name, ...props }: {name: string, [key: string]: any}) => {
 }
 
 export function WeatherReport({ weather, isLoading, showForecast = true, onFetchWeather }: WeatherReportProps) {
+  const { t } = useLanguage();
+
   if (isLoading) {
     return <Skeleton className="h-full w-full min-h-[160px]" />;
   }
@@ -35,10 +38,10 @@ export function WeatherReport({ weather, isLoading, showForecast = true, onFetch
     return (
       <Card className="h-full flex items-center justify-center min-h-[160px]">
         <CardContent className="pt-6 text-center">
-          <p className="text-muted-foreground mb-2">No weather data.</p>
+          <p className="text-muted-foreground mb-2">{t('dashboard.weather.noData')}</p>
            {onFetchWeather && (
              <Button onClick={onFetchWeather} size="sm" variant="outline">
-                <RefreshCw className="mr-2 h-4 w-4" /> Fetch Weather
+                <RefreshCw className="mr-2 h-4 w-4" /> {t('dashboard.weather.fetch')}
             </Button>
            )}
         </CardContent>
@@ -51,7 +54,7 @@ export function WeatherReport({ weather, isLoading, showForecast = true, onFetch
   return (
     <Card>
       <CardHeader className="pb-4">
-        <CardTitle className="text-xl">Weather</CardTitle>
+        <CardTitle className="text-xl">{t('dashboard.weather.title')}</CardTitle>
         <CardDescription>{showForecast ? summary : current.conditions}</CardDescription>
       </CardHeader>
       <CardContent>
@@ -64,11 +67,11 @@ export function WeatherReport({ weather, isLoading, showForecast = true, onFetch
             </div>
             <div className="space-y-2 text-sm text-right">
                 <div className="flex justify-end gap-2">
-                    <span className="text-muted-foreground">Humidity</span>
+                    <span className="text-muted-foreground">{t('dashboard.weather.humidity')}</span>
                     <span className="font-semibold">{current.humidity}%</span>
                 </div>
                 <div className="flex justify-end gap-2">
-                    <span className="text-muted-foreground">Wind</span>
+                    <span className="text-muted-foreground">{t('dashboard.weather.wind')}</span>
                     <span className="font-semibold">{current.windSpeed} km/h</span>
                 </div>
             </div>
@@ -76,7 +79,7 @@ export function WeatherReport({ weather, isLoading, showForecast = true, onFetch
 
         {showForecast && (
             <>
-                <h4 className="font-semibold mb-2">Hourly Forecast</h4>
+                <h4 className="font-semibold mb-2">{t('dashboard.weather.hourly')}</h4>
                 <ScrollArea className="w-full whitespace-nowrap">
                     <div className="flex space-x-4 pb-4">
                     {forecast.map((hour: HourlyForecast) => (

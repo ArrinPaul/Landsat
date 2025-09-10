@@ -18,6 +18,7 @@ import { parseCsv } from "@/lib/csv";
 import { suggestCoordinatesAction } from "@/lib/actions";
 import type { GroundTruthDataPoint, HistoryEntry } from "@/lib/types";
 import { ScrollArea } from "./ui/scroll-area";
+import { useLanguage } from "@/hooks/use-language";
 
 interface InputPanelProps {
   lat: string;
@@ -40,6 +41,7 @@ export function InputPanel({
   dateRange, setDateRange, onCompute, isComputing, onFileUpload,
   history, onHistorySelect
 }: InputPanelProps) {
+  const { t } = useLanguage();
   const { toast } = useToast();
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [fileName, setFileName] =useState<string>("");
@@ -51,12 +53,12 @@ export function InputPanel({
       const reader = new FileReader();
       reader.onload = (e) => {
         const text = e.target?.result as string;
-        const parsedData = parseCsv(text);
+        const parsedData = parseCsv(text, t);
         if ('error' in parsedData) {
-          toast({ title: "CSV Parsing Error", description: parsedData.error, variant: "destructive" });
+          toast({ title: t('dashboard.csv.error.title'), description: parsedData.error, variant: "destructive" });
           onFileUpload(null);
         } else {
-          toast({ title: "Success", description: `${parsedData.length} ground truth points loaded.` });
+          toast({ title: t('dashboard.csv.success.title'), description: t('dashboard.csv.success.description', { count: parsedData.length }) });
           onFileUpload(parsedData);
         }
       };
@@ -69,17 +71,17 @@ export function InputPanel({
 
   const handleSuggestCoordinates = async () => {
     if (!locationDesc) {
-      toast({ title: "Error", description: "Please enter a location description.", variant: "destructive" });
+      toast({ title: t('predict.error.noLocation.title'), description: t('predict.error.noLocation.description'), variant: "destructive" });
       return;
     }
     setIsSuggesting(true);
     const result = await suggestCoordinatesAction(locationDesc);
     if (result.error) {
-      toast({ title: "AI Error", description: result.error, variant: "destructive" });
+      toast({ title: t('predict.error.aiError.title'), description: result.error, variant: "destructive" });
     } else if (result.data) {
       setLat(result.data.latitude.toFixed(4));
       setLon(result.data.longitude.toFixed(4));
-      toast({ title: "Coordinates Suggested", description: `Confidence: ${(result.data.confidence * 100).toFixed(0)}%` });
+      toast({ title: t('predict.coordinatesSuggested.title'), description: `${t('predict.coordinatesSuggested.confidence')}: ${(result.data.confidence * 100).toFixed(0)}%` });
     }
     setIsSuggesting(false);
   };
@@ -87,39 +89,39 @@ export function InputPanel({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Data Input & Satellite Tracking</CardTitle>
+        <CardTitle>{t('dashboard.input.title')}</CardTitle>
         <CardDescription>
-          Specify coordinates, date range, and optional ground truth data to compute environmental metrics.
+          {t('dashboard.input.description')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
            <div className="space-y-2 col-span-1 md:col-span-2">
-            <Label htmlFor="location-desc">Location Description (for AI suggestions)</Label>
+            <Label htmlFor="location-desc">{t('dashboard.input.locationDesc')}</Label>
             <div className="flex gap-2">
               <Input
                 id="location-desc"
-                placeholder="e.g., Amazon Rainforest"
+                placeholder={t('dashboard.input.locationDescPlaceholder')}
                 value={locationDesc}
                 onChange={(e) => setLocationDesc(e.target.value)}
                 disabled={isSuggesting}
               />
               <Button onClick={handleSuggestCoordinates} disabled={isSuggesting || !locationDesc} size="icon">
                 {isSuggesting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-                <span className="sr-only">Suggest Coordinates</span>
+                <span className="sr-only">{t('predict.suggestCoordinates')}</span>
               </Button>
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="latitude">Latitude</Label>
+            <Label htmlFor="latitude">{t('predict.latitude')}</Label>
             <Input id="latitude" placeholder="e.g., 40.7128" value={lat} onChange={(e) => setLat(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="longitude">Longitude</Label>
+            <Label htmlFor="longitude">{t('predict.longitude')}</Label>
             <Input id="longitude" placeholder="e.g., -74.0060" value={lon} onChange={(e) => setLon(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label>Date range</Label>
+            <Label>{t('dashboard.input.dateRange')}</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -140,7 +142,7 @@ export function InputPanel({
                       format(dateRange.from, "LLL dd, y")
                     )
                   ) : (
-                    <span>Pick a date</span>
+                    <span>{t('dashboard.input.pickDate')}</span>
                   )}
                 </Button>
               </PopoverTrigger>
@@ -157,11 +159,11 @@ export function InputPanel({
             </Popover>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="csv-upload">Ground Truth (CSV)</Label>
+            <Label htmlFor="csv-upload">{t('dashboard.input.groundTruth')}</Label>
             <Button asChild variant="outline" className="w-full justify-start text-left font-normal">
                 <Label htmlFor="csv-upload" className="w-full cursor-pointer">
                     <Upload className="mr-2 h-4 w-4" />
-                    <span className="truncate">{fileName || "Upload file"}</span>
+                    <span className="truncate">{fileName || t('dashboard.input.uploadFile')}</span>
                 </Label>
             </Button>
             <Input id="csv-upload" type="file" accept=".csv" className="sr-only" onChange={handleFileChange} />
@@ -171,15 +173,15 @@ export function InputPanel({
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" disabled={history.length === 0}>
-                  <History className="mr-2 h-4 w-4" /> History
+                  <History className="mr-2 h-4 w-4" /> {t('dashboard.history.button')}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-80">
                 <div className="grid gap-4">
                   <div className="space-y-2">
-                    <h4 className="font-medium leading-none">Computation History</h4>
+                    <h4 className="font-medium leading-none">{t('dashboard.history.title')}</h4>
                     <p className="text-sm text-muted-foreground">
-                      Select a past computation to reload its settings.
+                      {t('dashboard.history.description')}
                     </p>
                   </div>
                   <ScrollArea className="h-64">
@@ -199,7 +201,7 @@ export function InputPanel({
                         ))}
                       </div>
                     ) : (
-                      <p className="text-sm text-muted-foreground text-center py-4">No history yet.</p>
+                      <p className="text-sm text-muted-foreground text-center py-4">{t('dashboard.history.empty')}</p>
                     )}
                   </ScrollArea>
                 </div>
@@ -210,7 +212,7 @@ export function InputPanel({
                 <Button variant="secondary" asChild>
                     <Link href={`/crop-advisor?lat=${lat}&lon=${lon}`}>
                         <Wheat className="mr-2 h-4 w-4" />
-                        Crop Advisor
+                        {t('dashboard.input.cropAdvisor')}
                     </Link>
                 </Button>
                 <Button onClick={onCompute} disabled={isComputing}>
@@ -219,7 +221,7 @@ export function InputPanel({
                 ) : (
                     <Cpu className="mr-2 h-4 w-4" />
                 )}
-                Compute Metrics
+                {t('dashboard.input.compute')}
                 </Button>
             </div>
           </div>

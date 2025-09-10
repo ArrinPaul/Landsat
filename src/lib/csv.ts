@@ -1,6 +1,7 @@
+
 import type { MetricData, GroundTruthDataPoint } from "@/lib/types";
 
-export function parseCsv(csvText: string): GroundTruthDataPoint[] | { error: string } {
+export function parseCsv(csvText: string, t: (key: string) => string): GroundTruthDataPoint[] | { error: string } {
   try {
     const rows = csvText.trim().split(/\r?\n/);
     const header = rows.shift()?.toLowerCase().split(',') || [];
@@ -8,7 +9,7 @@ export function parseCsv(csvText: string): GroundTruthDataPoint[] | { error: str
     const valueIndex = header.indexOf('value');
 
     if (dateIndex === -1 || valueIndex === -1) {
-      return { error: "CSV must contain 'date' and 'value' columns." };
+      return { error: t('dashboard.csv.error.columns') };
     }
 
     return rows.map(row => {
@@ -19,14 +20,21 @@ export function parseCsv(csvText: string): GroundTruthDataPoint[] | { error: str
       };
     }).filter(p => !isNaN(p.value) && p.date);
   } catch (e) {
-    return { error: "Failed to parse CSV file. Please check the format." };
+    return { error: t('dashboard.csv.error.parse') };
   }
 }
 
-export function generateCsv(data: MetricData[]): string {
+export function generateCsv(data: MetricData[], t: (key: string) => string): string {
   if (!data.length) return "";
 
-  const headers = "Metric,First Value,Last Value,Change (%),Valid Points (n)";
+  const headers = [
+    t('dashboard.metrics.table.metric'),
+    t('dashboard.metrics.table.start'),
+    t('dashboard.metrics.table.end'),
+    t('dashboard.metrics.table.change'),
+    t('dashboard.metrics.table.points')
+  ].join(',');
+
   const rows = data.map(metric => 
     [
       metric.name,

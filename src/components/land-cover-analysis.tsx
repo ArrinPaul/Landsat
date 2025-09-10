@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import type { LandCoverAnalysis as LandCoverAnalysisType } from "@/lib/types";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, XAxis, YAxis } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { useLanguage } from "@/hooks/use-language";
 
 
 interface LandCoverAnalysisProps {
@@ -30,15 +31,15 @@ const ChangeCell = ({ value }: { value: number }) => {
   );
 };
 
-const rows = [
-    { key: 'vegetation', label: 'Vegetation' },
-    { key: 'water', label: 'Water' },
-    { key: 'builtUp', label: 'Built-up' },
-    { key: 'other', label: 'Other' },
-] as const;
-
-
 export function LandCoverAnalysis({ landCover }: LandCoverAnalysisProps) {
+  const { t } = useLanguage();
+
+  const rows = [
+      { key: 'vegetation', label: t('dashboard.landCover.vegetation') },
+      { key: 'water', label: t('dashboard.landCover.water') },
+      { key: 'builtUp', label: t('dashboard.landCover.builtUp') },
+      { key: 'other', label: t('dashboard.landCover.other') },
+  ] as const;
   
   const chartData = rows.map(row => ({
     name: row.label,
@@ -48,11 +49,11 @@ export function LandCoverAnalysis({ landCover }: LandCoverAnalysisProps) {
 
   const chartConfig = {
     startArea: {
-      label: "Start Area",
+      label: t('dashboard.landCover.startArea'),
       color: "hsl(var(--secondary))",
     },
     endArea: {
-      label: "End Area",
+      label: t('dashboard.landCover.endArea'),
       color: "hsl(var(--primary))",
     },
   }
@@ -60,8 +61,8 @@ export function LandCoverAnalysis({ landCover }: LandCoverAnalysisProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Land Cover Change Analysis</CardTitle>
-        <CardDescription>Area statistics and visualization for different land cover types at the start and end of the selected period.</CardDescription>
+        <CardTitle>{t('dashboard.landCover.title')}</CardTitle>
+        <CardDescription>{t('dashboard.landCover.description')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-8">
         <div className="grid gap-6 md:grid-cols-2">
@@ -69,10 +70,10 @@ export function LandCoverAnalysis({ landCover }: LandCoverAnalysisProps) {
                  <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Land Cover Class</TableHead>
-                      <TableHead className="text-right">Start Area (km²)</TableHead>
-                      <TableHead className="text-right">End Area (km²)</TableHead>
-                      <TableHead className="text-right">Change (%)</TableHead>
+                      <TableHead>{t('dashboard.landCover.class')}</TableHead>
+                      <TableHead className="text-right">{t('dashboard.landCover.startArea')} (km²)</TableHead>
+                      <TableHead className="text-right">{t('dashboard.landCover.endArea')} (km²)</TableHead>
+                      <TableHead className="text-right">{t('dashboard.landCover.change')} (%)</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
