@@ -8,7 +8,7 @@
     "header.settings": "సెట్టింగ్‌లు",
     "header.getStarted": "ప్రారంభించండి",
     "landing.hero.title": "శాటిలైట్ డేటాను చర్య తీసుకోగల అంతర్దృష్టులుగా మార్చండి",
-    "landing.hero.subtitle": "గ్రౌండ్ ట్రూత్ డేటాను అప్‌లోడ్ చేయండి, పర్యావరణ మెట్రిక్‌లను విశ్లేషించండి మరియు మార్పును దృశ్యమానం చేయండి - అన్నీ ఒకే శక్తివంతమైన డాష్‌బోర్డ్‌ನಲ್ಲಿ.",
+    "landing.hero.subtitle": "గ్రౌండ్ ట్రూత్ డేటాను అప్‌లోడ్ చేయండి, పర్యావరణ మెట్రిక్‌లను విశ్లేషించండి మరియు మార్పును దృశ్యమానం చేయండి - అన్నీ ఒకే శక్తివంతమైన డాష్‌బోర్డ్‌లో.",
     "landing.hero.getStarted": "ప్రారంభించండి",
     "landing.hero.predictiveTools": "భవిష్య సూచక సాధనాలు",
     "landing.features.title": "మీ చేతివేళ్ల వద్ద శక్తివంతమైన విశ్లేషణ",
@@ -126,19 +126,8 @@
     "dashboard.csv.error.parse": "CSV ఫైల్‌ను పార్స్ చేయడంలో విఫలమైంది. దయచేసి ఫార్మాట్‌ను తనిఖీ చేయండి.",
     "dashboard.csv.success.title": "విజయం",
     "dashboard.csv.success.description": "{count} గ్రౌండ్ ట్రూత్ పాయింట్లు లోడ్ చేయబడ్డాయి.",
-    "dashboard.poi.title": "ఆసక్తికర ప్రదేశాలు",
-    "dashboard.poi.description": "అన్వేషించడం ప్రారంభించడానికి ముందుగా నిర్వచించిన స్థానాన్ని ఎంచుకోండి.",
-    "dashboard.poi.analyze": "విశ్లేషించండి",
-    "dashboard.poi.toast.title": "స్థానం లోడ్ చేయబడింది",
-    "dashboard.poi.toast.description": "{location} కోసం సెట్టింగ్‌లు లోడ్ చేయబడ్డాయి. గణన ప్రారంభమవుతోంది...",
-    "dashboard.poi.amazon.name": "అమెజాన్ రెయిన్‌ఫారెస్ట్",
-    "dashboard.poi.amazon.description": "ప్రపంచంలోని అతిపెద్ద ఉష్ణమండల వర్షారణ్యం యొక్క పచ్చదనాన్ని అన్వేషించండి.",
-    "dashboard.poi.sahara.name": "సహారా ఎడారి",
-    "dashboard.poi.sahara.description": "ఆఫ్రికా అంతటా విస్తరించి ఉన్న विशालమైన ఎడారి యొక్క శుష్క పరిస్థితులను పర్యవేక్షించండి.",
-    "dashboard.poi.nile.name": "నైలు నది డెల్టా",
-    "dashboard.poi.nile.description": "మధ్యధరాలోకి ప్రవహించే ఈ ఫలవంతమైన నదీ డెల్టా యొక్క వ్యవసాయ భూములను విశ్లేషించండి.",
-    "dashboard.poi.himalayas.name": "హిమాలయాలు",
-    "dashboard.poi.himalayas.description": "మౌంట్ ఎవరెస్ట్ నిలయమైన ప్రపంచంలోని అత్యంత ఎత్తైన పర్వత శ్రేణి యొక్క మంచు మరియు హిమాన్ని వీక్షించండి.",
+    "dashboard.welcome.title": "ఎర్త్ ఇన్‌సైట్స్‌కు స్వాగతం",
+    "dashboard.welcome.description": "మీ విశ్లేషణను ప్రారంభించడానికి పైన కోఆర్డినేట్‌లు లేదా ఒక స్థాన వివరణను నమోదు చేయండి మరియు ఒక తేదీ పరిధిని ఎంచుకోండి.",
     "dashboard.compute.success.title": "విజయం",
     "dashboard.compute.success.description": "మెట్రిక్‌లు మరియు భూమి కవర్ విశ్లేషణ పూర్తయింది.",
     "dashboard.compute.failure": "మెట్రిక్‌లను గణించలేకపోయాము. దయచేసి మీ ఇన్‌పుట్‌లను తనిఖీ చేసి, మళ్లీ ప్రయత్నించండి.",
@@ -239,5 +228,3 @@
     "cropAdvisor.result.alternative": "ప్రత్యామ్నాయ సూచన",
     "cropAdvisor.result.alternativeDesc": "మీ పరిస్థితులకు మరో మంచి ఎంపిక <strong>{crop}</strong> కావచ్చు."
 }
-
-    
