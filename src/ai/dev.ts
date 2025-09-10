@@ -14,6 +14,4 @@ import '@/ai/flows/text-to-speech.ts';
 import '@/ai/flows/compute-metrics.ts';
 import '@/ai/flows/predict-soil-moisture.ts';
 import '@/ai/flows/predict-crop-yield.ts';
-import '@/ai/flows/suggest-crop.ts';
-import '@/ai/tools/get-soil-moisture.ts';
-import '@/ai/tools/get-soil-type.ts';
+import '@/

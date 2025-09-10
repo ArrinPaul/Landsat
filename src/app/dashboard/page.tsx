@@ -4,6 +4,7 @@
 import { Dashboard } from "@/components/dashboard";
 import { Header } from "@/components/header";
 import { Chatbot } from "@/components/chatbot";
+import { PointsOfInterest } from "@/components/points-of-interest";
 
 export default function DashboardPage() {
   return (
@@ -20,4 +21,3 @@ export default function DashboardPage() {
       </footer>
     </div>
   );
-}
