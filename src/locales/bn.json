@@ -1,3 +1,4 @@
+
 {
     "header.title": "আর্থ ইনসাইটস",
     "header.features": "বৈশিষ্ট্য",
@@ -45,5 +46,68 @@
     "contact.submitted.close": "বন্ধ করুন",
     "footer.copyright": "© 2025 আর্থ ইনসাইটস। সর্বস্বত্ব সংরক্ষিত। | দল: লুনারএক্স",
     "footer.about": "আমাদের সম্পর্কে",
-    "footer.contact": "যোগাযোগ"
+    "footer.contact": "যোগাযোগ",
+
+    "predict.title": "ভবিষ্যদ্বাণীমূলক অন্তর্দৃষ্টি",
+    "predict.description": "আপনার অবস্থানের জন্য AI-চালিত ভবিষ্যদ্বাণী পান। একটি অবস্থান বিবরণ বা স্থানাঙ্ক লিখে শুরু করুন।",
+    "predict.locationDesc": "অবস্থানের বিবরণ",
+    "predict.locationDescPlaceholder": "যেমন, নীলনদ বদ্বীপ",
+    "predict.suggestCoordinates": "স্থানাঙ্ক পরামর্শ দিন",
+    "predict.latitude": "অক্ষাংশ",
+    "predict.longitude": "দ্রাঘিমাংশ",
+
+    "predict.weather.title": "আবহাওয়ার পূর্বাভাস",
+    "predict.weather.description": "বর্তমান আবহাওয়া এবং ২৪-ঘন্টার পূর্বাভাস পান।",
+    "predict.weather.button": "আবহাওয়ার পূর্বাভাস দিন",
+
+    "predict.crop.title": "ফসল পরিকল্পনা",
+    "predict.crop.description": "উপযুক্ত ফসল এবং রোপণ সময়সূচীর উপর সুপারিশ গ্রহণ করুন।",
+    "predict.crop.button": "ফসলের পরিকল্পনা করুন",
+
+    "predict.irrigation.title": "সেচ সময়সূচী",
+    "predict.irrigation.description": "কখন এবং কতটা জল দিতে হবে সে সম্পর্কে AI-ভিত্তিক পরামর্শ পান।",
+    "predict.irrigation.button": "সেচের সময়সূচী করুন",
+
+    "predict.soil.title": "মাটির আর্দ্রতা",
+    "predict.soil.description": "মাটিতে বর্তমান আয়তনের জলের পরিমাণ পূর্বাভাস দিন।",
+    "predict.soil.button": "আর্দ্রতার পূর্বাভাস দিন",
+
+    "predict.yield.title": "ফসলের ফলন",
+    "predict.yield.description": "নির্বাচিত অবস্থানের জন্য সম্ভাব্য ফসলের ফলন পূর্বাভাস দিন।",
+    "predict.yield.button": "ফলনের পূর্বাভাস",
+
+    "predict.error.noLocation.title": "ত্রুটি",
+    "predict.error.noLocation.description": "অনুগ্রহ করে একটি অবস্থান বিবরণ লিখুন।",
+    "predict.error.aiError.title": "AI ত্রুটি",
+    "predict.error.noCoords.title": "ত্রুটি",
+    "predict.error.noCoords.description": "অনুগ্রহ করে বৈধ স্থানাঙ্ক প্রদান করুন।",
+    "predict.error.predictionError.title": "পূর্বাভাস ত্রুটি",
+    "predict.error.unexpected.title": "ত্রুটি",
+    "predict.error.unexpected.description": "একটি অপ্রত্যাশিত ত্রুটি ঘটেছে।",
+    "predict.coordinatesSuggested.title": "প্রস্তাবিত স্থানাঙ্ক",
+    "predict.coordinatesSuggested.confidence": "আত্মবিশ্বাস",
+
+    "predict.result.cropPlan.title": "ফসল পরিকল্পনা সুপারিশ",
+    "predict.result.cropPlan.plantingWindow": "রোপণের সময়",
+    "predict.result.cropPlan.suitableCrops": "উপযুক্ত ফসল",
+    "predict.result.cropPlan.cooperativeFarming": "সমবায় চাষের পরামর্শ",
+
+    "predict.result.irrigation.title": "সেচ সময়সূচী সুপারিশ",
+    "predict.result.irrigation.recommendation": "সুপারিশ",
+    "predict.result.irrigation.nextDate": "পরবর্তী প্রস্তাবিত সেচ",
+    "predict.result.irrigation.wateringDepth": "জল দেওয়ার গভীরতা",
+    "predict.result.irrigation.notes": "নোট",
+
+    "predict.result.soil.title": "মাটির আর্দ্রতা পূর্বাভাস",
+    "predict.result.soil.vwc": "ভলিউমেট্রিক জলের উপাদান",
+    "predict.result.soil.summary": "সারাংশ",
+    "predict.result.soil.confidence": "আত্মবিশ্বাস",
+
+    "predict.result.yield.title": "ফসলের ফলন পূর্বাভাস",
+    "predict.result.yield.predictedYield": "পূর্ব بینی ফলন",
+    "predict.result.yield.unit": "টন/হেক্টর",
+    "predict.result.yield.notes": "নোট",
+    "predict.result.yield.confidence": "আত্মবিশ্বাস"
 }
+
+    

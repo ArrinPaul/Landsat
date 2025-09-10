@@ -1,3 +1,4 @@
+
 {
     "header.title": "ఎర్త్ ఇన్‌సైట్స్",
     "header.features": "లక్షణాలు",
@@ -6,10 +7,10 @@
     "header.dashboard": "డాష్‌బోర్డ్",
     "header.settings": "సెట్టింగ్‌లు",
     "header.getStarted": "ప్రారంభించండి",
-    "landing.hero.title": "శాటిలైట్ డేటాను చర్య తీసుకోగల అంతర్దృષ્ટులుగా మార్చండి",
-    "landing.hero.subtitle": "గ్రౌండ్ ట్రూత్ డేటాను అప్‌లోడ్ చేయండి, పర్యావరణ మెట్రిక్‌లను విశ్లేషించండి మరియు మార్పును దృశ్యమానం చేయండి - అన్నీ ఒకే శక్తివంతమైన డాష్‌బోర్డ్‌లో.",
+    "landing.hero.title": "శాటిలైట్ డేటాను చర్య తీసుకోగల అంతర్దృష్టులుగా మార్చండి",
+    "landing.hero.subtitle": "గ్రౌండ్ ట్రూత్ డేటాను అప్‌లోడ్ చేయండి, పర్యావరణ మెట్రిక్‌లను విశ్లేషించండి మరియు మార్పును దృశ్యమానం చేయండి - అన్నీ ఒకే శక్తివంతమైన డాష్‌బోర్డ్‌ನಲ್ಲಿ.",
     "landing.hero.getStarted": "ప్రారంభించండి",
-    "landing.hero.predictiveTools": "முன்னறிవింపు సాధనాలు",
+    "landing.hero.predictiveTools": "భవిష్య సూచక సాధనాలు",
     "landing.features.title": "మీ చేతివేళ్ల వద్ద శక్తివంతమైన విశ్లేషణ",
     "landing.features.subtitle": "వృక్షసంపద ఆరోగ్యం నుండి పట్టణ విస్తరణ వరకు, మీకు సమాచారంతో కూడిన నిర్ణయాలు తీసుకోవడానికి అవసరమైన డేటాను పొందండి.",
     "landing.features.keyFeatures": "ప్రಮುಖ లక్షణాలు",
@@ -45,5 +46,68 @@
     "contact.submitted.close": "మూసివేయండి",
     "footer.copyright": "© 2025 ఎర్త్ ఇన్‌సైట్స్. అన్ని హక్కులు ప్రత్యేకించబడినవి. | బృందం: లూనార్ఎక్స్",
     "footer.about": "మా గురించి",
-    "footer.contact": "సంప్రదించండి"
+    "footer.contact": "సంప్రదించండి",
+
+    "predict.title": "முன்னறிவிப்பு అంతర్దృష్టులు",
+    "predict.description": "మీ స్థానం కోసం AI-ఆధారిత అంచనాలను పొందండి. స్థాన వివరణ లేదా కోఆర్డినేట్‌లను నమోదు చేయడం ద్వారా ప్రారంభించండి.",
+    "predict.locationDesc": "స్థాన వివరణ",
+    "predict.locationDescPlaceholder": "ఉదా., నైలు నది డెల్టా",
+    "predict.suggestCoordinates": "కోఆర్డినేట్‌లను సూచించండి",
+    "predict.latitude": "అక్షాంశం",
+    "predict.longitude": "రేఖాంశం",
+
+    "predict.weather.title": "వాతావరణ సూచన",
+    "predict.weather.description": "ప్రస్తుత వాతావరణం మరియు 24-గంటల సూచనను పొందండి.",
+    "predict.weather.button": "వాతావరణాన్ని అంచనా వేయండి",
+
+    "predict.crop.title": "పంట ప్రణాళిక",
+    "predict.crop.description": "అనువైన పంటలు మరియు నాటడం షెడ్యూల్‌లపై సిఫార్సులను స్వీకరించండి.",
+    "predict.crop.button": "పంటలను ప్లాన్ చేయండి",
+
+    "predict.irrigation.title": "నీటిపారుదల షెడ్యూల్",
+    "predict.irrigation.description": "మీ పొలాలకు ఎప్పుడు మరియు ఎంత నీరు పెట్టాలనే దానిపై AI-ఆధారిత సలహా పొందండి.",
+    "predict.irrigation.button": "నీటిపారుదలని షెడ్యూల్ చేయండి",
+
+    "predict.soil.title": "నేల తేమ",
+    "predict.soil.description": "నేలలో ప్రస్తుత వాల్యూమెట్రిక్ నీటి కంటెంట్‌ను అంచనా వేయండి.",
+    "predict.soil.button": "తేమను అంచనా వేయండి",
+
+    "predict.yield.title": "పంట దిగుబడి",
+    "predict.yield.description": "ఎంచుకున్న స్థానం కోసం సంభావ్య పంట దిగుబడిని అంచనా వేయండి.",
+    "predict.yield.button": "దిగుబడిని అంచనా వేయండి",
+
+    "predict.error.noLocation.title": "లోపం",
+    "predict.error.noLocation.description": "దయచేసి స్థాన వివరణను నమోదు చేయండి.",
+    "predict.error.aiError.title": "AI లోపం",
+    "predict.error.noCoords.title": "లోపం",
+    "predict.error.noCoords.description": "దయచేసి చెల్లుబాటు అయ్యే కోఆర్డినేట్‌లను అందించండి.",
+    "predict.error.predictionError.title": "అంచనా లోపం",
+    "predict.error.unexpected.title": "లోపం",
+    "predict.error.unexpected.description": "ఊహించని లోపం సంభవించింది.",
+    "predict.coordinatesSuggested.title": "సూచించబడిన కోఆర్డినేట్లు",
+    "predict.coordinatesSuggested.confidence": "విశ్వాసం",
+
+    "predict.result.cropPlan.title": "పంట ప్రణాళిక సిఫార్సు",
+    "predict.result.cropPlan.plantingWindow": "నాటడం విండో",
+    "predict.result.cropPlan.suitableCrops": "అనువైన పంటలు",
+    "predict.result.cropPlan.cooperativeFarming": "సహకార వ్యవసాయ సూచన",
+
+    "predict.result.irrigation.title": "నీటిపారుదల షెడ్యూల్ సిఫార్సు",
+    "predict.result.irrigation.recommendation": "సిఫార్సు",
+    "predict.result.irrigation.nextDate": "తదుపరి సిఫార్సు చేయబడిన నీటిపారుదల",
+    "predict.result.irrigation.wateringDepth": "నీరు త్రాగుట లోతు",
+    "predict.result.irrigation.notes": "గమనికలు",
+
+    "predict.result.soil.title": "నేల తేమ అంచనా",
+    "predict.result.soil.vwc": "వాల్యూమెట్రిక్ వాటర్ కంటెంట్",
+    "predict.result.soil.summary": "సారాంశం",
+    "predict.result.soil.confidence": "విశ్వాసం",
+
+    "predict.result.yield.title": "పంట దిగుబడి అంచనా",
+    "predict.result.yield.predictedYield": "అంచనా వేసిన దిగుబడి",
+    "predict.result.yield.unit": "టన్నులు/హెక్టారు",
+    "predict.result.yield.notes": "గమనికలు",
+    "predict.result.yield.confidence": "విశ్వాసం"
 }
+
+    

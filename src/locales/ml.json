@@ -1,3 +1,4 @@
+
 {
     "header.title": "എർത്ത് ഇൻസൈറ്റ്സ്",
     "header.features": "സവിശേഷതകൾ",
@@ -14,17 +15,17 @@
     "landing.features.subtitle": "സസ്യങ്ങളുടെ ആരോഗ്യം മുതൽ നഗരവികസനം വരെ, അറിവോടെയുള്ള തീരുമാനങ്ങൾ എടുക്കാൻ ആവശ്യമായ ഡാറ്റ നേടുക.",
     "landing.features.keyFeatures": "പ്രധാന സവിശേഷതകൾ",
     "landing.features.coordinateInput": "കോർഡിനേറ്റ് ഇൻപുട്ട്",
-    "landing.features.coordinateInputDesc": "ഭൂമിയിലെ ഏത് പ്രദേശത്തെയും വിശകലനം ചെയ്യാൻ ಅಕ್ಷാംശം/രೇಖാംശം നൽകുക.",
+    "landing.features.coordinateInputDesc": "ഭൂമിയിലെ ഏത് പ്രദേശത്തെയും വിശകലനം ചെയ്യാൻ അക്ഷാംശം/രೇಖാംശം നൽകുക.",
     "landing.features.metricComputation": "മെട്രിക് കണക്കുകൂട്ടൽ",
     "landing.features.metricComputationDesc": "NDVI, NDWI, NDBI പോലുള്ള പ്രധാന സ്പെക്ട്രൽ സൂചികകൾ കണക്കാക്കുക.",
     "landing.features.interactiveVisuals": "സംവേദനാത്മക ദൃശ്യങ്ങൾ",
     "landing.features.interactiveVisualsDesc": "ടൈം-സീരീസ് ചാർട്ടുകളും ഉപഗ്രഹം vs ഗ്രൗണ്ട് ട്രൂത്ത് സ്കാറ്റർ പ്ലോട്ടുകളും.",
     "landing.features.exportEasily": "എളുപ്പത്തിൽ കയറ്റുമതി ചെയ്യുക",
-    "landing.features.exportEasilyDesc": "ഗവേഷണത്തിനായി നിങ്ങളുടെ കണക്കുകൂട്ടിയ மெട്രിക്കുകൾ CSV ഫോർമാറ്റിൽ ഡൗൺലോഡ് ചെയ്യുക.",
+    "landing.features.exportEasilyDesc": "ഗവേഷണത്തിനായി നിങ്ങളുടെ കണക്കുകൂട്ടിയ മെട്രിക്കുകൾ CSV ഫോർമാറ്റിൽ ഡൗൺലോഡ് ചെയ്യുക.",
     "landing.whyUs.title": "ആത്യന്തിക പാരിസ്ഥിതിക ഡാറ്റാ പ്ലാറ്റ്ഫോം",
     "landing.whyUs.subtitle": "സങ്കീർണ്ണമായ ഉപഗ്രഹ ചിത്രങ്ങളും தெளிவான, പ്രവർത്തനക്ഷമമായ പാരിസ്ഥിതിക बुद्धिमत्ताയും തമ്മിൽ ഞങ്ങൾ തടസ്സമില്ലാത്ത ഒരു പാലം നൽകുന്നു.",
     "landing.whyUs.tag": "എന്തുകൊണ്ട് ഞങ്ങൾ?",
-    "landing.whyUs.point1": "शक्तिशाली, அளவிடக்கூடிய വിശകലനത്തിനായി Google Earth Engine-ൽ നിർമ്മിച്ചത്.",
+    "landing.whyUs.point1": "ശക്തമായ, அளவிடக்கூடிய വിശകലനത്തിനായി Google Earth Engine-ൽ നിർമ്മിച്ചത്.",
     "landing.whyUs.point2": "നിങ്ങളുടെ ഗവേഷണത്തിന് കരുത്തേകാൻ കൃത്യവും വേഗതയേറിയതുമായ പാരിസ്ഥിതിക ഉൾക്കാഴ്ചകൾ.",
     "landing.whyUs.point3": "അർത്ഥഗർഭಿತമായ ഡാറ്റ പര്യവേക്ഷണത്തിനായി ഉപയോക്തൃ-സൗഹൃദവും ശക്തവുമായ ദൃശ്യവൽക്കരണം.",
     "landing.whyUs.point4": "ഗവേഷണത്തിനും തീരുമാനമെടുക്കുന്നതിനും കയറ്റുമതിക്ക് തയ്യാറാണ്.",
@@ -45,5 +46,68 @@
     "contact.submitted.close": "അടയ്ക്കുക",
     "footer.copyright": "© 2025 എർത്ത് ഇൻസൈറ്റ്സ്. എല്ലാ അവകാശങ്ങളും നിക്ഷിപ്തം. | ടീം: ലൂണാർഎക്സ്",
     "footer.about": "ഞങ്ങളെക്കുറിച്ച്",
-    "footer.contact": "ബന്ധപ്പെടുക"
+    "footer.contact": "ബന്ധപ്പെടുക",
+
+    "predict.title": "പ്രവചനപരമായ ഉൾക്കാഴ്ചകൾ",
+    "predict.description": "നിങ്ങളുടെ ലൊക്കേഷനായി AI- പവർ ചെയ്ത പ്രവചനങ്ങൾ നേടുക. ഒരു ലൊക്കേഷൻ വിവരണം അല്ലെങ്കിൽ കോർഡിനേറ്റുകൾ നൽകി ആരംഭിക്കുക.",
+    "predict.locationDesc": "ലൊക്കേഷൻ വിവരണം",
+    "predict.locationDescPlaceholder": "ഉദാഹരണത്തിന്, നൈൽ നദി ഡെൽറ്റ",
+    "predict.suggestCoordinates": "കോർഡിനേറ്റുകൾ നിർദ്ദേശിക്കുക",
+    "predict.latitude": "അക്ഷാംശം",
+    "predict.longitude": "രേഖാംശം",
+
+    "predict.weather.title": "കാലാവസ്ഥാ പ്രവചനം",
+    "predict.weather.description": "നിലവിലെ കാലാവസ്ഥയും 24 മണിക്കൂർ പ്രവചനവും നേടുക.",
+    "predict.weather.button": "കാലാവസ്ഥ പ്രവചിക്കുക",
+
+    "predict.crop.title": "വിള ആസൂത്രണം",
+    "predict.crop.description": "അനുയോജ്യമായ വിളകളെയും നടീൽ ഷെഡ്യൂളുകളെയും കുറിച്ചുള്ള ശുപാർശകൾ സ്വീകരിക്കുക.",
+    "predict.crop.button": "വിളകൾ ആസൂത്രണം ചെയ്യുക",
+
+    "predict.irrigation.title": "ജലസേചന ഷെഡ്യൂൾ",
+    "predict.irrigation.description": "നിങ്ങളുടെ വയലുകളിൽ എപ്പോൾ, എത്രമാത്രം വെള്ളം ഒഴിക്കണം എന്നതിനെക്കുറിച്ച് AI- അടിസ്ഥാനമാക്കിയുള്ള ഉപദേശം നേടുക.",
+    "predict.irrigation.button": "ജലസേചനം ഷെഡ്യൂൾ ചെയ്യുക",
+
+    "predict.soil.title": "മണ്ണിലെ ഈർപ്പം",
+    "predict.soil.description": "മണ്ണിലെ നിലവിലെ വോള്യൂമെട്രിക് ജലത്തിന്റെ അളവ് പ്രവചിക്കുക.",
+    "predict.soil.button": "ഈർപ്പം പ്രവചിക്കുക",
+
+    "predict.yield.title": "വിളവ്",
+    "predict.yield.description": "തിരഞ്ഞെടുത്ത ലൊക്കേഷനായി സാധ്യതയുള്ള വിളവ് പ്രവചിക്കുക.",
+    "predict.yield.button": "വിളവ് പ്രവചിക്കുക",
+
+    "predict.error.noLocation.title": "പിശക്",
+    "predict.error.noLocation.description": "ദയവായി ഒരു ലൊക്കേഷൻ വിവരണം നൽകുക.",
+    "predict.error.aiError.title": "AI പിശക്",
+    "predict.error.noCoords.title": "പിശക്",
+    "predict.error.noCoords.description": "ദയവായി സാധുവായ കോർഡിനേറ്റുകൾ നൽകുക.",
+    "predict.error.predictionError.title": "പ്രവചന പിശക്",
+    "predict.error.unexpected.title": "പിശക്",
+    "predict.error.unexpected.description": "ഒരു അപ്രതീക്ഷിത പിശക് സംഭവിച്ചു.",
+    "predict.coordinatesSuggested.title": "നിർദ്ദേശിച്ച കോർഡിനേറ്റുകൾ",
+    "predict.coordinatesSuggested.confidence": "ആത്മവിശ്വാസം",
+
+    "predict.result.cropPlan.title": "വിള പദ്ധതി ശുപാർശ",
+    "predict.result.cropPlan.plantingWindow": "നടീൽ വിൻഡോ",
+    "predict.result.cropPlan.suitableCrops": "അനുയോജ്യമായ വിളകൾ",
+    "predict.result.cropPlan.cooperativeFarming": "സഹകരണ കൃഷി നിർദ്ദേശം",
+
+    "predict.result.irrigation.title": "ജലസേചന ഷെഡ്യൂൾ ശുപാർശ",
+    "predict.result.irrigation.recommendation": "ശുപാർശ",
+    "predict.result.irrigation.nextDate": "അടുത്ത ശുപാർശ ചെയ്യപ്പെട്ട ജലസേചനം",
+    "predict.result.irrigation.wateringDepth": "വെള്ളമൊഴിക്കുന്നതിന്റെ ആഴം",
+    "predict.result.irrigation.notes": "കുറിപ്പുകൾ",
+
+    "predict.result.soil.title": "മണ്ണിലെ ഈർപ്പ പ്രവചനം",
+    "predict.result.soil.vwc": "വോള്യൂമെട്രിക് ജലത്തിന്റെ ഉള്ളടക്കം",
+    "predict.result.soil.summary": "ചുരുക്കം",
+    "predict.result.soil.confidence": "ആത്മവിശ്വാസം",
+
+    "predict.result.yield.title": "വിളവ് പ്രവചനം",
+    "predict.result.yield.predictedYield": "പ്രവചിച്ച വിളവ്",
+    "predict.result.yield.unit": "ടൺ/ഹെക്ടർ",
+    "predict.result.yield.notes": "കുറിപ്പുകൾ",
+    "predict.result.yield.confidence": "ആത്മവിശ്വാസം"
 }
+
+    

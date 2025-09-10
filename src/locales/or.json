@@ -1,3 +1,4 @@
+
 {
     "header.title": "ଆର୍ଥ ଇନସାଇଟ୍ସ",
     "header.features": "ବୈଶିଷ୍ଟ୍ୟଗୁଡିକ",
@@ -11,7 +12,7 @@
     "landing.hero.getStarted": "ଆରମ୍ଭ କରନ୍ତୁ",
     "landing.hero.predictiveTools": "ଭବିଷ୍ୟବାଣୀ ଉପକରଣ",
     "landing.features.title": "ଆପଣଙ୍କ ଆଙ୍ଗୁଠି நுனியில் ଶକ୍ତିଶାଳୀ ବିଶ୍ଳେଷଣ",
-    "landing.features.subtitle": "ବୃକ୍ଷଲତା ସ୍ୱାସ୍ଥ୍ୟରୁ ସହରୀ ସମ୍ପ୍ରସାରଣ ପର୍ଯ୍ୟନ୍ତ, ଆପଣଙ୍କୁ ସୂଚਿਤ ନିଷ୍పత్తి ନେବାକୁ ଆବଶ୍ୟક ଡାଟା ପਾଆନ୍ତু।",
+    "landing.features.subtitle": "ବୃକ୍ଷଲତା ସ୍ୱାସ୍ଥ୍ୟରୁ ସହରୀ ସମ୍ପ୍ରସାରଣ ପର୍ଯ୍ୟନ୍ତ, ଆପଣଙ୍କୁ ସୂଚିତ ନିଷ୍పత్తి ନେବାକୁ ଆବଶ୍ୟક ଡାଟା ପਾଆନ୍ତু।",
     "landing.features.keyFeatures": "ਮੁੱਖ ବୈଶିଷ୍ଟ୍ୟଗୁଡିକ",
     "landing.features.coordinateInput": "निर्देशांक इनपुट",
     "landing.features.coordinateInputDesc": "ପୃଥିବୀର ଯେକୌଣସି ଅଞ୍ଚଳ ବିଶ୍ଳେଷଣ କରିବାକୁ অक्षांश/रेखांश ପ୍ରବେଶ କରନ୍ତୁ।",
@@ -22,7 +23,7 @@
     "landing.features.exportEasily": "ସହଜରେ ରପ୍ତାନି କରନ୍ତୁ",
     "landing.features.exportEasilyDesc": "ଅନୁସନ୍ଧାନ ପାଇଁ ଆପଣଙ୍କର ଗଣିତ ମେଟ୍ରିକ୍ସ CSV ଫର୍ମାଟରେ ଡାଉନଲୋడ్ କରନ୍ତୁ।",
     "landing.whyUs.title": "ଅନ୍ତିମ ପରିବେଶ ଡାଟା ପ୍ଲାଟଫର୍ମ",
-    "landing.whyUs.subtitle": "ଆମେ ଜଟିଳ ଉପଗ୍ରହ ଚିତ୍ର ଏବଂ ସ୍ପଷ୍ଟ, କାର୍ଯ୍ୟକ୍ଷମ ପରିବେଶ बुद्धिमत्ता ମଧ୍ୟରେ ଏକ ନਿਰਵିఘ్ନ ସେତୁ ਪ੍ਰਦਾਨ କରୁ।",
+    "landing.whyUs.subtitle": "ଆମେ ଜଟିଳ ଉପଗ୍ରହ ଚିତ୍ର ଏବଂ ସ୍ପଷ୍ଟ, କାର୍ଯ୍ୟକ୍ଷମ ପରିବେଶ बुद्धिमत्ता ମଧ୍ୟରେ ଏକ ନିର୍ਵିఘନ ସେତୁ ਪ੍ਰਦਾਨ କରୁ।",
     "landing.whyUs.tag": "ଆମେ କାହିଁକି?",
     "landing.whyUs.point1": "শক্তিশালী, स्केलेबल ବିଶ୍ଳେଷଣ ପାଇଁ Google Earth Engine ଉପରେ ନିର୍ମିତ।",
     "landing.whyUs.point2": "ଆପଣଙ୍କ ଅନుସନ୍ଧାନକୁ ଶକ୍ତି ଦେବାକୁ ସଠిକ୍, ଦ୍ରୁତ ପରିବେଶ ଅନ୍ତର୍ଦृष्टि।",
@@ -45,5 +46,68 @@
     "contact.submitted.close": "ବନ୍ଦ କରନ୍ତୁ",
     "footer.copyright": "© 2025 ଆର୍ଥ ଇନସାଇଟ୍ସ। ସମସ୍ତ ଅଧିକାର ସଂରକ୍ଷିତ। | ଟିମ୍: ଲୁନାରଏକ୍ସ",
     "footer.about": "ଆମ ବିଷୟରେ",
-    "footer.contact": "ଯୋଗାଯੋਗ"
+    "footer.contact": "ଯୋଗାଯੋਗ",
+
+    "predict.title": "ଭବିଷ୍ୟବାଣୀ ଅନ୍ତର୍ଦृष्टि",
+    "predict.description": "ଆପଣଙ୍କ ସ୍ଥାନ ପାଇଁ AI-ଆధାରିତ ଭବିଷ୍ୟବାଣୀ ପାଆନ୍ତୁ। ଏକ ସ୍ଥାନ ବିବରଣୀ କିମ୍ବା କୋର୍ଡିନେଟ୍ ପ୍ରବେଶ କରି ଆରମ୍ଭ କରନ୍ତୁ।",
+    "predict.locationDesc": "ସ୍ଥାନ ବିବରଣୀ",
+    "predict.locationDescPlaceholder": "ଯଥା, ନୀଳ ନଦୀ ଡେଲ୍ଟା",
+    "predict.suggestCoordinates": "କୋର୍ଡିନେଟ୍ ପରାମର୍ଶ ଦିଅନ୍ତୁ",
+    "predict.latitude": "ଅକ୍ଷାଂଶ",
+    "predict.longitude": "ଦ୍ରାଘିମା",
+
+    "predict.weather.title": "ପାଣିପାଗ ପୂର୍ବାନୁମାନ",
+    "predict.weather.description": "ବର୍ତ୍ତମାନର ପାଣିପାଗ ଏବଂ ୨୪-ଘଣ୍ଟିଆ ପୂର୍ବାନୁମାନ ପାଆନ୍ତୁ।",
+    "predict.weather.button": "ପାଣିପାଗର ଭବିଷ୍ୟବାଣୀ କରନ୍ତୁ",
+
+    "predict.crop.title": "ଫସଲ ଯୋଜନା",
+    "predict.crop.description": "ଉପଯୁକ୍ତ ଫସଲ ଏବଂ ରୋପଣ କାର୍ଯ୍ୟସୂଚୀ ଉପରେ ସୁପାରିଶ ଗ୍ରହଣ କରନ୍ତୁ।",
+    "predict.crop.button": "ଫସଲ ଯୋଜନା କରନ୍ତୁ",
+
+    "predict.irrigation.title": "ଜଳସେଚନ କାର୍ଯ୍ୟସୂଚୀ",
+    "predict.irrigation.description": "ଆପଣଙ୍କ କ୍ଷେତରେ କେବେ ଏବଂ କେତେ ପାଣି ଦେବାକୁ ହେବ, ସେଥିପାଇଁ AI-ଆధାରିତ ପରାମର୍ଶ ପାଆନ୍ତୁ।",
+    "predict.irrigation.button": "ଜଳସେଚନ କାର୍ଯ୍ୟସୂଚୀ କରନ୍ତୁ",
+
+    "predict.soil.title": "ମୃତ୍ତିକା ଆର୍ଦ୍ରତା",
+    "predict.soil.description": "ମୃତ୍ତିକାରେ ବର୍ତ୍ତମାନର ଭଲ୍ୟୁମେଟ୍ରିକ୍ ଜଳ ପରିମାଣର ଭବିଷ୍ୟବାଣୀ କରନ୍ତୁ।",
+    "predict.soil.button": "ଆର୍ଦ୍ରତାର ଭବିଷ୍ୟବାଣୀ କରନ୍ତୁ",
+
+    "predict.yield.title": "ଫସଲ ଅମଳ",
+    "predict.yield.description": "ଚୟନିତ ସ୍ଥାନ ପାଇଁ ସମ୍ଭାବ୍ୟ ଫସଲ ଅମଳର ପୂର୍ବାନୁମାନ କରନ୍ତୁ।",
+    "predict.yield.button": "ଅମଳ ପୂର୍ବାନୁମାନ କରନ୍ତୁ",
+
+    "predict.error.noLocation.title": "ତ୍ରୁଟି",
+    "predict.error.noLocation.description": "ଦୟାକରି ଏକ ସ୍ଥାନ ବିବରଣୀ ପ୍ରବେଶ କରନ୍ତୁ।",
+    "predict.error.aiError.title": "AI ତ୍ରୁଟି",
+    "predict.error.noCoords.title": "ତ୍ରୁଟି",
+    "predict.error.noCoords.description": "ଦୟାକରି ବୈଧ କୋର୍ଡିନେଟ୍ ପ୍ରଦାନ କରନ୍ତୁ।",
+    "predict.error.predictionError.title": "ଭବିଷ୍ୟବାଣୀ ତ୍ରୁଟି",
+    "predict.error.unexpected.title": "ତ୍ରୁଟି",
+    "predict.error.unexpected.description": "ଏକ ଅପ୍ରତ୍ୟାଶିତ ତ୍ରୁଟି ଘଟିଲା।",
+    "predict.coordinatesSuggested.title": "ପରାମର୍ଶିତ କୋର୍ଡିନେଟ୍",
+    "predict.coordinatesSuggested.confidence": "ଆତ୍ମବିଶ୍ୱାସ",
+
+    "predict.result.cropPlan.title": "ଫସଲ ଯୋଜନା ସୁପାରିଶ",
+    "predict.result.cropPlan.plantingWindow": "ରୋପଣ ୱିଣ୍ଡୋ",
+    "predict.result.cropPlan.suitableCrops": "ଉପଯୁକ୍ତ ଫସଲ",
+    "predict.result.cropPlan.cooperativeFarming": "ସମବାୟ ଚାଷ ପରାମର୍ଶ",
+
+    "predict.result.irrigation.title": "ଜଳସେଚନ କାର୍ଯ୍ୟସୂଚୀ ସୁପାରିଶ",
+    "predict.result.irrigation.recommendation": "ସୁପାରିଶ",
+    "predict.result.irrigation.nextDate": "ପରବର୍ତ୍ତୀ ସୁପାରିଶ କରାଯାଇଥିବା ଜଳସେଚନ",
+    "predict.result.irrigation.wateringDepth": "ଜଳସେଚନ ଗଭୀରତା",
+    "predict.result.irrigation.notes": "ଟିପ୍ପଣୀ",
+
+    "predict.result.soil.title": "ମୃତ୍ତିକା ଆର୍ଦ୍ରତା ଭବିଷ୍ୟବାଣୀ",
+    "predict.result.soil.vwc": "ଭଲ୍ୟୁମେଟ୍ରିକ୍ ଜଳ ପରିମାଣ",
+    "predict.result.soil.summary": "ସାରାଂଶ",
+    "predict.result.soil.confidence": "ଆତ୍ମବିଶ୍ୱାସ",
+
+    "predict.result.yield.title": "ଫସଲ ଅମଳ ପୂର୍ବାନୁମାନ",
+    "predict.result.yield.predictedYield": "ପୂର୍ବାନୁମାନ କରାଯାଇଥିବା ଅମଳ",
+    "predict.result.yield.unit": "ଟନ୍/ହେକ୍ଟର",
+    "predict.result.yield.notes": "ଟିପ୍ପଣୀ",
+    "predict.result.yield.confidence": "ଆତ୍ମବିଶ୍ୱାସ"
 }
+
+    

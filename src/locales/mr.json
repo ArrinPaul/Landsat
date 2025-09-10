@@ -1,3 +1,4 @@
+
 {
     "header.title": "अर्थ इनसाइट्स",
     "header.features": "वैशिष्ट्ये",
@@ -45,5 +46,68 @@
     "contact.submitted.close": "बंद करा",
     "footer.copyright": "© 2025 अर्थ इनसाइट्स. सर्व हक्क राखीव. | टीम: लुनारएक्स",
     "footer.about": "आमच्याबद्दल",
-    "footer.contact": "संपर्क"
+    "footer.contact": "संपर्क",
+
+    "predict.title": "भविष्यसूचक अंतर्दृष्टी",
+    "predict.description": "तुमच्या स्थानासाठी AI-चालित अंदाज मिळवा. स्थान वर्णन किंवा निर्देशांक प्रविष्ट करून प्रारंभ करा.",
+    "predict.locationDesc": "स्थान वर्णन",
+    "predict.locationDescPlaceholder": "उदा., नाईल नदी डेल्टा",
+    "predict.suggestCoordinates": "निर्देशांक सुचवा",
+    "predict.latitude": "अक्षांश",
+    "predict.longitude": "रेखांश",
+
+    "predict.weather.title": "हवामान अंदाज",
+    "predict.weather.description": "सध्याचे हवामान आणि 24-तासांचा अंदाज मिळवा.",
+    "predict.weather.button": "हवामानाचा अंदाज घ्या",
+
+    "predict.crop.title": "पीक नियोजन",
+    "predict.crop.description": "योग्य पिकांवर आणि लागवड वेळापत्रकांवर शिफारसी प्राप्त करा.",
+    "predict.crop.button": "पिकांचे नियोजन करा",
+
+    "predict.irrigation.title": "सिंचन वेळापत्रक",
+    "predict.irrigation.description": "तुमच्या शेतात केव्हा आणि किती पाणी द्यावे याबद्दल AI-आधारित सल्ला मिळवा.",
+    "predict.irrigation.button": "सिंचनाचे वेळापत्रक करा",
+
+    "predict.soil.title": "मातीचा ओलावा",
+    "predict.soil.description": "मातीतील सध्याच्या व्हॉल्यूमेट्रिक पाण्याच्या सामग्रीचा अंदाज घ्या.",
+    "predict.soil.button": "ओलाव्याचा अंदाज घ्या",
+
+    "predict.yield.title": "पीक उत्पादन",
+    "predict.yield.description": "निवडलेल्या स्थानासाठी संभाव्य पीक उत्पादनाचा अंदाज घ्या.",
+    "predict.yield.button": "उत्पादनाचा अंदाज घ्या",
+
+    "predict.error.noLocation.title": "त्रुटी",
+    "predict.error.noLocation.description": "कृपया स्थान वर्णन प्रविष्ट करा.",
+    "predict.error.aiError.title": "AI त्रुटी",
+    "predict.error.noCoords.title": "त्रुटी",
+    "predict.error.noCoords.description": "कृपया वैध निर्देशांक प्रदान करा.",
+    "predict.error.predictionError.title": "अंदाज त्रुटी",
+    "predict.error.unexpected.title": "त्रुटी",
+    "predict.error.unexpected.description": "एक अनपेक्षित त्रुटी आली.",
+    "predict.coordinatesSuggested.title": "सुचवलेले निर्देशांक",
+    "predict.coordinatesSuggested.confidence": "आत्मविश्वास",
+
+    "predict.result.cropPlan.title": "पीक नियोजन शिफारस",
+    "predict.result.cropPlan.plantingWindow": "लागवड विंडो",
+    "predict.result.cropPlan.suitableCrops": "योग्य पिके",
+    "predict.result.cropPlan.cooperativeFarming": "सहकारी शेती सूचना",
+
+    "predict.result.irrigation.title": "सिंचन वेळापत्रक शिफारस",
+    "predict.result.irrigation.recommendation": "शिफारस",
+    "predict.result.irrigation.nextDate": "पुढील शिफारस केलेले सिंचन",
+    "predict.result.irrigation.wateringDepth": "पाण्याची खोली",
+    "predict.result.irrigation.notes": "टिपा",
+
+    "predict.result.soil.title": "मातीचा ओलावा अंदाज",
+    "predict.result.soil.vwc": "व्हॉल्यूमेट्रिक पाण्याची सामग्री",
+    "predict.result.soil.summary": "सारांश",
+    "predict.result.soil.confidence": "आत्मविश्वास",
+
+    "predict.result.yield.title": "पीक उत्पादन अंदाज",
+    "predict.result.yield.predictedYield": "अपेक्षित उत्पन्न",
+    "predict.result.yield.unit": "टन/हेक्टर",
+    "predict.result.yield.notes": "टिपा",
+    "predict.result.yield.confidence": "आत्मविश्वास"
 }
+
+    

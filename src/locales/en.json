@@ -1,3 +1,4 @@
+
 {
     "header.title": "Earth Insights",
     "header.features": "Features",
@@ -45,5 +46,68 @@
     "contact.submitted.close": "Close",
     "footer.copyright": "© 2025 Earth Insights. All rights reserved. | Team: LunarX",
     "footer.about": "About",
-    "footer.contact": "Contact"
+    "footer.contact": "Contact",
+
+    "predict.title": "Predictive Insights",
+    "predict.description": "Get AI-powered predictions for your location. Start by entering a location description or coordinates.",
+    "predict.locationDesc": "Location Description",
+    "predict.locationDescPlaceholder": "e.g., Nile River Delta",
+    "predict.suggestCoordinates": "Suggest Coordinates",
+    "predict.latitude": "Latitude",
+    "predict.longitude": "Longitude",
+
+    "predict.weather.title": "Weather Forecast",
+    "predict.weather.description": "Get the current weather and a 24-hour forecast.",
+    "predict.weather.button": "Predict Weather",
+
+    "predict.crop.title": "Crop Planning",
+    "predict.crop.description": "Receive recommendations on suitable crops and planting schedules.",
+    "predict.crop.button": "Plan Crops",
+
+    "predict.irrigation.title": "Irrigation Schedule",
+    "predict.irrigation.description": "Get AI-based advice on when and how much to water your fields.",
+    "predict.irrigation.button": "Schedule Irrigation",
+
+    "predict.soil.title": "Soil Moisture",
+    "predict.soil.description": "Predict the current volumetric water content in the soil.",
+    "predict.soil.button": "Predict Moisture",
+
+    "predict.yield.title": "Crop Yield",
+    "predict.yield.description": "Forecast potential crop yield for the selected location.",
+    "predict.yield.button": "Forecast Yield",
+
+    "predict.error.noLocation.title": "Error",
+    "predict.error.noLocation.description": "Please enter a location description.",
+    "predict.error.aiError.title": "AI Error",
+    "predict.error.noCoords.title": "Error",
+    "predict.error.noCoords.description": "Please provide valid coordinates.",
+    "predict.error.predictionError.title": "Prediction Error",
+    "predict.error.unexpected.title": "Error",
+    "predict.error.unexpected.description": "An unexpected error occurred.",
+    "predict.coordinatesSuggested.title": "Coordinates Suggested",
+    "predict.coordinatesSuggested.confidence": "Confidence",
+
+    "predict.result.cropPlan.title": "Crop Plan Recommendation",
+    "predict.result.cropPlan.plantingWindow": "Planting Window",
+    "predict.result.cropPlan.suitableCrops": "Suitable Crops",
+    "predict.result.cropPlan.cooperativeFarming": "Cooperative Farming Suggestion",
+
+    "predict.result.irrigation.title": "Irrigation Schedule Recommendation",
+    "predict.result.irrigation.recommendation": "Recommendation",
+    "predict.result.irrigation.nextDate": "Next Recommended Irrigation",
+    "predict.result.irrigation.wateringDepth": "Watering Depth",
+    "predict.result.irrigation.notes": "Notes",
+
+    "predict.result.soil.title": "Soil Moisture Prediction",
+    "predict.result.soil.vwc": "Volumetric Water Content",
+    "predict.result.soil.summary": "Summary",
+    "predict.result.soil.confidence": "Confidence",
+
+    "predict.result.yield.title": "Crop Yield Forecast",
+    "predict.result.yield.predictedYield": "Predicted Yield",
+    "predict.result.yield.unit": "tons/hectare",
+    "predict.result.yield.notes": "Notes",
+    "predict.result.yield.confidence": "Confidence"
 }
+
+    
