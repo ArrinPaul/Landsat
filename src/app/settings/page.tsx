@@ -8,9 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/hooks/use-language";
 
 export default function SettingsPage() {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [permission, setPermission] = useState<NotificationPermission>("default");
 
@@ -23,7 +25,7 @@ export default function SettingsPage() {
 
   const handleNotificationToggle = async (checked: boolean) => {
     if (!("Notification" in window)) {
-      toast({ title: "Unsupported", description: "This browser does not support desktop notifications.", variant: "destructive" });
+      toast({ title: t('settings.notifications.unsupported.title'), description: t('settings.notifications.unsupported.description'), variant: "destructive" });
       return;
     }
 
@@ -35,16 +37,16 @@ export default function SettingsPage() {
         setPermission(newPermission);
         if (newPermission === "granted") {
           setNotificationsEnabled(true);
-          toast({ title: "Success", description: "Notifications have been enabled." });
+          toast({ title: t('settings.notifications.success.title'), description: t('settings.notifications.success.description') });
         } else {
-            toast({ title: "Info", description: "You have blocked notifications.", variant: "destructive" });
+            toast({ title: t('settings.notifications.blocked.title'), description: t('settings.notifications.blocked.info'), variant: "destructive" });
         }
       } else {
-         toast({ title: "Blocked", description: "You have previously denied notification permissions. Please enable them in your browser settings.", variant: "destructive" });
+         toast({ title: t('settings.notifications.blocked.title'), description: t('settings.notifications.blocked.description'), variant: "destructive" });
       }
     } else {
       setNotificationsEnabled(false);
-      toast({ title: "Info", description: "Notifications have been disabled." });
+      toast({ title: t('settings.notifications.disabled.title'), description: t('settings.notifications.disabled.description') });
     }
   };
 
@@ -54,20 +56,20 @@ export default function SettingsPage() {
       <main className="flex-1 p-4 md:p-6">
             <Card className="max-w-2xl mx-auto">
             <CardHeader>
-                <CardTitle>Settings</CardTitle>
+                <CardTitle>{t('settings.title')}</CardTitle>
                 <CardDescription>
-                Manage your preferences and application settings.
+                {t('settings.description')}
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className="flex items-center justify-between">
-                <Label htmlFor="dark-mode">Dark Mode</Label>
+                <Label htmlFor="dark-mode">{t('settings.darkMode')}</Label>
                 <ThemeToggle />
                 </div>
                 <div className="flex items-center justify-between">
                 <div className="flex flex-col">
-                    <Label htmlFor="notifications">Satellite Pass Alerts</Label>
-                    <p className="text-xs text-muted-foreground">Receive a notification before a satellite passes over your location.</p>
+                    <Label htmlFor="notifications">{t('settings.satelliteAlerts.label')}</Label>
+                    <p className="text-xs text-muted-foreground">{t('settings.satelliteAlerts.description')}</p>
                 </div>
                 <Switch 
                     id="notifications" 
@@ -77,12 +79,12 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="space-y-2 pt-6">
-                <h3 className="text-lg font-semibold">About</h3>
+                <h3 className="text-lg font-semibold">{t('settings.about.title')}</h3>
                 <p className="text-sm text-muted-foreground">
-                    <strong>Earth Insights Dashboard</strong>
+                    <strong>{t('header.title')}</strong>
                 </p>
                 <p className="text-xs text-muted-foreground whitespace-nowrap">
-                    &copy; 2025 Earth Insights. All rights reserved. | Team: LunarX
+                    {t('footer.copyright')}
                 </p>
                 </div>
             </CardContent>
@@ -91,3 +93,5 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+    
