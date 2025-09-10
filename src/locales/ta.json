@@ -30,7 +30,7 @@
     "landing.whyUs.point3": "உள்ளுணர்வு డేటా εξερεύషణకు பயனர் நட்பு மற்றும் சக்திவாய்ந்த காட்சிப்படுத்தல்.",
     "landing.whyUs.point4": "ஆராய்ச்சி மற்றும் முடிவெடுப்பதற்கு ஏற்றுமதிக்கு సిద్ధం.",
     "contact.title": "எங்களை தொடர்பு கொள்ள",
-    "contact.description": "கேள்வி உள்ளதா அல்லது எங்களுடன் வேலை செய்ய விரும்புகிறீர்களா? கீழே உள்ள படிவத்தை நிரப்பவும்.",
+    "contact.description": "கேள்வி உள்ளதா அல்லது எங்களுடன் పని செய்ய விரும்புகிறீர்களா? கீழே உள்ள படிவத்தை நிரப்பவும்.",
     "contact.name": "பெயர்",
     "contact.namePlaceholder": "உங்கள் பெயரை உள்ளிடவும்",
     "contact.email": "மின்னஞ்சல்",
@@ -126,19 +126,8 @@
     "dashboard.csv.error.parse": "CSV கோப்பைப் பாகுபடுத்த முடியவில்லை. దయచేసి ఆకృతిని తనిఖీ చేయండి.",
     "dashboard.csv.success.title": "வெற்றி",
     "dashboard.csv.success.description": "{count} தரை உண்மைப் புள்ளிகள் ஏற்றப்பட்டன.",
-    "dashboard.poi.title": "ஆர்வமுள்ள இடங்கள்",
-    "dashboard.poi.description": "ஆராயத் தொடங்க ముందుగా வரையறுக்கப்பட்ட இருப்பிடத்தைத் தேர்ந்தெடுக்கவும்.",
-    "dashboard.poi.analyze": "பகுப்பாய்வு செய்",
-    "dashboard.poi.toast.title": "இருப்பிடம் ஏற்றப்பட்டது",
-    "dashboard.poi.toast.description": "{location}-க்கான அமைப்புகள் ஏற்றப்பட்டன. கணக்கீடு தொடங்குகிறது...",
-    "dashboard.poi.amazon.name": "அமேசான் மழைக்காடு",
-    "dashboard.poi.amazon.description": "உலகின் மிகப்பெரிய வெப்பமண்டல மழைக்காடுகளின் பசுமையை ஆராயுங்கள்.",
-    "dashboard.poi.sahara.name": "சஹாரா பாலைவனம்",
-    "dashboard.poi.sahara.description": "ஆப்பிரிக்கா முழுவதும் பரவியுள்ள பரந்த பாலைவனத்தின் வறண்ட நிலைகளைக் கண்காணிக்கவும்.",
-    "dashboard.poi.nile.name": "நைல் நதி டெல்டா",
-    "dashboard.poi.nile.description": "மத்தியதரைக் கடலில் பாயும் இந்த வளமான நதி டெல்டாவின் விவசாய நிலங்களைப் பகுப்பாய்வு செய்யுங்கள்.",
-    "dashboard.poi.himalayas.name": "இமயமலை",
-    "dashboard.poi.himalayas.description": "எவரெஸ்ட் சிகரத்தின் தாயகமான உலகின் மிக உயரமான மலைத்தொடரின் பனி மற்றும் பனிக்கட்டியைப் பார்க்கவும்.",
+    "dashboard.welcome.title": "எர்த் இன்சைட்ஸுக்கு வரவேற்கிறோம்",
+    "dashboard.welcome.description": "உங்கள் பகுப்பாய்வைத் தொடங்க மேலே ஆயத்தொலைவுகள் அல்லது இருப்பிட விளக்கத்தை உள்ளிட்டு தேதி வரம்பைத் தேர்ந்தெடுக்கவும்.",
     "dashboard.compute.success.title": "வெற்றி",
     "dashboard.compute.success.description": "அளவீடுகள் மற்றும் நிலப்பரப்பு பகுப்பாய்வு పూర్తయింది.",
     "dashboard.compute.failure": "அளவீடுகளைக் கணக்கிட முடியவில்லை. దయచేసి మీ ఇన్‌పుట్‌లను తనిఖీ చేసి, మళ్లీ ప్రయత్నించండి.",
@@ -239,5 +228,3 @@
     "cropAdvisor.result.alternative": "மாற்றுப் பரிந்துரை",
     "cropAdvisor.result.alternativeDesc": "உங்கள் நிலைமைகளுக்கு மற்றொரு நல்ல விருப்பம் <strong>{crop}</strong> ஆக இருக்கலாம்."
 }
-
-    
