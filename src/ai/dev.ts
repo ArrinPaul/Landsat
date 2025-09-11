@@ -17,3 +17,7 @@ import '@/ai/flows/predict-crop-yield.ts';
 import '@/ai/flows/suggest-crop.ts';
 import '@/ai/tools/get-soil-moisture.ts';
 import '@/ai/tools/get-soil-type.ts';
+import '@/ai/tools/run-scenario-analysis.ts';
+import '@/ai/flows/analyze-drought-flood-risk.ts';
+import '@/ai/flows/get-advanced-crop-advice.ts';
+import '@/ai/flows/generate-timelapse-video.ts';

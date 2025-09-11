@@ -1,4 +1,5 @@
 
+
 import type { DateRange } from "react-day-picker";
 import { z } from "zod";
 
@@ -158,6 +159,32 @@ export interface TimeSeriesData {
 export interface AnalysisResult {
     timeSeries: TimeSeriesData;
     landCover: LandCoverAnalysis;
+}
+
+// New type for Drought & Flood Risk Analysis
+export interface DroughtFloodRisk {
+    droughtRisk: 'Low' | 'Medium' | 'High';
+    floodRisk: 'Low' | 'Medium' | 'High';
+    summary: string;
+    confidence: number;
+}
+
+// New type for Advanced Crop Advice
+export interface AdvancedCropAdvice {
+    crop: string;
+    plantingDensity: {
+        value: number;
+        unit: string; // e.g., 'seeds/hectare'
+    };
+    pestAndDiseaseRisks: {
+        name: string;
+        description: string;
+    }[];
+    fertilizationStrategy: {
+        timing: string; // e.g., 'At planting', 'Top-dressing at 30 days'
+        recommendation: string;
+    }[];
+    notes: string;
 }
 
     

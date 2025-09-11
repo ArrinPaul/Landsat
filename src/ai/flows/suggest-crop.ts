@@ -60,11 +60,11 @@ const prompt = ai.definePrompt({
   {{/if}}
 
   Your final output must be structured precisely as follows:
-  1.  **Suggested Crop**: Identify the single best crop for these exact conditions.
-  2.  **Suitability Score**: Provide a percentage score (0-100) representing your confidence. Base this score on how perfectly the crop's needs match the specific, real-world data you fetched.
-  3.  **Reasoning**: Give a detailed but easy-to-understand explanation. Justify your choice by explicitly referencing the climate description and, most importantly, the soil and moisture data you fetched using your tools.
-  4.  **Alternative Crop**: Suggest one other viable crop as an alternative.
-  5.  **Fetched Data**: Ensure you populate the 'fetchedSoilType' and 'fetchedMoistureLevel' fields in the output with the exact results from your tool calls.
+  1.  'Suggested Crop': Identify the single best crop for these exact conditions.
+  2.  'Suitability Score': Provide a percentage score (0-100) representing your confidence. Base this score on how perfectly the crop's needs match the specific, real-world data you fetched.
+  3.  'Reasoning': Give a detailed but easy-to-understand explanation. Justify your choice by explicitly referencing the climate description and, most importantly, the soil and moisture data you fetched using your tools.
+  4.  'Alternative Crop': Suggest one other viable crop as an alternative.
+  5.  'Fetched Data': Ensure you populate the 'fetchedSoilType' and 'fetchedMoistureLevel' fields in the output with the exact results from your tool calls.
   `,
 });
 

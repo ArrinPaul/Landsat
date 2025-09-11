@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Wand2, Loader2, Thermometer, Tractor, Droplets, LandPlot, BarChartBig } from "lucide-react";
+import { Wand2, Loader2, Thermometer, Tractor, Droplets, LandPlot, BarChartBig, CloudRain, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { 
     suggestCoordinatesAction, 
@@ -15,11 +15,13 @@ import {
     planCropsAction, 
     scheduleIrrigationAction,
     predictSoilMoistureAction,
-    predictCropYieldAction
+    predictCropYieldAction,
+    analyzeDroughtAndFloodRiskAction,
 } from "@/lib/actions";
-import type { WeatherData, CropPlan, IrrigationSchedule, SoilMoisturePrediction, CropYieldPrediction } from "@/lib/types";
+import type { WeatherData, CropPlan, IrrigationSchedule, SoilMoisturePrediction, CropYieldPrediction, DroughtFloodRisk } from "@/lib/types";
 import { WeatherReport } from "@/components/weather-report";
 import { useLanguage } from "@/hooks/use-language";
+import { Badge } from "@/components/ui/badge";
 
 export default function PredictPage() {
     const { toast } = useToast();
@@ -35,8 +37,9 @@ export default function PredictPage() {
     const [irrigationSchedule, setIrrigationSchedule] = useState<IrrigationSchedule | null>(null);
     const [soilMoisture, setSoilMoisture] = useState<SoilMoisturePrediction | null>(null);
     const [cropYield, setCropYield] = useState<CropYieldPrediction | null>(null);
+    const [droughtFloodRisk, setDroughtFloodRisk] = useState<DroughtFloodRisk | null>(null);
 
-    type PredictionType = 'weather' | 'crops' | 'irrigation' | 'soil' | 'yield';
+    type PredictionType = 'weather' | 'crops' | 'irrigation' | 'soil' | 'yield' | 'risk';
 
     const handleSuggestCoordinates = async () => {
         if (!locationDesc) {
@@ -61,6 +64,7 @@ export default function PredictPage() {
         setIrrigationSchedule(null);
         setSoilMoisture(null);
         setCropYield(null);
+        setDroughtFloodRisk(null);
     }
 
     const handlePrediction = async (type: PredictionType) => {
@@ -96,6 +100,10 @@ export default function PredictPage() {
                     result = await predictCropYieldAction({ ...coords, cropType: 'Maize' }); // Note: Crop type is hardcoded for now
                     if (result.data) setCropYield(result.data);
                     break;
+                case 'risk':
+                    result = await analyzeDroughtAndFloodRiskAction(coords);
+                    if (result.data) setDroughtFloodRisk(result.data);
+                    break;
             }
 
             if (result?.error) {
@@ -107,6 +115,16 @@ export default function PredictPage() {
 
         setIsLoading(null);
     };
+
+    const getRiskBadgeVariant = (riskLevel: 'Low' | 'Medium' | 'High') => {
+        switch (riskLevel) {
+            case 'Low': return 'default';
+            case 'Medium': return 'secondary';
+            case 'High': return 'destructive';
+            default: return 'outline';
+        }
+    }
+
 
     return (
         <div className="flex flex-col min-h-screen">
@@ -211,9 +229,21 @@ export default function PredictPage() {
                                 </Button>
                             </CardContent>
                         </Card>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2"><AlertTriangle/> {t('predict.risk.title')}</CardTitle>
+                                <CardDescription>{t('predict.risk.description')}</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Button onClick={() => handlePrediction('risk')} disabled={!!isLoading}>
+                                    {isLoading === 'risk' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
+                                    {t('predict.risk.button')}
+                                </Button>
+                            </CardContent>
+                        </Card>
                     </div>
 
-                    {isLoading && !weather && !cropPlan && !irrigationSchedule && !soilMoisture && !cropYield && (
+                    {isLoading && (
                         <Card>
                             <CardContent className="pt-6">
                                 <div className="flex justify-center items-center h-48">
@@ -225,6 +255,38 @@ export default function PredictPage() {
 
                     {weather && (
                         <WeatherReport weather={weather} showForecast={true} />
+                    )}
+                    
+                    {droughtFloodRisk && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>{t('predict.result.risk.title')}</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-center">
+                                    <div>
+                                        <h4 className="font-semibold text-muted-foreground">{t('predict.result.risk.drought')}</h4>
+                                        <Badge variant={getRiskBadgeVariant(droughtFloodRisk.droughtRisk)} className="text-2xl mt-2">
+                                            {droughtFloodRisk.droughtRisk}
+                                        </Badge>
+                                    </div>
+                                    <div>
+                                        <h4 className="font-semibold text-muted-foreground">{t('predict.result.risk.flood')}</h4>
+                                        <Badge variant={getRiskBadgeVariant(droughtFloodRisk.floodRisk)} className="text-2xl mt-2">
+                                            {droughtFloodRisk.floodRisk}
+                                        </Badge>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold">{t('predict.result.risk.summary')}</h4>
+                                    <p className="text-muted-foreground">{droughtFloodRisk.summary}</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold">{t('predict.result.yield.confidence')}</h4>
+                                    <p className="text-muted-foreground">{(droughtFloodRisk.confidence * 100).toFixed(0)}%</p>
+                                </div>
+                            </CardContent>
+                        </Card>
                     )}
 
                     {cropPlan && (
