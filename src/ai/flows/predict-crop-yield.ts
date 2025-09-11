@@ -79,5 +79,3 @@ const predictCropYieldFlow = ai.defineFlow(
     return output;
   }
 );
-
-    

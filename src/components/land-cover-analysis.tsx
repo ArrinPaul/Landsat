@@ -134,5 +134,3 @@ export function LandCoverAnalysis({ landCover }: LandCoverAnalysisProps) {
     </Card>
   );
 }
-
-    
