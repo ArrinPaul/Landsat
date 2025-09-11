@@ -10,6 +10,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { getDroughtAndFloodRiskData } from '@/ai/tools/get-drought-flood-risk-data';
 
 const DroughtFloodRiskInputSchema = z.object({
   latitude: z.number().describe('The latitude of the location.'),
@@ -20,7 +21,7 @@ export type DroughtFloodRiskInput = z.infer<typeof DroughtFloodRiskInputSchema>;
 const DroughtFloodRiskOutputSchema = z.object({
     droughtRisk: z.enum(['Low', 'Medium', 'High']).describe("The assessed risk level for drought."),
     floodRisk: z.enum(['Low', 'Medium', 'High']).describe("The assessed risk level for flooding."),
-    summary: z.string().describe("A concise summary explaining the key factors influencing the risk assessment, such as typical climate patterns, topography, and historical water index data."),
+    summary: z.string().describe("A concise summary explaining the key factors influencing the risk assessment, explicitly mentioning the fetched historical precipitation and recent soil moisture data."),
     confidence: z.number().min(0).max(1).describe("A confidence score (0-1) for the overall risk assessment."),
 });
 export type DroughtFloodRiskOutput = z.infer<typeof DroughtFloodRiskOutputSchema>;
@@ -34,25 +35,25 @@ const prompt = ai.definePrompt({
   name: 'droughtFloodRiskPrompt',
   input: { schema: DroughtFloodRiskInputSchema },
   output: { schema: DroughtFloodRiskOutputSchema },
-  prompt: `You are an expert hydrologist and climate scientist AI. Your task is to assess the drought and flood risk for a specific geographic location.
+  tools: [getDroughtAndFloodRiskData],
+  prompt: `You are an expert hydrologist and climate scientist AI. Your task is to assess the drought and flood risk for a specific geographic location using real-time data.
 
-  **Analysis Factors:**
-  To make your assessment, consider the following based on the provided coordinates:
-  1.  **Historical Precipitation**: The typical annual rainfall and its seasonality.
-  2.  **Topography**: The general elevation and terrain (e.g., is it a low-lying delta, a mountainous region, or a flat plain?).
-  3.  **Proximity to Water Bodies**: Is it near a major river, lake, or coastline?
-  4.  **Soil Type & Land Cover**: The general soil characteristics (e.g., sandy vs. clay) and vegetation cover, which affect water absorption and runoff.
-  5.  **Climate Zone**: The broader climate classification (e.g., arid, tropical monsoon, temperate).
-  
+  **Process:**
+  1.  **Mandatory Data Fetching**: You MUST use the 'getDroughtAndFloodRiskData' tool to get real-world data for the given coordinates. This tool will provide you with the 30-year average annual precipitation and the current soil moisture level. Do not guess or use generalized knowledge.
+  2.  **Analysis**: Synthesize the fetched data with your knowledge of the location's topography, proximity to water bodies, and climate zone to make your assessment.
+      - A much lower-than-average precipitation and 'Dry' soil moisture suggests a high drought risk.
+      - A much higher-than-average precipitation and 'Wet' soil moisture, especially in a low-lying area, suggests a high flood risk.
+  3.  **Output Generation**: Based on your analysis, provide a structured JSON response.
+
   **Location:**
   - Latitude: {{{latitude}}}
   - Longitude: {{{longitude}}}
-
+  
   **Output Requirements:**
-  Based on your analysis, provide a structured JSON response with:
+  Your response must be a structured JSON object containing:
   1.  'droughtRisk': Assessed drought risk as 'Low', 'Medium', or 'High'.
   2.  'floodRisk': Assessed flood risk as 'Low', 'Medium', or 'High'.
-  3.  'summary': A concise explanation for your ratings, referencing the factors you considered.
+  3.  'summary': A concise explanation for your ratings. You MUST explicitly reference the fetched precipitation and soil moisture data in your summary.
   4.  'confidence': Your confidence level (0.0 to 1.0) in this assessment.
   `,
 });
