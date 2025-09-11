@@ -22,7 +22,7 @@ export type PredictCropYieldInput = z.infer<typeof PredictCropYieldInputSchema>;
 const PredictCropYieldOutputSchema = z.object({
     predictedYield: z.number().describe("The predicted crop yield in tons per hectare."),
     crop: z.string().describe("The crop for which the yield is predicted."),
-    confidence: z.number().describe("A confidence score (0-1) for the prediction."),
+    confidence: z.number().min(0).max(1).describe("A confidence score (0-1) for the prediction."),
     notes: z.string().describe("Additional context or factors influencing the yield prediction."),
 });
 export type PredictCropYieldOutput = z.infer<typeof PredictCropYieldOutputSchema>;
@@ -41,7 +41,7 @@ const prompt = ai.definePrompt({
 
   Your response must be a structured JSON object and include:
   1.  The 'predictedYield' in tons per hectare. This should be a realistic figure for the specified crop and region.
-  2.  The 'crop' name.
+  2.  The 'crop' name matching the input 'cropType'.
   3.  A 'confidence' score for your prediction (from 0.0 to 1.0), reflecting the typical variability for that region.
   4.  A brief 'notes' section explaining the key factors influencing this prediction (e.g., expected rainfall, general soil quality, temperature trends).
 
@@ -71,6 +71,13 @@ const predictCropYieldFlow = ai.defineFlow(
   },
   async input => {
     const { output } = await prompt(input);
-    return output!;
+    
+    if (!output) {
+        throw new Error("The AI model did not return a crop yield prediction.");
+    }
+    
+    return output;
   }
 );
+
+    

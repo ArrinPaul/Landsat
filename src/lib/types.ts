@@ -1,5 +1,4 @@
 
-
 import type { DateRange } from "react-day-picker";
 import { z } from "zod";
 
@@ -135,6 +134,8 @@ export interface LandCoverAnalysis {
   water: LandCoverChangeStat;
   builtUp: LandCoverChangeStat;
   other: LandCoverChangeStat;
+  beforeMapUrl: string;
+  afterMapUrl: string;
 }
 
 export interface TimeSeriesData {
@@ -207,4 +208,5 @@ export interface ScenarioAnalysis {
     likelyImpact: string;
     confidence: number;
 }
+
     

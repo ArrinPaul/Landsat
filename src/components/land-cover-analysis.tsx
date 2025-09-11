@@ -14,6 +14,7 @@ import type { LandCoverAnalysis as LandCoverAnalysisType } from "@/lib/types";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, XAxis, YAxis } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { useLanguage } from "@/hooks/use-language";
+import { ImageWithLoader } from "./image-with-loader";
 
 
 interface LandCoverAnalysisProps {
@@ -65,15 +66,14 @@ export function LandCoverAnalysis({ landCover }: LandCoverAnalysisProps) {
         <CardDescription>{t('dashboard.landCover.description')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-8">
-        <div className="grid gap-6 md:grid-cols-2">
-            <div className="flex flex-col justify-center">
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+            <div className="lg:col-span-1">
                  <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>{t('dashboard.landCover.class')}</TableHead>
-                      <TableHead className="text-right">{t('dashboard.landCover.startArea')} (km²)</TableHead>
-                      <TableHead className="text-right">{t('dashboard.landCover.endArea')} (km²)</TableHead>
-                      <TableHead className="text-right">{t('dashboard.landCover.change')} (%)</TableHead>
+                      <TableHead className="text-right">{t('dashboard.landCover.startArea')}</TableHead>
+                      <TableHead className="text-right">{t('dashboard.landCover.change')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -85,39 +85,54 @@ export function LandCoverAnalysis({ landCover }: LandCoverAnalysisProps) {
                                    {row.label}
                                 </TableCell>
                                 <TableCell className="text-right">{data.startArea.toFixed(2)}</TableCell>
-                                <TableCell className="text-right">{data.endArea.toFixed(2)}</TableCell>
-                                <TableCell className="text-right"><ChangeCell value={data.percentageChange} /></TableCell>
+                                <TableCell><ChangeCell value={data.percentageChange} /></TableCell>
                             </TableRow>
                         )
                     })}
                   </TableBody>
                 </Table>
             </div>
-            <div className="min-h-[300px]">
-                <ChartContainer config={chartConfig} className="h-full w-full">
-                    <BarChart data={chartData} accessibilityLayer>
-                        <CartesianGrid vertical={false} />
-                        <XAxis
-                            dataKey="name"
-                            tickLine={false}
-                            tickMargin={10}
-                            axisLine={false}
-                        />
-                        <YAxis 
-                            tickFormatter={(value) => `${value} km²`}
-                        />
-                         <ChartTooltip
-                            cursor={false}
-                            content={<ChartTooltipContent indicator="dot" />}
-                         />
-                        <Legend />
-                        <Bar dataKey="startArea" fill="var(--color-startArea)" radius={4} />
-                        <Bar dataKey="endArea" fill="var(--color-endArea)" radius={4} />
-                    </BarChart>
-                </ChartContainer>
+            <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                 <div className="space-y-2">
+                    <h3 className="text-center font-semibold">{t('dashboard.landCover.startArea')}</h3>
+                    <div className="aspect-square rounded-lg overflow-hidden border">
+                       <ImageWithLoader src={landCover.beforeMapUrl} alt="Land cover map at the start of the period." />
+                    </div>
+                </div>
+                 <div className="space-y-2">
+                    <h3 className="text-center font-semibold">{t('dashboard.landCover.endArea')}</h3>
+                    <div className="aspect-square rounded-lg overflow-hidden border">
+                        <ImageWithLoader src={landCover.afterMapUrl} alt="Land cover map at the end of the period." />
+                    </div>
+                </div>
             </div>
+        </div>
+         <div className="min-h-[300px] pt-8">
+            <ChartContainer config={chartConfig} className="h-full w-full">
+                <BarChart data={chartData} accessibilityLayer>
+                    <CartesianGrid vertical={false} />
+                    <XAxis
+                        dataKey="name"
+                        tickLine={false}
+                        tickMargin={10}
+                        axisLine={false}
+                    />
+                    <YAxis 
+                        tickFormatter={(value) => `${value} km²`}
+                    />
+                        <ChartTooltip
+                        cursor={false}
+                        content={<ChartTooltipContent indicator="dot" />}
+                        />
+                    <Legend />
+                    <Bar dataKey="startArea" fill="var(--color-startArea)" radius={4} />
+                    <Bar dataKey="endArea" fill="var(--color-endArea)" radius={4} />
+                </BarChart>
+            </ChartContainer>
         </div>
       </CardContent>
     </Card>
   );
 }
+
+    
