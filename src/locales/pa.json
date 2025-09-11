@@ -143,7 +143,7 @@
     "dashboard.csv.success.description": "{count} ਜ਼ਮੀਨੀ ਸੱਚਾਈ ਪੁਆਇੰਟ ਲੋਡ ਕੀਤੇ ਗਏ।",
     "dashboard.welcome.title": "ਅਰਥ ਇਨਸਾਈਟਸ ਵਿੱਚ ਤੁਹਾਡਾ ਸੁਆਗਤ ਹੈ",
     "dashboard.welcome.description": "ਆਪਣਾ ਵਿਸ਼ਲੇਸ਼ਣ ਸ਼ੁਰੂ ਕਰਨ ਲਈ ਉੱਪਰ ਕੋਆਰਡੀਨੇਟ ਜਾਂ ਸਥਾਨ ਦਾ ਵੇਰਵਾ ਦਰਜ ਕਰੋ ਅਤੇ ਇੱਕ ਮਿਤੀ ਸੀਮਾ ਚੁਣੋ।",
-    "dashboard.compute.success.title": "ਸਫਲता",
+    "dashboard.compute.success.title": "ਸਫਲਤਾ",
     "dashboard.compute.success.description": "ਮੈਟ੍ਰਿਕਸ ਅਤੇ ਜ਼ਮੀਨੀ ਕਵਰ ਵਿਸ਼ਲੇਸ਼ਣ ਪੂਰਾ ਹੋਇਆ।",
     "dashboard.compute.failure": "ਮੈਟ੍ਰਿਕਸ ਦੀ ਗਣਨਾ ਨਹੀਂ ਕੀਤੀ ਜਾ ਸਕੀ। ਕਿਰਪਾ ਕਰਕੇ ਆਪਣੇ ਇਨਪੁਟ ਦੀ ਜਾਂਚ ਕਰੋ ਅਤੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
     "dashboard.summary.builtUp": "ਨਿਰਮਿਤ ਖੇਤਰ ਵਾਧਾ",

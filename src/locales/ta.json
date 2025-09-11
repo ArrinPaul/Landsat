@@ -83,7 +83,7 @@
     "predict.error.noCoords.description": "దయచేసి చెల్లుబాటు అయ్యే ஆயத்தொலைவுகளை வழங்கவும்.",
     "predict.error.predictionError.title": "கணிப்பு பிழை",
     "predict.error.unexpected.title": "பிழை",
-    "predict.error.unexpected.description": "ഒരു ఊహించని లోపం సంభవించింది.",
+    "predict.error.unexpected.description": "ஒரு ఊహించని లోపం సంభవించింది.",
     "predict.error.noScenario.title": "சூழ்நிலை இல்லை",
     "predict.error.noScenario.description": "பகுப்பாய்வுக்காக ஒரு சூழ்நிலையை விவரிக்கவும்.",
     "predict.coordinatesSuggested.title": "பரிந்துரைக்கப்பட்ட ஆயத்தொலைவுகள்",
