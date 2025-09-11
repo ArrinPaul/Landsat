@@ -33,14 +33,25 @@ const generateTimelapseVideoFlow = ai.defineFlow(
       If it's NDBI, show the subtle expansion or contraction of built-up urban areas. 
       The video should be a smooth and continuous evolution.`;
     
-    let { operation } = await ai.generate({
-      model: googleAI.model('veo-2.0-generate-001'),
-      prompt,
-      config: {
-        durationSeconds: 6,
-        aspectRatio: '16:9',
-      },
-    });
+    let operation;
+    try {
+        const result = await ai.generate({
+            model: googleAI.model('veo-2.0-generate-001'),
+            prompt,
+            config: {
+                durationSeconds: 6,
+                aspectRatio: '16:9',
+            },
+        });
+        operation = result.operation;
+    } catch (e: any) {
+        const errorMessage = e.message || '';
+        if (errorMessage.includes('FAILED_PRECONDITION') || errorMessage.includes('billing enabled')) {
+            throw new Error("Video generation with Veo requires Google Cloud Platform billing to be enabled for your project. Please enable billing in your GCP account settings to use this feature.");
+        }
+        throw e;
+    }
+
 
     if (!operation) {
       throw new Error('Video generation did not start correctly.');
