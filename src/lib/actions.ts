@@ -19,11 +19,11 @@ import { getAdvancedCropAdvice } from "@/ai/flows/get-advanced-crop-advice";
 import { generateTimelapseVideo } from "@/ai/flows/generate-timelapse-video";
 
 
-import type { SatellitePassData, WeatherData, CropPlan, IrrigationSchedule, AnalysisResult, SoilMoisturePrediction, CropYieldPrediction, SuggestCropInput, SuggestCropOutput, DroughtFloodRisk, AdvancedCropAdvice } from "@/lib/types";
+import type { SatellitePassData, WeatherData, CropPlan, IrrigationSchedule, AnalysisResult, SoilMoisturePrediction, CropYieldPrediction, SuggestCropInput, SuggestCropOutput, DroughtFloodRisk, AdvancedCropAdvice, GenerateTimelapseVideoInput, GenerateTimelapseVideoOutput } from "@/lib/types";
 import type { ChatbotInput, ChatbotOutput } from "@/ai/flows/chatbot";
 import type { TextToSpeechOutput } from "@/ai/flows/text-to-speech";
 import type { GenerateDataInsightsInput } from "@/ai/flows/generate-insights";
-import type { GenerateTimelapseVideoInput, GenerateTimelapseVideoOutput } from "@/ai/flows/generate-timelapse-video";
+
 
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) {
