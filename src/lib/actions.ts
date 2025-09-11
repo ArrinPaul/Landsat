@@ -14,11 +14,16 @@ import { computeMetrics, type ComputeMetricsOutput } from "@/ai/flows/compute-me
 import { predictSoilMoisture } from "@/ai/flows/predict-soil-moisture";
 import { predictCropYield } from "@/ai/flows/predict-crop-yield";
 import { suggestCrop } from "@/ai/flows/suggest-crop";
+import { analyzeDroughtAndFloodRisk } from "@/ai/flows/analyze-drought-flood-risk";
+import { getAdvancedCropAdvice } from "@/ai/flows/get-advanced-crop-advice";
+import { generateTimelapseVideo } from "@/ai/flows/generate-timelapse-video";
 
-import type { SatellitePassData, WeatherData, CropPlan, IrrigationSchedule, AnalysisResult, SoilMoisturePrediction, CropYieldPrediction, SuggestCropInput, SuggestCropOutput } from "@/lib/types";
+
+import type { SatellitePassData, WeatherData, CropPlan, IrrigationSchedule, AnalysisResult, SoilMoisturePrediction, CropYieldPrediction, SuggestCropInput, SuggestCropOutput, DroughtFloodRisk, AdvancedCropAdvice } from "@/lib/types";
 import type { ChatbotInput, ChatbotOutput } from "@/ai/flows/chatbot";
 import type { TextToSpeechOutput } from "@/ai/flows/text-to-speech";
 import type { GenerateDataInsightsInput } from "@/ai/flows/generate-insights";
+import type { GenerateTimelapseVideoInput, GenerateTimelapseVideoOutput } from "@/ai/flows/generate-timelapse-video";
 
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) {
@@ -27,143 +32,78 @@ const getErrorMessage = (error: unknown): string => {
   return String(error);
 };
 
-export async function computeMetricsAction(input: { latitude: number; longitude: number; startDate: string; endDate: string; }): Promise<{data: AnalysisResult | null, error: string | null}> {
+// Generic action creator
+async function handleAction<T, U>(action: (input: T) => Promise<U>, input: T): Promise<{ data: U | null; error: string | null; }> {
     try {
-        const result: ComputeMetricsOutput = await computeMetrics(input);
+        const result = await action(input);
         return { data: result, error: null };
     } catch (error) {
-        console.error("computeMetricsAction Error:", error);
+        console.error(`${action.name} Error:`, error);
         return { data: null, error: getErrorMessage(error) };
     }
 }
 
 
+export async function computeMetricsAction(input: { latitude: number; longitude: number; startDate: string; endDate: string; }): Promise<{data: AnalysisResult | null, error: string | null}> {
+    return handleAction(computeMetrics, input);
+}
+
 export async function suggestCoordinatesAction(locationDescription: string) {
-  try {
-    const result = await suggestCoordinates({ locationDescription });
-    return { data: result };
-  } catch (error) {
-    console.error("suggestCoordinatesAction Error:", error);
-    return { error: `AI Error: ${getErrorMessage(error)}` };
-  }
+    return handleAction(suggestCoordinates, { locationDescription });
 }
 
-export async function generateInsightAction(
-  input: GenerateDataInsightsInput
-) {
-  try {
-    const result = await generateDataInsights(input);
-    return { data: result };
-  } catch (error) {
-    console.error("generateInsightAction Error:", error);
-    return { error: `AI Error: ${getErrorMessage(error)}` };
-  }
+export async function generateInsightAction(input: GenerateDataInsightsInput) {
+    return handleAction(generateDataInsights, input);
 }
 
-export async function generateReportAction(
-  metricsData: string,
-  location: string,
-  dateRange: string
-) {
-  try {
-    const result = await generateReportSummary({
-      metricsData,
-      location,
-      dateRange,
-    });
-    return { data: result };
-  } catch (error) {
-    console.error("generateReportAction Error:", error);
-    return { error: `AI Error: ${getErrorMessage(error)}` };
-  }
+export async function generateReportAction(metricsData: string, location: string, dateRange: string) {
+    return handleAction(generateReportSummary, { metricsData, location, dateRange });
 }
 
-export async function predictSatellitePassAction(input: { latitude: number; longitude: number; }): Promise<{data: SatellitePassData | null, error: string | null}> {
-    try {
-        const result = await predictSatellitePass(input);
-        return { data: result, error: null };
-    } catch (error) {
-        console.error("predictSatellitePassAction Error:", error);
-        return { data: null, error: `AI Error: ${getErrorMessage(error)}` };
-    }
+export async function predictSatellitePassAction(input: { latitude: number; longitude: number; }) {
+    return handleAction(predictSatellitePass, input);
 }
 
-export async function getWeatherReportAction(input: { latitude: number; longitude: number; }): Promise<{data: WeatherData | null, error: string | null}> {
-    try {
-        const result = await getWeatherReport(input);
-        return { data: result, error: null };
-    } catch (error) {
-        console.error("getWeatherReportAction Error:", error);
-        return { data: null, error: `AI Error: ${getErrorMessage(error)}` };
-    }
+export async function getWeatherReportAction(input: { latitude: number; longitude: number; }) {
+    return handleAction(getWeatherReport, input);
 }
 
-export async function chatbotAction(input: ChatbotInput): Promise<{ data: ChatbotOutput | null; error: string | null; }> {
-    try {
-        const result = await chatbot(input);
-        return { data: result, error: null };
-    } catch (error) {
-        console.error("Chatbot action error:", error);
-        return { data: null, error: `AI Error: ${getErrorMessage(error)}` };
-    }
+export async function chatbotAction(input: ChatbotInput) {
+    return handleAction(chatbot, input);
 }
 
-export async function planCropsAction(input: { latitude: number; longitude: number; }): Promise<{ data: CropPlan | null; error: string | null; }> {
-    try {
-        const result = await planCrops(input);
-        return { data: result, error: null };
-    } catch (error) {
-        console.error("Crop planning action error:", error);
-        return { data: null, error: `AI Error: ${getErrorMessage(error)}` };
-    }
+export async function planCropsAction(input: { latitude: number; longitude: number; }) {
+    return handleAction(planCrops, input);
 }
 
-export async function scheduleIrrigationAction(input: { latitude: number; longitude: number; }): Promise<{ data: IrrigationSchedule | null; error: string | null; }> {
-    try {
-        const result = await scheduleIrrigation(input);
-        return { data: result, error: null };
-    } catch (error) {
-        console.error("Irrigation scheduling action error:", error);
-        return { data: null, error: `AI Error: ${getErrorMessage(error)}` };
-    }
+export async function scheduleIrrigationAction(input: { latitude: number; longitude: number; }) {
+    return handleAction(scheduleIrrigation, input);
 }
 
-export async function textToSpeechAction(text: string): Promise<{ data: TextToSpeechOutput | null; error: string | null; }> {
-    try {
-        const result = await textToSpeech({ text });
-        return { data: result, error: null };
-    } catch (error) {
-        console.error("Text to speech action error:", error);
-        return { data: null, error: `AI Error: ${getErrorMessage(error)}` };
-    }
+export async function textToSpeechAction(text: string) {
+    return handleAction(textToSpeech, { text });
 }
 
-export async function predictSoilMoistureAction(input: { latitude: number; longitude: number; }): Promise<{ data: SoilMoisturePrediction | null; error: string | null; }> {
-    try {
-        const result = await predictSoilMoisture(input);
-        return { data: result, error: null };
-    } catch (error) {
-        console.error("Soil moisture prediction error:", error);
-        return { data: null, error: `AI Error: ${getErrorMessage(error)}` };
-    }
+export async function predictSoilMoistureAction(input: { latitude: number; longitude: number; }) {
+    return handleAction(predictSoilMoisture, input);
 }
 
-export async function predictCropYieldAction(input: { latitude: number; longitude: number; cropType?: string; }): Promise<{ data: CropYieldPrediction | null; error: string | null; }> {
-    try {
-        const result = await predictCropYield(input);
-        return { data: result, error: null };
-    } catch (error) {
-        console.error("Crop yield prediction error:", error);
-        return { data: null, error: `AI Error: ${getErrorMessage(error)}` };
-    }
+export async function predictCropYieldAction(input: { latitude: number; longitude: number; cropType?: string; }) {
+    return handleAction(predictCropYield, input);
 }
 
-export async function suggestCropAction(input: SuggestCropInput): Promise<{ data: SuggestCropOutput | null; error: string | null; }> {
-    try {
-        const result = await suggestCrop(input);
-        return { data: result, error: null };
-    } catch (error) {
-        console.error("Crop suggestion action error:", error);
-        return { data: null, error: `AI Error: ${getErrorMessage(error)}` };
-    }
+export async function suggestCropAction(input: SuggestCropInput) {
+    return handleAction(suggestCrop, input);
+}
+
+export async function analyzeDroughtAndFloodRiskAction(input: { latitude: number; longitude: number; }): Promise<{ data: DroughtFloodRisk | null; error: string | null; }> {
+    return handleAction(analyzeDroughtAndFloodRisk, input);
+}
+
+export async function getAdvancedCropAdviceAction(input: { latitude: number; longitude: number; climateDescription: string; crop: string; }): Promise<{ data: AdvancedCropAdvice | null; error: string | null; }> {
+    return handleAction(getAdvancedCropAdvice, input);
+}
+
+export async function generateTimelapseVideoAction(input: GenerateTimelapseVideoInput): Promise<{ data: GenerateTimelapseVideoOutput | null; error: string | null; }> {
+    return handleAction(generateTimelapseVideo, input);
 }

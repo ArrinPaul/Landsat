@@ -20,7 +20,7 @@ if (typeof window !== 'undefined') {
 }
 
 
-export function Chatbot() {
+export function Chatbot({ lat, lon }: { lat?: string, lon?: string }) {
   const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -125,7 +125,11 @@ export function Chatbot() {
     setIsLoading(true);
 
     const newMessages = [...messages, userMessage];
-    const result = await chatbotAction({ messages: newMessages });
+    const result = await chatbotAction({ 
+        messages: newMessages,
+        latitude: lat ? parseFloat(lat) : undefined,
+        longitude: lon ? parseFloat(lon) : undefined,
+    });
 
     setIsLoading(false);
 

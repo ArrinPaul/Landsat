@@ -10,7 +10,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { AnalysisResult, GroundTruthDataPoint } from '@/lib/types';
 import { format } from 'date-fns';
+import type { DateRange } from "react-day-picker";
 import { useLanguage } from '@/hooks/use-language';
+import { Button } from './ui/button';
+import { Loader2, Video } from 'lucide-react';
+import { generateTimelapseVideoAction } from '@/lib/actions';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog"
+
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -56,6 +69,8 @@ interface VisualizationsProps {
   groundTruthData: GroundTruthDataPoint[] | null;
   selectedMetric: string;
   setSelectedMetric: (metric: string) => void;
+  locationDescription: string;
+  dateRange?: DateRange;
 }
 
 const metricOrder = [
@@ -63,12 +78,16 @@ const metricOrder = [
     'B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B9', 'B11', 'B12',
 ];
 
-export function Visualizations({ analysisResult, groundTruthData, selectedMetric, setSelectedMetric }: VisualizationsProps) {
+export function Visualizations({ analysisResult, groundTruthData, selectedMetric, setSelectedMetric, locationDescription, dateRange }: VisualizationsProps) {
   const { t } = useLanguage();
+  const { toast } = useToast();
   const chartRef = useRef(null);
   const scatterRef = useRef(null);
   const [brushStartIndex, setBrushStartIndex] = useState<number | undefined>();
   const [brushEndIndex, setBrushEndIndex] = useState<number | undefined>();
+  
+  const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
   const metricNames = Object.keys(analysisResult.timeSeries).sort((a,b) => {
       const indexA = metricOrder.indexOf(a);
@@ -85,8 +104,34 @@ export function Visualizations({ analysisResult, groundTruthData, selectedMetric
     setBrushStartIndex(range.startIndex);
     setBrushEndIndex(range.endIndex);
   };
+  
+  const handleGenerateVideo = async () => {
+    if (!dateRange?.from || !dateRange?.to) {
+        toast({ title: t('dashboard.error.noDate.title'), description: t('dashboard.error.noDate.description'), variant: "destructive"});
+        return;
+    }
+    setIsGeneratingVideo(true);
+    setVideoUrl(null);
+
+    const result = await generateTimelapseVideoAction({
+        metricName: selectedMetric,
+        locationDescription,
+        startDate: format(dateRange.from, "MMM dd, yyyy"),
+        endDate: format(dateRange.to, "MMM dd, yyyy"),
+    });
+
+    setIsGeneratingVideo(false);
+
+    if (result.error || !result.data) {
+        toast({ title: t('dashboard.video.error.title'), description: result.error || t('dashboard.video.error.description'), variant: "destructive"});
+    } else {
+        setVideoUrl(result.data.videoDataUri);
+    }
+  }
+
 
   return (
+    <>
     <Card>
       <CardHeader>
         <CardTitle>{t('dashboard.viz.title')}</CardTitle>
@@ -102,9 +147,16 @@ export function Visualizations({ analysisResult, groundTruthData, selectedMetric
             </TabsTrigger>
           </TabsList>
           <TabsContent value="time-series" className="mt-4">
-            <div className="flex justify-end mb-4">
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+                <Button onClick={handleGenerateVideo} disabled={isGeneratingVideo}>
+                    {isGeneratingVideo ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('dashboard.video.button.generating')}</>
+                    ) : (
+                        <><Video className="mr-2 h-4 w-4" /> {t('dashboard.video.button.generate')}</>
+                    )}
+                </Button>
                 <Select value={selectedMetric} onValueChange={setSelectedMetric}>
-                    <SelectTrigger className="w-[280px]">
+                    <SelectTrigger className="w-full sm:w-[280px]">
                         <SelectValue placeholder={t('dashboard.viz.selectPlaceholder')} />
                     </SelectTrigger>
                     <SelectContent>
@@ -162,5 +214,23 @@ export function Visualizations({ analysisResult, groundTruthData, selectedMetric
         </Tabs>
       </CardContent>
     </Card>
+
+    <Dialog open={!!videoUrl} onOpenChange={(open) => !open && setVideoUrl(null)}>
+        <DialogContent className="max-w-4xl">
+            <DialogHeader>
+            <DialogTitle>{t('dashboard.video.modal.title', {metric: selectedMetric})}</DialogTitle>
+            <DialogDescription>
+                {t('dashboard.video.modal.description', {location: locationDescription})}
+            </DialogDescription>
+            </DialogHeader>
+            <div className="aspect-video w-full bg-black rounded-md overflow-hidden">
+                {videoUrl && (
+                    <video controls autoPlay src={videoUrl} className="w-full h-full" />
+                )}
+            </div>
+        </DialogContent>
+    </Dialog>
+
+    </>
   );
 }

@@ -17,6 +17,7 @@ import { predictSatellitePassAction, getWeatherReportAction, computeMetricsActio
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
 import { BarChart, Search, SlidersHorizontal, Map } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
+import { Chatbot } from "./chatbot";
 
 export function Dashboard() {
   const { t } = useLanguage();
@@ -250,9 +251,12 @@ export function Dashboard() {
             groundTruthData={groundTruthData}
             selectedMetric={selectedMetric}
             setSelectedMetric={setSelectedMetric}
+            locationDescription={locationDesc}
+            dateRange={dateRange}
           />
         </>
       )}
+      <Chatbot lat={lat} lon={lon} />
     </div>
   );
 }
