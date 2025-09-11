@@ -33,26 +33,26 @@ const prompt = ai.definePrompt({
   name: 'predictSoilMoisturePrompt',
   input: { schema: PredictSoilMoistureInputSchema },
   output: { schema: PredictSoilMoistureOutputSchema },
-  prompt: `You are a soil scientist. Based on the provided latitude and longitude, analyze recent satellite data (e.g., Sentinel-1 for radar backscatter), recent precipitation data, and soil type information to predict the current soil moisture at a depth of 10cm.
+  prompt: `You are a soil scientist and hydrologist. Based on the provided latitude and longitude, analyze typical soil type for the region, recent precipitation patterns, and time of year to generate a realistic prediction of the current soil moisture at a depth of 10cm.
 
   The current date is ${new Date().toISOString()}.
 
-  Your response should include:
-  1.  The predicted volumetric water content as a percentage.
-  2.  A brief, actionable summary of the conditions.
-  3.  A confidence score for your prediction (0 to 1).
+  Your response must be a structured JSON object and include:
+  1.  'volumetricWaterContent': The predicted soil moisture as a percentage (e.g., a value from 5.0 for very dry to 40.0 for saturated).
+  2.  'summary': A brief, actionable summary of the conditions (e.g., "Soil is moderately dry. Irrigation may be needed...").
+  3.  'confidence': A confidence score for your prediction (from 0.0 to 1.0).
 
-  Location:
+  **Location:**
   - Latitude: {{{latitude}}}
   - Longitude: {{{longitude}}}
 
-  Example Input:
+  **Example Input:**
   { "latitude": 34.05, "longitude": -118.25 }
 
-  Example Output:
+  **Example Output (ensure this is realistic for Los Angeles, California):**
   {
     "volumetricWaterContent": 18.2,
-    "summary": "Soil is moderately dry. Irrigation may be needed for sensitive crops within the next 48 hours if no rain is forecast.",
+    "summary": "Soil is moderately dry. Irrigation may be needed for sensitive crops within the next 48 hours if no rain is forecast, which is typical for this arid climate.",
     "confidence": 0.78
   }
   `,

@@ -46,22 +46,23 @@ const prompt = ai.definePrompt({
   name: 'getWeatherReportPrompt',
   input: {schema: GetWeatherReportInputSchema},
   output: {schema: GetWeatherReportOutputSchema},
-  prompt: `You are a weather reporting service. Given the coordinates, provide a detailed and realistic weather report for the entire day.
+  prompt: `You are a weather reporting service. Given the coordinates, provide a detailed and realistic weather report for the entire day. The report must be plausible for the given location and the current time of year.
 
   The current date is ${new Date().toISOString()}.
 
-  Your response must include:
-  1. The current weather conditions (temperature, conditions, humidity, wind speed, and an icon).
-  2. An hourly forecast for the next 24 hours, starting from the current hour.
-  3. A concise summary of the day's weather.
+  Your response must be a structured JSON object and include:
+  1.  The 'current' weather conditions: temperature (Celsius), a brief text description of conditions, humidity (%), wind speed (km/h), and a suitable 'iconName' from the lucide-react library (e.g., Sun, Cloudy, Wind, Umbrella, CloudRain, Snowflake).
+  2.  An 'forecast' array of hourly predictions for the next 24 hours. Each entry must have a time, temperature, conditions, and iconName. The first entry should be for the current hour, labeled 'Now'.
+  3.  A concise, one-sentence 'summary' of the day's weather outlook.
 
-  Latitude: {{{latitude}}}
-  Longitude: {{{longitude}}}
+  **Location:**
+  - Latitude: {{{latitude}}}
+  - Longitude: {{{longitude}}}
 
-  Example Input:
+  **Example Input:**
   { "latitude": 28.6139, "longitude": 77.2090 }
 
-  Example Output:
+  **Example Output (ensure values are realistic for the location and time):**
   {
     "current": {
       "temperature": 34,

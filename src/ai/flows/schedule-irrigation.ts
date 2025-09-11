@@ -35,29 +35,29 @@ const prompt = ai.definePrompt({
   name: 'scheduleIrrigationPrompt',
   input: { schema: ScheduleIrrigationInputSchema },
   output: { schema: ScheduleIrrigationOutputSchema },
-  prompt: `You are an agricultural water management specialist. Based on the provided latitude and longitude, analyze recent satellite data (NDWI, Soil Moisture), and local weather forecasts to provide an irrigation recommendation.
+  prompt: `You are an agricultural water management specialist. Based on the provided latitude and longitude, analyze simulated soil moisture, local climate patterns, and typical crop water needs for the region to provide a realistic irrigation recommendation.
 
   The current date is ${new Date().toISOString()}.
 
-  Your response should include:
-  1.  A clear recommendation (e.g., "Irrigate within 24 hours," "No irrigation needed for 5-7 days").
-  2.  The suggested date for the next irrigation in YYYY-MM-DD format.
-  3.  The recommended watering depth in inches.
-  4.  A brief note explaining the reasoning.
+  Your response must be a structured JSON object and include:
+  1.  A clear 'recommendation' (e.g., "Irrigate within 24 hours," "No irrigation needed for 5-7 days").
+  2.  The suggested 'nextIrrigationDate' in YYYY-MM-DD format.
+  3.  The recommended 'wateringDepthInches'.
+  4.  A brief 'notes' section explaining your reasoning, referencing factors like recent weather patterns or soil type.
 
-  Location:
+  **Location:**
   - Latitude: {{{latitude}}}
   - Longitude: {{{longitude}}}
 
-  Example Input:
+  **Example Input:**
   { "latitude": 28.4595, "longitude": 77.0266 }
 
-  Example Output:
+  **Example Output (ensure this is realistic for Gurgaon, India, and considers monsoon season):**
   {
     "recommendation": "Delay irrigation",
     "nextIrrigationDate": "${new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}",
     "wateringDepthInches": 1.5,
-    "notes": "No irrigation needed for 5-7 days. Recent monsoon showers have adequately replenished soil moisture. NDWI values are high, and the short-term forecast predicts further precipitation."
+    "notes": "No irrigation needed for 5-7 days. The region is currently in its monsoon season, and recent showers have likely replenished soil moisture. NDWI values are typically high during this period."
   }
   `,
 });

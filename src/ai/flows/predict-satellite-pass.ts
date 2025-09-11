@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -33,14 +34,19 @@ const prompt = ai.definePrompt({
   name: 'predictSatellitePassPrompt',
   input: {schema: PredictSatellitePassInputSchema},
   output: {schema: PredictSatellitePassOutputSchema},
-  prompt: `You are a satellite tracking expert. Given the coordinates, predict the next satellite pass for a relevant earth observation satellite (e.g., Landsat 8, Sentinel-2, GOES).
+  prompt: `You are a satellite tracking expert. Given the coordinates, predict the next pass for a major, relevant public earth observation satellite (e.g., Landsat 9, Sentinel-2, GOES-18).
 
-  The current date is ${new Date().toISOString()}. The returned pass time should be in the near future (within the next 24 hours).
+  The current date is ${new Date().toISOString()}. The returned pass time must be in the near future (within the next 24 hours).
 
-  Latitude: {{{latitude}}}
-  Longitude: {{{longitude}}}
+  **Location:**
+  - Latitude: {{{latitude}}}
+  - Longitude: {{{longitude}}}
 
-  Respond with the predicted pass time in UTC ISO 8601 format, the satellite's name, its current status, and its approximate orbital speed in km/s.
+  Your response must be a structured JSON object containing:
+  1.  'passTime': The predicted next pass time in UTC ISO 8601 format.
+  2.  'satelliteName': The specific name of the satellite.
+  3.  'status': The satellite's current operational status (e.g., 'Active', 'Maintenance').
+  4.  'speed': The satellite's approximate orbital speed in km/s (typically around 7.5 km/s for LEO satellites).
 `,
 });
 
