@@ -3,27 +3,12 @@
 /**
  * @fileOverview A flow for generating a time-lapse video of an environmental metric.
  * - generateTimelapseVideo - Generates a video from a text prompt derived from dashboard settings.
- * - GenerateTimelapseVideoInput - The input type for the function.
- * - GenerateTimelapseVideoOutput - The return type for the function.
  */
 
 import { ai } from '@/ai/genkit';
 import { googleAI } from '@genkit-ai/googleai';
-import { z } from 'genkit';
-import { format } from 'date-fns';
+import { GenerateTimelapseVideoInputSchema, GenerateTimelapseVideoOutputSchema, type GenerateTimelapseVideoInput, type GenerateTimelapseVideoOutput } from '@/lib/types';
 
-export const GenerateTimelapseVideoInputSchema = z.object({
-  metricName: z.string().describe('The name of the metric being visualized, e.g., NDVI.'),
-  locationDescription: z.string().describe('A description of the location, e.g., Amazon Rainforest.'),
-  startDate: z.string().describe('The start date of the time-lapse (e.g., "Jan 01, 2023").'),
-  endDate: z.string().describe('The end date of the time-lapse (e.g., "Dec 31, 2023").'),
-});
-export type GenerateTimelapseVideoInput = z.infer<typeof GenerateTimelapseVideoInputSchema>;
-
-export const GenerateTimelapseVideoOutputSchema = z.object({
-  videoDataUri: z.string().describe('The generated video as a data URI in MP4 format.'),
-});
-export type GenerateTimelapseVideoOutput = z.infer<typeof GenerateTimelapseVideoOutputSchema>;
 
 export async function generateTimelapseVideo(input: GenerateTimelapseVideoInput): Promise<GenerateTimelapseVideoOutput> {
   return generateTimelapseVideoFlow(input);
