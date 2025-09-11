@@ -17,9 +17,10 @@ import { suggestCrop } from "@/ai/flows/suggest-crop";
 import { analyzeDroughtAndFloodRisk } from "@/ai/flows/analyze-drought-flood-risk";
 import { getAdvancedCropAdvice } from "@/ai/flows/get-advanced-crop-advice";
 import { generateTimelapseVideo } from "@/ai/flows/generate-timelapse-video";
+import { runScenarioAnalysis } from "@/ai/tools/run-scenario-analysis";
 
 
-import type { SatellitePassData, WeatherData, CropPlan, IrrigationSchedule, AnalysisResult, SoilMoisturePrediction, CropYieldPrediction, SuggestCropInput, SuggestCropOutput, DroughtFloodRisk, AdvancedCropAdvice, GenerateTimelapseVideoInput, GenerateTimelapseVideoOutput } from "@/lib/types";
+import type { SatellitePassData, WeatherData, CropPlan, IrrigationSchedule, AnalysisResult, SoilMoisturePrediction, CropYieldPrediction, SuggestCropInput, SuggestCropOutput, DroughtFloodRisk, AdvancedCropAdvice, GenerateTimelapseVideoInput, GenerateTimelapseVideoOutput, ScenarioAnalysis } from "@/lib/types";
 import type { ChatbotInput, ChatbotOutput } from "@/ai/flows/chatbot";
 import type { TextToSpeechOutput } from "@/ai/flows/text-to-speech";
 import type { GenerateDataInsightsInput } from "@/ai/flows/generate-insights";
@@ -106,4 +107,8 @@ export async function getAdvancedCropAdviceAction(input: { latitude: number; lon
 
 export async function generateTimelapseVideoAction(input: GenerateTimelapseVideoInput): Promise<{ data: GenerateTimelapseVideoOutput | null; error: string | null; }> {
     return handleAction(generateTimelapseVideo, input);
+}
+
+export async function runScenarioAnalysisAction(input: { latitude: number; longitude: number; scenarioDescription: string; }): Promise<{ data: ScenarioAnalysis | null; error: string | null; }> {
+    return handleAction(runScenarioAnalysis, input);
 }

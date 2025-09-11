@@ -69,6 +69,13 @@
     "predict.yield.title": "పంట దిగుబడి",
     "predict.yield.description": "ఎంచుకున్న స్థానం కోసం సంభావ్య పంట దిగుబడిని అంచనా వేయండి.",
     "predict.yield.button": "దిగుబడిని అంచనా వేయండి",
+    "predict.risk.title": "కరువు & వరద ప్రమాదం",
+    "predict.risk.description": "చారిత్రక డేటా ఆధారంగా కరువు మరియు వరద ప్రమాదాన్ని అంచనా వేయండి.",
+    "predict.risk.button": "ప్రమాదాన్ని అంచనా వేయండి",
+    "predict.scenario.title": "'ఏమైతే' దృష్టాంత విశ్లేషణ",
+    "predict.scenario.description": "AI యొక్క సంభావ్య ప్రభావం యొక్క విశ్లేషణను చూడటానికి ఒక ఊహాత్మక పర్యావరణ మార్పును వివరించండి.",
+    "predict.scenario.placeholder": "ఉదా., 'వార్షిక వర్షపాతం 15% పెరిగితే ఏమి జరుగుతుంది?' లేదా 'స్థానిక మొక్కజొన్న పంటలపై 2-డిగ్రీల సెల్సియస్ ఉష్ణోగ్రత పెరుగుదల ప్రభావం.'",
+    "predict.scenario.button": "విశ్లేషణను అమలు చేయండి",
     "predict.error.noLocation.title": "లోపం",
     "predict.error.noLocation.description": "దయచేసి స్థాన వివరణను నమోదు చేయండి.",
     "predict.error.aiError.title": "AI లోపం",
@@ -77,6 +84,8 @@
     "predict.error.predictionError.title": "అంచనా లోపం",
     "predict.error.unexpected.title": "లోపం",
     "predict.error.unexpected.description": "ఊహించని లోపం సంభవించింది.",
+    "predict.error.noScenario.title": "దృష్టాంతం లేదు",
+    "predict.error.noScenario.description": "విశ్లేషణ కోసం దయచేసి ఒక దృష్టాంతాన్ని వివరించండి.",
     "predict.coordinatesSuggested.title": "సూచించబడిన కోఆర్డినేట్లు",
     "predict.coordinatesSuggested.confidence": "విశ్వాసం",
     "predict.result.cropPlan.title": "పంట ప్రణాళిక సిఫార్సు",
@@ -97,6 +106,12 @@
     "predict.result.yield.unit": "టన్నులు/హెక్టారు",
     "predict.result.yield.notes": "గమనికలు",
     "predict.result.yield.confidence": "విశ్వాసం",
+    "predict.result.risk.title": "కరువు & వరద ప్రమాద అంచనా",
+    "predict.result.risk.drought": "కరువు ప్రమాదం",
+    "predict.result.risk.flood": "వరద ప్రమాదం",
+    "predict.result.risk.summary": "విశ్లేషణాత్మక సారాంశం",
+    "predict.result.scenario.title": "దృష్టాంత విశ్లేషణ ఫలితం",
+    "predict.result.scenario.impact": "సంభావ్య ప్రభావం",
     "dashboard.input.title": "డేటా ఇన్‌పుట్ & శాటిలైట్ ట్రాకింగ్",
     "dashboard.input.description": "పర్యావరణ మెట్రిక్‌లను గణించడానికి కోఆర్డినేట్‌లు, తేదీ పరిధి మరియు ఐచ్ఛిక గ్రౌండ్ ట్రూత్ డేటాను పేర్కొనండి.",
     "dashboard.input.locationDesc": "స్థాన వివరణ (AI సూచనల కోసం)",
@@ -228,5 +243,3 @@
     "cropAdvisor.result.alternative": "ప్రత్యామ్నాయ సూచన",
     "cropAdvisor.result.alternativeDesc": "మీ పరిస్థితులకు మరో మంచి ఎంపిక <strong>{crop}</strong> కావచ్చు."
 }
-
-    

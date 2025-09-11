@@ -69,6 +69,13 @@
     "predict.yield.title": "பயிர் விளைச்சல்",
     "predict.yield.description": "தேர்ந்தெடுக்கப்பட்ட இடத்திற்கான சாத்தியமான பயிர் விளைச்சலைக் கணிக்கவும்.",
     "predict.yield.button": "விளைச்சலைக் கணிக்கவும்",
+    "predict.risk.title": "வறட்சி மற்றும் வெள்ள அபாயம்",
+    "predict.risk.description": "வரலாற்றுத் தரவுகளின் அடிப்படையில் வறட்சி மற்றும் வெள்ள அபாயத்தை மதிப்பிடவும்.",
+    "predict.risk.button": "அபாயத்தை மதிப்பிடவும்",
+    "predict.scenario.title": "'என்னவென்றால்' சூழ்நிலை பகுப்பாய்வு",
+    "predict.scenario.description": "AI இன் சாத்தியமான தாக்கத்தின் பகுப்பாய்வைக் காண ஒரு கற்பனையான சுற்றுச்சூழல் மாற்றத்தை விவரிக்கவும்.",
+    "predict.scenario.placeholder": "எ.கா., 'ஆண்டு மழை 15% அதிகரித்தால் என்ன நடக்கும்?' அல்லது 'உள்ளூர் சோளப் பயிர்களில் 2-டிகிரி செல்சியஸ் வெப்பநிலை உயர்வின் தாக்கம்.'",
+    "predict.scenario.button": "பகுப்பாய்வை இயக்கவும்",
     "predict.error.noLocation.title": "பிழை",
     "predict.error.noLocation.description": "దయచేసి இருப்பிட ವಿವರಣೆಯನ್ನು ನಮೂದಿಸಿ.",
     "predict.error.aiError.title": "AI பிழை",
@@ -77,6 +84,8 @@
     "predict.error.predictionError.title": "கணிப்பு பிழை",
     "predict.error.unexpected.title": "பிழை",
     "predict.error.unexpected.description": "ഒരു ఊహించని లోపం సంభవించింది.",
+    "predict.error.noScenario.title": "சூழ்நிலை இல்லை",
+    "predict.error.noScenario.description": "பகுப்பாய்வுக்காக ஒரு சூழ்நிலையை விவரிக்கவும்.",
     "predict.coordinatesSuggested.title": "பரிந்துரைக்கப்பட்ட ஆயத்தொலைவுகள்",
     "predict.coordinatesSuggested.confidence": "நம்பிக்கை",
     "predict.result.cropPlan.title": "பயிர் திட்டப் பரிந்துரை",
@@ -97,6 +106,12 @@
     "predict.result.yield.unit": "டன்/ஹெக்டேர்",
     "predict.result.yield.notes": "குறிப்புகள்",
     "predict.result.yield.confidence": "நம்பிக்கை",
+    "predict.result.risk.title": "வறட்சி மற்றும் வெள்ள அபாய மதிப்பீடு",
+    "predict.result.risk.drought": "வறட்சி ஆபத்து",
+    "predict.result.risk.flood": "வெள்ள ஆபத்து",
+    "predict.result.risk.summary": "பகுப்பாய்வு சுருக்கம்",
+    "predict.result.scenario.title": "சூழ்நிலை பகுப்பாய்வு முடிவு",
+    "predict.result.scenario.impact": "சாத்தியமான தாக்கம்",
     "dashboard.input.title": "தரவு உள்ளீடு & செயற்கைக்கோள் கண்காணிப்பு",
     "dashboard.input.description": "சுற்றுச்சூழல் அளவீடுகளை கணக்கிட ஆயத்தொலைவுகள், தேதி வரம்பு மற்றும் விருப்பத் தரை உண்மைத் தரவைக் குறிப்பிடவும்.",
     "dashboard.input.locationDesc": "இருப்பிட விளக்கம் (AI பரிந்துரைகளுக்கு)",
@@ -228,5 +243,3 @@
     "cropAdvisor.result.alternative": "மாற்றுப் பரிந்துரை",
     "cropAdvisor.result.alternativeDesc": "உங்கள் நிலைமைகளுக்கு மற்றொரு நல்ல விருப்பம் <strong>{crop}</strong> ஆக இருக்கலாம்."
 }
-
-    

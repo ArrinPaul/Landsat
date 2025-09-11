@@ -200,5 +200,11 @@ export const GenerateTimelapseVideoOutputSchema = z.object({
   videoDataUri: z.string().describe('The generated video as a data URI in MP4 format.'),
 });
 export type GenerateTimelapseVideoOutput = z.infer<typeof GenerateTimelapseVideoOutputSchema>;
-    
 
+// New type for Scenario Analysis
+export interface ScenarioAnalysis {
+    scenario: string;
+    likelyImpact: string;
+    confidence: number;
+}
+    
