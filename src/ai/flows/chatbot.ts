@@ -12,7 +12,6 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { ChatMessageSchema } from '@/lib/types';
-import { runScenarioAnalysis } from '@/ai/tools/run-scenario-analysis';
 
 const ChatbotInputSchema = z.object({
   messages: z.array(ChatMessageSchema),

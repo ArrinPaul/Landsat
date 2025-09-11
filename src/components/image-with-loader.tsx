@@ -32,5 +32,3 @@ export function ImageWithLoader({ src, alt, className }: ImageWithLoaderProps) {
     </div>
   );
 }
-
-    

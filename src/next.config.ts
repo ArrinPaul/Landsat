@@ -34,5 +34,3 @@ const nextConfig: NextConfig = {
 };
 
 module.exports = nextConfig;
-
-    

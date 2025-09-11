@@ -208,5 +208,3 @@ export interface ScenarioAnalysis {
     likelyImpact: string;
     confidence: number;
 }
-
-    
