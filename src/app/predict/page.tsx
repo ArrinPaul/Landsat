@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Wand2, Loader2, Thermometer, Tractor, Droplets, LandPlot, BarChartBig, CloudRain, AlertTriangle } from "lucide-react";
+import { Wand2, Loader2, Thermometer, Tractor, Droplets, LandPlot, BarChartBig, CloudRain, AlertTriangle, BrainCircuit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { 
     suggestCoordinatesAction, 
@@ -17,11 +17,13 @@ import {
     predictSoilMoistureAction,
     predictCropYieldAction,
     analyzeDroughtAndFloodRiskAction,
+    runScenarioAnalysisAction,
 } from "@/lib/actions";
-import type { WeatherData, CropPlan, IrrigationSchedule, SoilMoisturePrediction, CropYieldPrediction, DroughtFloodRisk } from "@/lib/types";
+import type { WeatherData, CropPlan, IrrigationSchedule, SoilMoisturePrediction, CropYieldPrediction, DroughtFloodRisk, ScenarioAnalysis } from "@/lib/types";
 import { WeatherReport } from "@/components/weather-report";
 import { useLanguage } from "@/hooks/use-language";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function PredictPage() {
     const { toast } = useToast();
@@ -38,8 +40,10 @@ export default function PredictPage() {
     const [soilMoisture, setSoilMoisture] = useState<SoilMoisturePrediction | null>(null);
     const [cropYield, setCropYield] = useState<CropYieldPrediction | null>(null);
     const [droughtFloodRisk, setDroughtFloodRisk] = useState<DroughtFloodRisk | null>(null);
+    const [scenario, setScenario] = useState("a 2-degree temperature increase");
+    const [scenarioResult, setScenarioResult] = useState<ScenarioAnalysis | null>(null);
 
-    type PredictionType = 'weather' | 'crops' | 'irrigation' | 'soil' | 'yield' | 'risk';
+    type PredictionType = 'weather' | 'crops' | 'irrigation' | 'soil' | 'yield' | 'risk' | 'scenario';
 
     const handleSuggestCoordinates = async () => {
         if (!locationDesc) {
@@ -65,6 +69,7 @@ export default function PredictPage() {
         setSoilMoisture(null);
         setCropYield(null);
         setDroughtFloodRisk(null);
+        setScenarioResult(null);
     }
 
     const handlePrediction = async (type: PredictionType) => {
@@ -103,6 +108,15 @@ export default function PredictPage() {
                 case 'risk':
                     result = await analyzeDroughtAndFloodRiskAction(coords);
                     if (result.data) setDroughtFloodRisk(result.data);
+                    break;
+                case 'scenario':
+                    if (!scenario) {
+                        toast({ title: t('predict.error.noScenario.title'), description: t('predict.error.noScenario.description'), variant: "destructive" });
+                        result = { error: 'No scenario description' };
+                        break;
+                    }
+                    result = await runScenarioAnalysisAction({ ...coords, scenarioDescription: scenario });
+                    if (result.data) setScenarioResult(result.data);
                     break;
             }
 
@@ -164,6 +178,26 @@ export default function PredictPage() {
                                     <Label htmlFor="longitude">{t('predict.longitude')}</Label>
                                     <Input id="longitude" placeholder="e.g., 31.07" value={lon} onChange={(e) => setLon(e.target.value)} />
                                 </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                    
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2"><BrainCircuit/> {t('predict.scenario.title')}</CardTitle>
+                            <CardDescription>{t('predict.scenario.description')}</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                <Textarea 
+                                    placeholder={t('predict.scenario.placeholder')}
+                                    value={scenario}
+                                    onChange={(e) => setScenario(e.target.value)}
+                                />
+                                <Button onClick={() => handlePrediction('scenario')} disabled={!!isLoading}>
+                                    {isLoading === 'scenario' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
+                                    {t('predict.scenario.button')}
+                                </Button>
                             </div>
                         </CardContent>
                     </Card>
@@ -248,6 +282,25 @@ export default function PredictPage() {
                             <CardContent className="pt-6">
                                 <div className="flex justify-center items-center h-48">
                                     <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {scenarioResult && (
+                        <Card>
+                             <CardHeader>
+                                <CardTitle>{t('predict.result.scenario.title')}</CardTitle>
+                                <CardDescription>{scenarioResult.scenario}</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                               <div>
+                                    <h4 className="font-semibold">{t('predict.result.scenario.impact')}</h4>
+                                    <p className="text-muted-foreground">{scenarioResult.likelyImpact}</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold">{t('predict.result.yield.confidence')}</h4>
+                                    <p className="text-muted-foreground">{(scenarioResult.confidence * 100).toFixed(0)}%</p>
                                 </div>
                             </CardContent>
                         </Card>
