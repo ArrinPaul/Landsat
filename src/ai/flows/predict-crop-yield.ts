@@ -35,25 +35,25 @@ const prompt = ai.definePrompt({
   name: 'predictCropYieldPrompt',
   input: { schema: PredictCropYieldInputSchema },
   output: { schema: PredictCropYieldOutputSchema },
-  prompt: `You are an agricultural scientist specializing in crop yield prediction. Based on the provided latitude, longitude, and crop type, analyze historical satellite data (NDVI), climate patterns, and typical soil data to predict the potential crop yield.
+  prompt: `You are an agricultural scientist specializing in crop yield prediction. Based on the provided latitude, longitude, and crop type, analyze known climate patterns, typical soil data, and regional agricultural productivity to predict the potential crop yield.
 
   The current date is ${new Date().toISOString()}.
 
-  Your response should include:
-  1.  The predicted yield in tons per hectare.
-  2.  The crop name.
-  3.  A confidence score for your prediction (0 to 1).
-  4.  A brief note explaining the key factors influencing this prediction (e.g., expected rainfall, soil quality, temperature trends).
+  Your response must be a structured JSON object and include:
+  1.  The 'predictedYield' in tons per hectare. This should be a realistic figure for the specified crop and region.
+  2.  The 'crop' name.
+  3.  A 'confidence' score for your prediction (from 0.0 to 1.0), reflecting the typical variability for that region.
+  4.  A brief 'notes' section explaining the key factors influencing this prediction (e.g., expected rainfall, general soil quality, temperature trends).
 
-  Location:
+  **Location & Crop:**
   - Latitude: {{{latitude}}}
   - Longitude: {{{longitude}}}
   - Crop Type: {{{cropType}}}
 
-  Example Input:
+  **Example Input:**
   { "latitude": 41.6, "longitude": -93.6, "cropType": "Corn" }
 
-  Example Output:
+  **Example Output (ensure this is realistic for Iowa, USA):**
   {
     "predictedYield": 12.5,
     "crop": "Corn",
