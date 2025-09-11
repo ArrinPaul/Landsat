@@ -65,6 +65,8 @@ const ComputeMetricsOutputSchema = z.object({
         water: LandCoverChangeStatSchema,
         builtUp: LandCoverChangeStatSchema,
         other: LandCoverChangeStatSchema,
+        beforeMapUrl: z.string().url().describe('A data URI of the land cover map at the start date.'),
+        afterMapUrl: z.string().url().describe('A data URI of the land cover map at the end date.'),
     }),
 });
 export type ComputeMetricsOutput = z.infer<typeof ComputeMetricsOutputSchema>;
@@ -148,7 +150,38 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
                 const firstImage = withMetrics.first();
                 const lastImage = withMetrics.sort('system:time_start', false).first();
                 
-                const calculateLandCover = (image: ee.Image) => {
+                const landCoverPalette = [
+                    '666666', // Other (gray)
+                    '00FF00', // Vegetation (green)
+                    'FF0000', // Built-up (red)
+                    '0000FF', // Water (blue)
+                ];
+
+                const createClassifiedImage = (image: ee.Image) => {
+                    const ndvi = image.select('NDVI');
+                    const ndwi = image.select('NDWI');
+                    const ndbi = image.select('NDBI');
+
+                    const water = ndwi.gt(0.0).rename('water');
+                    const vegetation = ndvi.gt(0.2).and(water.not()).rename('vegetation');
+                    const builtUp = ndbi.gt(0.0).and(vegetation.not()).and(water.not()).rename('builtUp');
+                    
+                    // Create a single-band image where pixel values represent classes
+                    // 0=Other, 1=Vegetation, 2=Built-up, 3=Water
+                    const classified = ee.Image(0)
+                        .where(vegetation, 1)
+                        .where(builtUp, 2)
+                        .where(water, 3)
+                        .rename('landcover');
+                        
+                    return classified.visualize({
+                        min: 0,
+                        max: 3,
+                        palette: landCoverPalette
+                    });
+                };
+                
+                const calculateLandCoverStats = (image: ee.Image) => {
                     const ndvi = image.select('NDVI');
                     const ndwi = image.select('NDWI');
                     const ndbi = image.select('NDBI');
@@ -175,14 +208,29 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
                     });
                 };
                 
-                const landCoverStart = calculateLandCover(firstImage);
-                const landCoverEnd = calculateLandCover(lastImage);
+                const landCoverStart = calculateLandCoverStats(firstImage);
+                const landCoverEnd = calculateLandCoverStats(lastImage);
+
+                const getMapUri = (image: ee.Image) => {
+                    const classifiedVis = createClassifiedImage(image);
+                    return classifiedVis.getThumbURL({
+                        dimensions: '512x512',
+                        region: areaOfInterest.toGeoJSON(),
+                        format: 'png'
+                    });
+                };
+                
+                const beforeMapUrl = getMapUri(firstImage);
+                const afterMapUrl = getMapUri(lastImage);
+
 
                 // Now evaluate the full results.
                 ee.Dictionary({
                     timeSeries: chartData.toList(chartData.size()),
                     landCoverStart: landCoverStart,
-                    landCoverEnd: landCoverEnd
+                    landCoverEnd: landCoverEnd,
+                    beforeMapUrl: beforeMapUrl,
+                    afterMapUrl: afterMapUrl
                 }).evaluate((result, error) => {
                     if (error) {
                         return reject(new Error(`Earth Engine Error during final evaluation: ${error}`));
@@ -193,6 +241,9 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
                     }
                      if (!result.landCoverStart || !result.landCoverEnd) {
                         return reject(new Error("Could not compute land cover analysis. The area might be too small or lack valid imagery at the start/end dates."));
+                    }
+                    if (!result.beforeMapUrl || !result.afterMapUrl) {
+                        return reject(new Error("Could not generate land cover maps."));
                     }
                     resolve(result);
                 });
@@ -264,7 +315,9 @@ const computeMetricsFlow = ai.defineFlow(
             endArea: end.other,
             absoluteChange: end.other - start.other,
             percentageChange: getPercentageChange(start.other, end.other),
-        }
+        },
+        beforeMapUrl: eeData.beforeMapUrl,
+        afterMapUrl: eeData.afterMapUrl
     };
 
     return { 

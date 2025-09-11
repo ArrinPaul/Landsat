@@ -24,6 +24,9 @@ import { WeatherReport } from "@/components/weather-report";
 import { useLanguage } from "@/hooks/use-language";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const cropOptions = ["Corn", "Wheat", "Rice", "Soybeans", "Cotton", "Potatoes", "Tomatoes", "Barley", "Sorghum"];
 
 export default function PredictPage() {
     const { toast } = useToast();
@@ -42,6 +45,7 @@ export default function PredictPage() {
     const [droughtFloodRisk, setDroughtFloodRisk] = useState<DroughtFloodRisk | null>(null);
     const [scenario, setScenario] = useState("a 2-degree temperature increase");
     const [scenarioResult, setScenarioResult] = useState<ScenarioAnalysis | null>(null);
+    const [selectedCrop, setSelectedCrop] = useState("Corn");
 
     type PredictionType = 'weather' | 'crops' | 'irrigation' | 'soil' | 'yield' | 'risk' | 'scenario';
 
@@ -62,23 +66,12 @@ export default function PredictPage() {
         setIsSuggesting(false);
     };
 
-    const clearResults = () => {
-        setWeather(null);
-        setCropPlan(null);
-        setIrrigationSchedule(null);
-        setSoilMoisture(null);
-        setCropYield(null);
-        setDroughtFloodRisk(null);
-        setScenarioResult(null);
-    }
-
     const handlePrediction = async (type: PredictionType) => {
         if (!lat || !lon) {
             toast({ title: t('predict.error.noCoords.title'), description: t('predict.error.noCoords.description'), variant: "destructive" });
             return;
         }
         setIsLoading(type);
-        clearResults();
 
         const coords = { latitude: parseFloat(lat), longitude: parseFloat(lon) };
         
@@ -102,7 +95,7 @@ export default function PredictPage() {
                     if (result.data) setSoilMoisture(result.data);
                     break;
                 case 'yield':
-                    result = await predictCropYieldAction({ ...coords, cropType: 'Maize' }); // Note: Crop type is hardcoded for now
+                    result = await predictCropYieldAction({ ...coords, cropType: selectedCrop });
                     if (result.data) setCropYield(result.data);
                     break;
                 case 'risk':
@@ -181,28 +174,52 @@ export default function PredictPage() {
                             </div>
                         </CardContent>
                     </Card>
-                    
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2"><BrainCircuit/> {t('predict.scenario.title')}</CardTitle>
-                            <CardDescription>{t('predict.scenario.description')}</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
-                                <Textarea 
-                                    placeholder={t('predict.scenario.placeholder')}
-                                    value={scenario}
-                                    onChange={(e) => setScenario(e.target.value)}
-                                />
-                                <Button onClick={() => handlePrediction('scenario')} disabled={!!isLoading}>
-                                    {isLoading === 'scenario' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
-                                    {t('predict.scenario.button')}
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                         <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2"><BrainCircuit/> {t('predict.scenario.title')}</CardTitle>
+                                <CardDescription>{t('predict.scenario.description')}</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-4">
+                                    <Textarea 
+                                        placeholder={t('predict.scenario.placeholder')}
+                                        value={scenario}
+                                        onChange={(e) => setScenario(e.target.value)}
+                                    />
+                                    <Button onClick={() => handlePrediction('scenario')} disabled={!!isLoading}>
+                                        {isLoading === 'scenario' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
+                                        {t('predict.scenario.button')}
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2"><BarChartBig/> {t('predict.yield.title')}</CardTitle>
+                                <CardDescription>{t('predict.yield.description')}</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                 <div className="space-y-4">
+                                   <Select value={selectedCrop} onValueChange={setSelectedCrop}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder={t('cropAdvisor.advanced.selectCrop.placeholder')} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {cropOptions.map(crop => <SelectItem key={crop} value={crop}>{crop}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                    <Button onClick={() => handlePrediction('yield')} disabled={!!isLoading}>
+                                        {isLoading === 'yield' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
+                                        {t('predict.yield.button')}
+                                    </Button>
+                                 </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2"><Thermometer/> {t('predict.weather.title')}</CardTitle>
@@ -251,18 +268,7 @@ export default function PredictPage() {
                                 </Button>
                             </CardContent>
                         </Card>
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2"><BarChartBig/> {t('predict.yield.title')}</CardTitle>
-                                <CardDescription>{t('predict.yield.description')}</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <Button onClick={() => handlePrediction('yield')} disabled={!!isLoading}>
-                                    {isLoading === 'yield' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
-                                    {t('predict.yield.button')}
-                                </Button>
-                            </CardContent>
-                        </Card>
+                       
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2"><AlertTriangle/> {t('predict.risk.title')}</CardTitle>

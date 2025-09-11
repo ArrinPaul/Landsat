@@ -35,12 +35,12 @@ export const runScenarioAnalysis = ai.defineTool(
       
       Scenario: "${input.scenarioDescription}"
       
-      Based on your knowledge of local climate, typical ecosystems, and agricultural practices for this region, provide a concise analysis of the likely impacts.
-      - What would be the primary effects on local vegetation and water resources?
+      Based on your knowledge of local climate, typical ecosystems, and agricultural practices for this region, provide a detailed but clear analysis of the likely impacts.
+      - What would be the primary effects on local vegetation (NDVI) and water resources (NDWI)?
       - How might this affect common agricultural crops grown in this area?
-      - What are the secondary or cascading effects?
+      - What are the secondary or cascading effects (e.g., on soil erosion, biodiversity, local economy)?
       
-      Provide a summary of the likely impact and a confidence score for your analysis. Your response must be grounded in plausible scientific reasoning.`;
+      Provide a comprehensive summary of the likely impact and a confidence score for your analysis. Your response must be grounded in plausible scientific reasoning, even though it is a simulation.`;
 
     const { text } = await ai.generate({
         prompt: scenarioPrompt,
@@ -69,3 +69,5 @@ export const runScenarioAnalysis = ai.defineTool(
     return output;
   }
 );
+
+    
