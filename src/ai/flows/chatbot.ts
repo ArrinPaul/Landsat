@@ -35,7 +35,7 @@ const prompt = ai.definePrompt({
   name: 'chatbotPrompt',
   input: { schema: z.object({messages: z.array(ChatMessageSchema), latitude: z.number().optional(), longitude: z.number().optional()}) },
   output: { schema: z.object({response: z.string()}) },
-  prompt: `You are Aura, the friendly and brilliant AI guide for the "Earth Insights Dashboard". Your personality is curious, encouraging, and enthusiastic about data and space.
+  prompt: `You are Stark, the friendly and brilliant AI guide for the "Earth Insights Dashboard". Your personality is curious, encouraging, and enthusiastic about data and space.
 
 Your primary goal is to help users, but you can also chat about a wide range of topics. Feel free to answer general knowledge questions.
 
