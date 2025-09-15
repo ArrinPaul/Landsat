@@ -14,12 +14,6 @@ import { Avatar, AvatarFallback } from './ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/hooks/use-language';
 
-let SpeechRecognition: any = null;
-if (typeof window !== 'undefined') {
-    SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
-}
-
-
 export function Chatbot({ lat, lon }: { lat?: string, lon?: string }) {
   const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
@@ -29,9 +23,34 @@ export function Chatbot({ lat, lon }: { lat?: string, lon?: string }) {
   const [isRecording, setIsRecording] = useState(false);
   const [audioStates, setAudioStates] = useState<Record<number, 'idle' | 'loading' | 'playing'>>({});
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const recognitionRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const { toast } = useToast();
+  
+  const recognitionRef = useRef<any>(null);
+  if (recognitionRef.current === null && typeof window !== 'undefined') {
+    const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+
+        recognition.onresult = (event: any) => {
+          const transcript = event.results[0][0].transcript;
+          setInput(transcript);
+          handleSend(transcript); 
+        };
+        recognition.onerror = (event: any) => {
+           toast({ title: t('chatbot.error.voice.title'), description: event.error, variant: "destructive"});
+           setIsRecording(false);
+        };
+        recognition.onend = () => {
+           setIsRecording(false);
+        };
+        recognitionRef.current = recognition;
+    }
+  }
+
 
   useEffect(() => {
     if (isOpen && messages.length === 0) {
@@ -50,33 +69,8 @@ export function Chatbot({ lat, lon }: { lat?: string, lon?: string }) {
     }
   }, [messages]);
   
-  useEffect(() => {
-    if (!SpeechRecognition) {
-      return;
-    }
-    const recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.lang = 'en-US';
-
-    recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript;
-      setInput(transcript);
-      handleSend(transcript);
-    };
-    recognition.onerror = (event: any) => {
-       toast({ title: t('chatbot.error.voice.title'), description: event.error, variant: "destructive"});
-       setIsRecording(false);
-    };
-    recognition.onend = () => {
-       setIsRecording(false);
-    };
-
-    recognitionRef.current = recognition;
-  }, [toast, t]);
-
   const handleVoiceInput = () => {
-    if (!SpeechRecognition) {
+    if (!recognitionRef.current) {
        toast({ title: t('chatbot.error.unsupported.title'), description: t('chatbot.error.unsupported.description'), variant: "destructive" });
        return;
     }
