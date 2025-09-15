@@ -211,21 +211,12 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
                 const landCoverStart = calculateLandCoverStats(firstImage);
                 const landCoverEnd = calculateLandCoverStats(lastImage);
 
-                const getMapUri = (image: ee.Image, region: ee.Geometry) => {
-                    const classifiedVis = createClassifiedImage(image);
-                    return classifiedVis.getThumbURL({
-                        dimensions: '512x512',
-                        region: region.toGeoJSON(),
-                        format: 'png'
-                    });
-                };
-                
                 // Now evaluate the full results.
                 ee.Dictionary({
                     timeSeries: chartData.toList(chartData.size()),
                     landCoverStart: landCoverStart,
                     landCoverEnd: landCoverEnd,
-                    regionGeoJSON: areaOfInterest.toGeoJSON(),
+                    regionGeoJSON: areaOfInterest, // Pass the computed object directly
                 }).evaluate((result: any, error) => {
                     if (error) {
                         return reject(new Error(`Earth Engine Error during final evaluation: ${error}`));
@@ -241,7 +232,6 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
                     }
                     
                     // With the evaluated GeoJSON, we can now safely get the URLs synchronously.
-                    // This requires re-creating the image objects, but it's the correct EE pattern.
                     const beforeVis = createClassifiedImage(firstImage);
                     const afterVis = createClassifiedImage(lastImage);
 
