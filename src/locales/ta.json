@@ -191,7 +191,7 @@
     "dashboard.metrics.table.insightTitle": "{metric}-க்கான AI நுண்ணறிவு",
     "dashboard.metrics.table.insightPlaceholder": "இந்த அளவீட்டிற்கு AI நுண்ணறிவை உருவாக்க மாய மந்திரக்கோலை கிளிக் செய்யவும்.",
     "dashboard.viz.title": "தரவுக் காட்சிப்படுத்தல்",
-    "dashboard.viz.description": "சுற்றுச்சூழல் அளவீடுகள் மற்றும் ಸ್ಪೆಕ್ಟ್ರಲ್ பட்டைகளின் ஊடாடும் வரைபடங்கள்.",
+    "dashboard.viz.description": "சுற்றுச்சூழல் அளவீடுகள் மற்றும் ಸ್ಪೆಕ್ಟ್ರల్ பட்டைகளின் ஊடாடும் வரைபடங்கள்.",
     "dashboard.viz.tabs.timeSeries": "நேரத் தொடர் பகுப்பாய்வு",
     "dashboard.viz.tabs.comparison": "செயற்கைக்கோள் বনাম தரை",
     "dashboard.viz.tabs.csvRequired": "CSV தேவை",
