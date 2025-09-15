@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -207,6 +206,7 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleExportCsv}>{t('dashboard.metrics.export.csv')}</Button>
             <Button variant="outline" onClick={handleExportReport} disabled={reportLoading}>
+              {reportLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               {reportLoading ? t('dashboard.metrics.export.generating') : t('dashboard.metrics.export.report')}
             </Button>
           </div>
