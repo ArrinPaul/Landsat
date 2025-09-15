@@ -23,7 +23,7 @@ const cropOptions = ["Corn", "Wheat", "Rice", "Soybeans", "Cotton", "Potatoes", 
 
 function CropAdvisorContent() {
     const { toast } = useToast();
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const searchParams = useSearchParams();
     const [isLoading, setIsLoading] = useState< 'suggest' | 'advanced' | null>(null);
     
@@ -63,6 +63,7 @@ function CropAdvisorContent() {
             longitude: parseFloat(lon),
             climateDescription: climate,
             currentCrop,
+            language: language,
         };
 
         const response = await suggestCropAction(formData);
@@ -186,9 +187,9 @@ function CropAdvisorContent() {
                                      <Alert variant="default">
                                         <Wheat className="h-4 w-4" />
                                         <AlertTitle>{t('cropAdvisor.result.alternative')}</AlertTitle>
-                                        <AlertDescription
-                                            dangerouslySetInnerHTML={{ __html: t('cropAdvisor.result.alternativeDesc', { crop: `<strong>${suggestionResult.alternativeCrop}</strong>` }) }}
-                                        />
+                                        <AlertDescription>
+                                           {t('cropAdvisor.result.alternativeDesc', { crop: suggestionResult.alternativeCrop })}
+                                        </AlertDescription>
                                     </Alert>
                                 )}
                                 
@@ -291,5 +292,3 @@ export default function CropAdvisorPage() {
         </Suspense>
     )
 }
-
-    
