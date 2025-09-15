@@ -232,6 +232,8 @@
     "cropAdvisor.button.getRecommendation": "பரிந்துரையைப் பெறுங்கள்",
     "cropAdvisor.toast.success.title": "பரிந்துரை உருவாக்கப்பட்டது",
     "cropAdvisor.toast.success.description": "உங்கள் பயிர் பரிந்துரை தயாராக உள்ளது.",
+    "cropAdvisor.toast.advancedSuccess.title": "மேம்பட்ட ஆலோசனை உருவாக்கப்பட்டது",
+    "cropAdvisor.toast.advancedSuccess.description": "{crop}-க்கான விரிவான ஆலோசனை தயாராக உள்ளது.",
     "cropAdvisor.result.title": "AI பரிந்துரை",
     "cropAdvisor.result.description": "உங்கள் உள்ளீடு மற்றும் நிகழ்நேர செயற்கைக்கோள் தரவின் அடிப்படையில், இதோ எங்கள் பரிந்துரை.",
     "cropAdvisor.result.soilType": "பெறப்பட்ட மண் வகை",
@@ -241,5 +243,15 @@
     "cropAdvisor.result.suitable": "பொருத்தமானது",
     "cropAdvisor.result.reasoning": "காரணம்",
     "cropAdvisor.result.alternative": "மாற்றுப் பரிந்துரை",
-    "cropAdvisor.result.alternativeDesc": "உங்கள் நிலைமைகளுக்கு மற்றொரு நல்ல விருப்பம் <strong>{crop}</strong> ஆக இருக்கலாம்."
+    "cropAdvisor.result.alternativeDesc": "உங்கள் நிலைமைகளுக்கு மற்றொரு நல்ல விருப்பம் <strong>{crop}</strong> ஆக இருக்கலாம்.",
+    "cropAdvisor.error.noCropSelected.title": "பயிர் தேர்ந்தெடுக்கப்படவில்லை",
+    "cropAdvisor.error.noCropSelected.description": "மேம்பட்ட ஆலோசனையைப் பெற தயவுசெய்து ஒரு பயிரைத் தேர்ந்தெடுக்கவும்.",
+    "cropAdvisor.advanced.title": "மேம்பட்ட பயிர்-குறிப்பிட்ட ஆலோசனையைப் பெறுங்கள்",
+    "cropAdvisor.advanced.description": "நடவு அடர்த்தி, உரமிடுதல் மற்றும் பூச்சிக் கட்டுப்பாடு குறித்த விரிவான பரிந்துரைகளைப் பெற ஒரு பயிரைத் தேர்ந்தெடுக்கவும்.",
+    "cropAdvisor.advanced.selectCrop.placeholder": "ஒரு பயிரைத் தேர்ந்தெடுக்கவும்",
+    "cropAdvisor.advanced.button": "மேம்பட்ட ஆலோசனையைப் பெறுங்கள்",
+    "cropAdvisor.advanced.result.title": "{crop}-க்கான மேம்பட்ட ஆலோசனை",
+    "cropAdvisor.advanced.result.plantingDensity": "நடவு அடர்த்தி",
+    "cropAdvisor.advanced.result.pests": "பூச்சி மற்றும் நோய் அபாயங்கள்",
+    "cropAdvisor.advanced.result.fertilization": "உரமிடும் உத்தி"
 }

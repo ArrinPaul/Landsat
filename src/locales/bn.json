@@ -232,6 +232,8 @@
     "cropAdvisor.button.getRecommendation": "সুপারিশ পান",
     "cropAdvisor.toast.success.title": "সুপারিশ তৈরি হয়েছে",
     "cropAdvisor.toast.success.description": "আপনার ফসল সুপারিশ প্রস্তুত।",
+    "cropAdvisor.toast.advancedSuccess.title": "উন্নত পরামর্শ তৈরি হয়েছে",
+    "cropAdvisor.toast.advancedSuccess.description": "{crop}-এর জন্য বিস্তারিত পরামর্শ প্রস্তুত।",
     "cropAdvisor.result.title": "AI সুপারিশ",
     "cropAdvisor.result.description": "আপনার ইনপুট এবং রিয়েল-টাইম স্যাটেলাইট ডেটার উপর ভিত্তি করে, এখানে আমাদের পরামর্শ।",
     "cropAdvisor.result.soilType": "সংগৃহীত মাটির ধরন",
@@ -241,5 +243,15 @@
     "cropAdvisor.result.suitable": "উপযুক্ত",
     "cropAdvisor.result.reasoning": "যুক্তি",
     "cropAdvisor.result.alternative": "বিকল্প পরামর্শ",
-    "cropAdvisor.result.alternativeDesc": "আপনার অবস্থার জন্য আরেকটি ভাল বিকল্প হতে পারে <strong>{crop}</strong>।"
+    "cropAdvisor.result.alternativeDesc": "আপনার অবস্থার জন্য আরেকটি ভাল বিকল্প হতে পারে <strong>{crop}</strong>।",
+    "cropAdvisor.error.noCropSelected.title": "কোনো ফসল নির্বাচন করা হয়নি",
+    "cropAdvisor.error.noCropSelected.description": "উন্নত পরামর্শ পেতে দয়া করে একটি ফসল নির্বাচন করুন।",
+    "cropAdvisor.advanced.title": "উন্নত ফসল-নির্দিষ্ট পরামর্শ পান",
+    "cropAdvisor.advanced.description": "রোপণ ঘনত্ব, সার প্রয়োগ এবং कीट নিয়ন্ত্রণ সম্পর্কে বিস্তারিত সুপারিশ পেতে একটি ফসল নির্বাচন করুন।",
+    "cropAdvisor.advanced.selectCrop.placeholder": "একটি ফসল নির্বাচন করুন",
+    "cropAdvisor.advanced.button": "উন্নত পরামর্শ পান",
+    "cropAdvisor.advanced.result.title": "{crop}-এর জন্য উন্নত পরামর্শ",
+    "cropAdvisor.advanced.result.plantingDensity": "রোপণ ঘনত্ব",
+    "cropAdvisor.advanced.result.pests": "কীটপতঙ্গ ও রোগের ঝুঁকি",
+    "cropAdvisor.advanced.result.fertilization": "সার প্রয়োগের কৌশল"
 }

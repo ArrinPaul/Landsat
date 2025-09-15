@@ -232,6 +232,8 @@
     "cropAdvisor.button.getRecommendation": "ശുപാർശ നേടുക",
     "cropAdvisor.toast.success.title": "ശുപാർശ സൃഷ്ടിച്ചു",
     "cropAdvisor.toast.success.description": "നിങ്ങളുടെ വിള ശുപാർശ തയ്യാറാണ്.",
+    "cropAdvisor.toast.advancedSuccess.title": "വിപുലമായ ഉപദേശം സൃഷ്ടിച്ചു",
+    "cropAdvisor.toast.advancedSuccess.description": "{crop}-നുള്ള വിശദമായ ഉപദേശം തയ്യാറാണ്.",
     "cropAdvisor.result.title": "AI ശുപാർശ",
     "cropAdvisor.result.description": "നിങ്ങളുടെ ഇൻപുട്ടും തത്സമയ ഉപഗ്രഹ ഡാറ്റയും അടിസ്ഥാനമാക്കി, ഇതാ ഞങ്ങളുടെ നിർദ്ദേശം.",
     "cropAdvisor.result.soilType": "ലഭ്യമാക്കിയ മണ്ണിൻ്റെ തരം",
@@ -241,5 +243,15 @@
     "cropAdvisor.result.suitable": "അനുയോജ്യം",
     "cropAdvisor.result.reasoning": "യുക്തി",
     "cropAdvisor.result.alternative": "ബദൽ നിർദ്ദേശം",
-    "cropAdvisor.result.alternativeDesc": "നിങ്ങളുടെ സാഹചര്യങ്ങൾക്ക് മറ്റൊരു നല്ല ഓപ്ഷൻ <strong>{crop}</strong> ആകാം."
+    "cropAdvisor.result.alternativeDesc": "നിങ്ങളുടെ സാഹചര്യങ്ങൾക്ക് മറ്റൊരു നല്ല ഓപ്ഷൻ <strong>{crop}</strong> ആകാം.",
+    "cropAdvisor.error.noCropSelected.title": "വിളയൊന്നും തിരഞ്ഞെടുത്തിട്ടില്ല",
+    "cropAdvisor.error.noCropSelected.description": "വിപുലമായ ഉപദേശം ലഭിക്കുന്നതിന് ദയവായി ഒരു വിള തിരഞ്ഞെടുക്കുക.",
+    "cropAdvisor.advanced.title": "വിപുലമായ വിള-നിർദ്ദിഷ്ട ഉപദേശം നേടുക",
+    "cropAdvisor.advanced.description": "നടീൽ സാന്ദ്രത, വളപ്രയോഗം, കീടനിയന്ത്രണം എന്നിവയെക്കുറിച്ചുള്ള വിശദമായ ശുപാർശകൾ ലഭിക്കുന്നതിന് ഒരു വിള തിരഞ്ഞെടുക്കുക.",
+    "cropAdvisor.advanced.selectCrop.placeholder": "ഒരു വിള തിരഞ്ഞെടുക്കുക",
+    "cropAdvisor.advanced.button": "വിപുലമായ ഉപദേശം നേടുക",
+    "cropAdvisor.advanced.result.title": "{crop}-നുള്ള വിപുലമായ ഉപദേശം",
+    "cropAdvisor.advanced.result.plantingDensity": "നടീൽ സാന്ദ്രത",
+    "cropAdvisor.advanced.result.pests": "കീടങ്ങളും രോഗങ്ങളും",
+    "cropAdvisor.advanced.result.fertilization": "വളപ്രയോഗ തന്ത്രം"
 }

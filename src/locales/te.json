@@ -232,6 +232,8 @@
     "cropAdvisor.button.getRecommendation": "సిఫార్సు పొందండి",
     "cropAdvisor.toast.success.title": "సిఫార్సు ఉత్పత్తి చేయబడింది",
     "cropAdvisor.toast.success.description": "మీ పంట సిఫార్సు సిద్ధంగా ఉంది.",
+    "cropAdvisor.toast.advancedSuccess.title": "అధునాతన సలహా ఉత్పత్తి చేయబడింది",
+    "cropAdvisor.toast.advancedSuccess.description": "{crop} కోసం వివరణాత్మక సలహా సిద్ధంగా ఉంది.",
     "cropAdvisor.result.title": "AI సిఫార్సు",
     "cropAdvisor.result.description": "మీ ఇన్‌పుట్ మరియు నిజ-సమయ శాటిలైట్ డేటా ఆధారంగా, ఇక్కడ మా సూచన ఉంది.",
     "cropAdvisor.result.soilType": "పొందిన నేల రకం",
@@ -241,5 +243,15 @@
     "cropAdvisor.result.suitable": "అనుకూలం",
     "cropAdvisor.result.reasoning": "హేతువు",
     "cropAdvisor.result.alternative": "ప్రత్యామ్నాయ సూచన",
-    "cropAdvisor.result.alternativeDesc": "మీ పరిస్థితులకు మరో మంచి ఎంపిక <strong>{crop}</strong> కావచ్చు."
+    "cropAdvisor.result.alternativeDesc": "మీ పరిస్థితులకు మరో మంచి ఎంపిక <strong>{crop}</strong> కావచ్చు.",
+    "cropAdvisor.error.noCropSelected.title": "పంట ఎంచుకోబడలేదు",
+    "cropAdvisor.error.noCropSelected.description": "అధునాతన సలహా పొందడానికి దయచేసి ఒక పంటను ఎంచుకోండి.",
+    "cropAdvisor.advanced.title": "అధునాతన పంట-నిర్దిష్ట సలహా పొందండి",
+    "cropAdvisor.advanced.description": "నాటడం సాంద్రత, ఎరువులు మరియు తెగుళ్ళ నియంత్రణపై వివరణాత్మక సిఫార్సులను స్వీకరించడానికి ఒక పంటను ఎంచుకోండి.",
+    "cropAdvisor.advanced.selectCrop.placeholder": "ఒక పంటను ఎంచుకోండి",
+    "cropAdvisor.advanced.button": "అధునాతన సలహా పొందండి",
+    "cropAdvisor.advanced.result.title": "{crop} కోసం అధునాతన సలహా",
+    "cropAdvisor.advanced.result.plantingDensity": "నాటడం సాంద్రత",
+    "cropAdvisor.advanced.result.pests": "తెగుళ్ళు & వ్యాధుల ప్రమాదాలు",
+    "cropAdvisor.advanced.result.fertilization": "ఎరువుల వ్యూహం"
 }
