@@ -12,6 +12,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { ChatMessageSchema } from '@/lib/types';
+import { generateAudio } from '@/ai/flows/text-to-speech';
 
 const ChatbotInputSchema = z.object({
   messages: z.array(ChatMessageSchema),
@@ -22,6 +23,7 @@ export type ChatbotInput = z.infer<typeof ChatbotInputSchema>;
 
 const ChatbotOutputSchema = z.object({
   response: z.string().describe("The chatbot's response to the user."),
+  audioDataUri: z.string().optional().describe("The generated audio for the response, as a data URI in WAV format."),
 });
 export type ChatbotOutput = z.infer<typeof ChatbotOutputSchema>;
 
@@ -31,8 +33,8 @@ export async function chatbot(input: ChatbotInput): Promise<ChatbotOutput> {
 
 const prompt = ai.definePrompt({
   name: 'chatbotPrompt',
-  input: { schema: ChatbotInputSchema },
-  output: { schema: ChatbotOutputSchema },
+  input: { schema: z.object({messages: z.array(ChatMessageSchema), latitude: z.number().optional(), longitude: z.number().optional()}) },
+  output: { schema: z.object({response: z.string()}) },
   prompt: `You are Aura, the friendly and brilliant AI guide for the "Earth Insights Dashboard". Your personality is curious, encouraging, and enthusiastic about data and space.
 
 Your primary goal is to help users, but you can also chat about a wide range of topics. Feel free to answer general knowledge questions.
@@ -66,7 +68,13 @@ const chatbotFlow = ai.defineFlow(
     if (!output) {
       throw new Error("The AI model did not return a response.");
     }
+    
+    // Generate audio for the response
+    const audioDataUri = await generateAudio(output.response);
 
-    return { response: output.response };
+    return { 
+        response: output.response,
+        audioDataUri,
+    };
   }
 );

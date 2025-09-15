@@ -10,7 +10,7 @@ import { chatbot } from "@/ai/flows/chatbot";
 import { planCrops } from "@/ai/flows/plan-crops";
 import { scheduleIrrigation } from "@/ai/flows/schedule-irrigation";
 import { textToSpeech } from "@/ai/flows/text-to-speech";
-import { computeMetrics, type ComputeMetricsOutput } from "@/ai/flows/compute-metrics";
+import { computeMetrics } from "@/ai/flows/compute-metrics";
 import { predictSoilMoisture } from "@/ai/flows/predict-soil-moisture";
 import { predictCropYield } from "@/ai/flows/predict-crop-yield";
 import { suggestCrop, type SuggestCropInput, type SuggestCropOutput } from "@/ai/flows/suggest-crop";
@@ -20,9 +20,8 @@ import { generateTimelapseVideo } from "@/ai/flows/generate-timelapse-video";
 import { runScenarioAnalysis } from "@/ai/tools/run-scenario-analysis";
 
 
-import type { SatellitePassData, WeatherData, CropPlan, IrrigationSchedule, AnalysisResult, SoilMoisturePrediction, CropYieldPrediction, DroughtFloodRisk, AdvancedCropAdvice, GenerateTimelapseVideoInput, GenerateTimelapseVideoOutput, ScenarioAnalysis } from "@/lib/types";
+import type { AnalysisResult, AdvancedCropAdvice, DroughtFloodRisk, GenerateTimelapseVideoInput, GenerateTimelapseVideoOutput, ScenarioAnalysis, CropPlan, CropYieldPrediction, IrrigationSchedule, SatellitePassData, SoilMoisturePrediction, WeatherData } from "@/lib/types";
 import type { ChatbotInput, ChatbotOutput } from "@/ai/flows/chatbot";
-import type { TextToSpeechOutput } from "@/ai/flows/text-to-speech";
 import type { GenerateDataInsightsInput } from "@/ai/flows/generate-insights";
 
 
@@ -69,7 +68,7 @@ export async function getWeatherReportAction(input: { latitude: number; longitud
     return handleAction(getWeatherReport, input);
 }
 
-export async function chatbotAction(input: ChatbotInput) {
+export async function chatbotAction(input: ChatbotInput): Promise<{ data: ChatbotOutput | null, error: string | null}> {
     return handleAction(chatbot, input);
 }
 
