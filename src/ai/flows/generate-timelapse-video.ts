@@ -80,11 +80,16 @@ const generateTimelapseVideoFlow = ai.defineFlow(
     }
     const videoDownloadUrl = `${video.media.url}&key=${apiKey}`;
     
-    const fetch = (await import('node-fetch')).default;
-    const videoResponse = await fetch(videoDownloadUrl);
+    let videoResponse;
+    try {
+        const fetch = (await import('node-fetch')).default;
+        videoResponse = await fetch(videoDownloadUrl);
+    } catch (error: any) {
+        throw new Error(`Network error while downloading video file: ${error.message}`);
+    }
 
     if (!videoResponse.ok || !videoResponse.body) {
-        throw new Error(`Failed to download video file: ${videoResponse.statusText}`);
+        throw new Error(`Failed to download video file. Status: ${videoResponse.status} ${videoResponse.statusText}`);
     }
 
     const videoBuffer = await videoResponse.buffer();

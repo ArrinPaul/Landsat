@@ -75,13 +75,13 @@ export async function getSoilAndWeatherData(latitude: number, longitude: number)
     try {
         const response = await fetch(url);
         if (!response.ok) {
-            throw new Error(`Failed to fetch data from Open-Meteo Soil API: ${response.statusText}`);
+            throw new Error(`Open-Meteo Soil API returned an error: ${response.status} ${response.statusText}`);
         }
         const data = await response.json();
         return data as SoilAndWeatherData;
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error fetching soil and weather data:", error);
-        throw new Error("Could not retrieve real-time soil and weather information.");
+        throw new Error(`Could not retrieve soil/weather info. Network request failed: ${error.message}`);
     }
 }
 
@@ -106,13 +106,13 @@ export async function getHistoricalPrecipitation(latitude: number, longitude: nu
     try {
         const response = await fetch(url);
         if (!response.ok) {
-            throw new Error(`Failed to fetch data from Open-Meteo Climate API: ${response.statusText}`);
+            throw new Error(`Open-Meteo Climate API returned an error: ${response.status} ${response.statusText}`);
         }
         const data = await response.json();
         return data as HistoricalPrecipitationData;
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error fetching historical precipitation data:", error);
-        throw new Error("Could not retrieve historical climate information.");
+        throw new Error(`Could not retrieve climate info. Network request failed: ${error.message}`);
     }
 }
 
