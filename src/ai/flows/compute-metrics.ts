@@ -211,40 +211,60 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
                 const landCoverStart = calculateLandCoverStats(firstImage);
                 const landCoverEnd = calculateLandCoverStats(lastImage);
 
-                const getMapUri = (image: ee.Image) => {
+                const getMapUri = (image: ee.Image, region: ee.Geometry) => {
                     const classifiedVis = createClassifiedImage(image);
                     return classifiedVis.getThumbURL({
                         dimensions: '512x512',
-                        region: areaOfInterest.toGeoJSON(),
+                        region: region.toGeoJSON(),
                         format: 'png'
                     });
                 };
                 
-                const beforeMapUrl = getMapUri(firstImage);
-                const afterMapUrl = getMapUri(lastImage);
-
-
                 // Now evaluate the full results.
                 ee.Dictionary({
                     timeSeries: chartData.toList(chartData.size()),
                     landCoverStart: landCoverStart,
                     landCoverEnd: landCoverEnd,
-                    beforeMapUrl: beforeMapUrl,
-                    afterMapUrl: afterMapUrl
-                }).evaluate((result, error) => {
+                    regionGeoJSON: areaOfInterest.toGeoJSON(),
+                }).evaluate((result: any, error) => {
                     if (error) {
                         return reject(new Error(`Earth Engine Error during final evaluation: ${error}`));
                     }
-                    // Add more robust checks for the final result object.
                     if (!result || !result.timeSeries || !Array.isArray(result.timeSeries)) {
                         return reject(new Error("No time-series data returned from Earth Engine."));
                     }
                      if (!result.landCoverStart || !result.landCoverEnd) {
                         return reject(new Error("Could not compute land cover analysis. The area might be too small or lack valid imagery at the start/end dates."));
                     }
-                    if (!result.beforeMapUrl || !result.afterMapUrl) {
-                        return reject(new Error("Could not generate land cover maps."));
+                    if (!result.regionGeoJSON) {
+                        return reject(new Error("Could not evaluate the region geometry for map generation."));
                     }
+                    
+                    // With the evaluated GeoJSON, we can now safely get the URLs synchronously.
+                    // This requires re-creating the image objects, but it's the correct EE pattern.
+                    const beforeVis = createClassifiedImage(firstImage);
+                    const afterVis = createClassifiedImage(lastImage);
+
+                    const beforeMapUrl = beforeVis.getThumbURL({
+                        dimensions: '512x512',
+                        region: result.regionGeoJSON,
+                        format: 'png'
+                    });
+
+                    const afterMapUrl = afterVis.getThumbURL({
+                        dimensions: '512x512',
+                        region: result.regionGeoJSON,
+                        format: 'png'
+                    });
+
+                    if (!beforeMapUrl || !afterMapUrl) {
+                        return reject(new Error("Could not generate land cover map URLs."));
+                    }
+                    
+                    // Attach the URLs to the result object
+                    result.beforeMapUrl = beforeMapUrl;
+                    result.afterMapUrl = afterMapUrl;
+
                     resolve(result);
                 });
             });
@@ -326,5 +346,3 @@ const computeMetricsFlow = ai.defineFlow(
      };
   }
 );
-
-    
