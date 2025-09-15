@@ -89,7 +89,8 @@ function CropAdvisorContent() {
             latitude: parseFloat(lat),
             longitude: parseFloat(lon),
             climateDescription: climate,
-            crop: selectedCropForAdvice
+            crop: selectedCropForAdvice,
+            language: language
         });
         
         if (response.error) {
@@ -205,6 +206,9 @@ function CropAdvisorContent() {
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {cropOptions.map(crop => <SelectItem key={crop} value={crop}>{crop}</SelectItem>)}
+                                                {suggestionResult.suggestedCrop && !cropOptions.includes(suggestionResult.suggestedCrop) && (
+                                                    <SelectItem value={suggestionResult.suggestedCrop}>{suggestionResult.suggestedCrop}</SelectItem>
+                                                )}
                                             </SelectContent>
                                         </Select>
                                         <Button onClick={handleAdvancedAdviceSubmit} disabled={!!isLoading || !selectedCropForAdvice} className="w-full sm:w-auto">

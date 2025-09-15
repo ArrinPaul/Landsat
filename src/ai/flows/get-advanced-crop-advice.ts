@@ -20,6 +20,7 @@ const AdvancedCropAdviceInputSchema = z.object({
   longitude: z.number().describe('The longitude of the farm location.'),
   climateDescription: z.string().describe("A brief description of the local climate."),
   crop: z.string().describe('The specific crop for which advice is being sought (e.g., "Corn", "Wheat").'),
+  language: z.string().optional().default('en').describe('The language for the output reasoning (e.g., "en", "hi", "es").'),
 });
 export type AdvancedCropAdviceInput = z.infer<typeof AdvancedCropAdviceInputSchema>;
 
@@ -62,11 +63,13 @@ const prompt = ai.definePrompt({
   **Process:**
   1.  **Mandatory Data Fetching**: You MUST use the 'getSoilType' and 'getSoilMoisture' tools for the given coordinates to get real-world data. Do not guess.
   2.  **Synthesize and Advise**: Combine the fetched soil/moisture data with the farmer's climate description and the specific needs of the selected crop to generate your advice.
+  3.  **Language**: All descriptive text in your output (descriptions, recommendations, notes) MUST be in the requested language: {{{language}}}.
 
   **Farm Parameters:**
   - Crop: {{{crop}}}
   - Location: Latitude {{{latitude}}}, Longitude {{{longitude}}}
   - Local Climate: {{{climateDescription}}}
+  - Output Language: {{{language}}}
 
   **Output Requirements:**
   Your response must be a structured JSON object containing the following:

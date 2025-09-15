@@ -232,6 +232,8 @@
     "cropAdvisor.button.getRecommendation": "शिफारस मिळवा",
     "cropAdvisor.toast.success.title": "शिफारस तयार झाली",
     "cropAdvisor.toast.success.description": "तुमची पीक शिफारस तयार आहे.",
+    "cropAdvisor.toast.advancedSuccess.title": "प्रगत सल्ला तयार झाला",
+    "cropAdvisor.toast.advancedSuccess.description": "{crop} साठी तपशीलवार सल्ला तयार आहे.",
     "cropAdvisor.result.title": "AI शिफारस",
     "cropAdvisor.result.description": "तुमच्या इनपुट आणि रिअल-टाइम उपग्रह डेटावर आधारित, ही आमची सूचना आहे.",
     "cropAdvisor.result.soilType": "मिळवलेला मातीचा प्रकार",
@@ -241,5 +243,15 @@
     "cropAdvisor.result.suitable": "योग्य",
     "cropAdvisor.result.reasoning": "तर्क",
     "cropAdvisor.result.alternative": "पर्यायी सूचना",
-    "cropAdvisor.result.alternativeDesc": "तुमच्या परिस्थितीसाठी दुसरा चांगला पर्याय <strong>{crop}</strong> असू शकतो."
+    "cropAdvisor.result.alternativeDesc": "तुमच्या परिस्थितीसाठी दुसरा चांगला पर्याय <strong>{crop}</strong> असू शकतो.",
+    "cropAdvisor.error.noCropSelected.title": "कोणतेही पीक निवडलेले नाही",
+    "cropAdvisor.error.noCropSelected.description": "प्रगत सल्ला मिळविण्यासाठी कृपया एक पीक निवडा.",
+    "cropAdvisor.advanced.title": "प्रगत पीक-विशिष्ट सल्ला मिळवा",
+    "cropAdvisor.advanced.description": "लागवड घनता, खत आणि कीटक नियंत्रणावर तपशीलवार शिफारसी प्राप्त करण्यासाठी एक पीक निवडा.",
+    "cropAdvisor.advanced.selectCrop.placeholder": "एक पीक निवडा",
+    "cropAdvisor.advanced.button": "प्रगत सल्ला मिळवा",
+    "cropAdvisor.advanced.result.title": "{crop} साठी प्रगत सल्ला",
+    "cropAdvisor.advanced.result.plantingDensity": "लागवड घनता",
+    "cropAdvisor.advanced.result.pests": "कीटक आणि रोग धोके",
+    "cropAdvisor.advanced.result.fertilization": "खत धोरण"
 }
