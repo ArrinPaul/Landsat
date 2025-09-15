@@ -19,6 +19,7 @@ const SuggestCropInputSchema = z.object({
   longitude: z.number().describe('The longitude of the farm location.'),
   climateDescription: z.string().describe("A brief description of the local climate (e.g., 'hot and arid with monsoon season', 'temperate with cold winters')."),
   currentCrop: z.string().optional().describe('The crop currently or recently grown in the field, if any.'),
+  language: z.string().optional().default('en').describe('The language for the output reasoning.'),
 });
 export type SuggestCropInput = z.infer<typeof SuggestCropInputSchema>;
 
@@ -44,6 +45,8 @@ const prompt = ai.definePrompt({
   tools: [getSoilMoisture, getSoilType],
   prompt: `You are an expert agronomist and soil scientist AI model advising a farmer. Your task is to recommend the best possible crop for their field based on real-time, location-specific data.
 
+  Your response must be in the specified language: {{{language}}}.
+
   Your process must follow these steps:
   1.  **Data Acquisition**: Use the provided tools ('getSoilType' and 'getSoilMoisture') to determine the soil type and current moisture level for the given coordinates. You must use these tools; do not guess or use generalized knowledge.
   2.  **Multi-factor Analysis**: Synthesize all available information to provide a practical, well-reasoned crop suggestion. Consider the following factors:
@@ -62,7 +65,7 @@ const prompt = ai.definePrompt({
   Your final output must be structured precisely as follows:
   1.  'Suggested Crop': Identify the single best crop for these exact conditions.
   2.  'Suitability Score': Provide a percentage score (0-100) representing your confidence. Base this score on how perfectly the crop's needs match the specific, real-world data you fetched.
-  3.  'Reasoning': Give a detailed but easy-to-understand explanation. Justify your choice by explicitly referencing the climate description and, most importantly, the soil and moisture data you fetched using your tools.
+  3.  'Reasoning': Give a detailed but easy-to-understand explanation IN THE REQUESTED LANGUAGE ({{{language}}}). Justify your choice by explicitly referencing the climate description and, most importantly, the soil and moisture data you fetched using your tools.
   4.  'Alternative Crop': Suggest one other viable crop as an alternative.
   5.  'Fetched Data': Ensure you populate the 'fetchedSoilType' and 'fetchedMoistureLevel' fields in the output with the exact results from your tool calls.
   `,
