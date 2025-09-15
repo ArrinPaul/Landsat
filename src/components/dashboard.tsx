@@ -18,6 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/
 import { BarChart, Search, SlidersHorizontal, Map } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
 import { Chatbot } from "./chatbot";
+import { MonitoringCard } from "./monitoring-card";
 
 export function Dashboard() {
   const { t } = useLanguage();
@@ -220,21 +221,19 @@ export function Dashboard() {
       {analysisResult && !isComputing && (
         <>
           <div className="grid gap-6 lg:grid-cols-1 xl:grid-cols-4">
-            <div className="xl:col-span-3">
+            <div className="xl:col-span-3 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               <SummaryCards 
                 landCover={analysisResult.landCover}
-                nextPass={nextPass}
-                isFetchingPass={isFetchingPass}
-                onFetchPass={fetchNextPass}
               />
             </div>
-            <div className="xl:col-span-1">
-                <WeatherReport 
+            <div className="xl:col-span-1 grid gap-6">
+                 <WeatherReport 
                     weather={weather} 
                     isLoading={isFetchingWeather} 
                     showForecast={false}
                     onFetchWeather={fetchWeather}
                 />
+                 <MonitoringCard />
             </div>
           </div>
 

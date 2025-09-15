@@ -54,7 +54,7 @@ export const runScenarioAnalysis = ai.defineTool(
         prompt: `Based on the following analysis, structure the output into the required JSON format.
         
         Analysis:
-        ${text}
+        ${text()}
         
         User's Scenario: "${input.scenarioDescription}"
         `,

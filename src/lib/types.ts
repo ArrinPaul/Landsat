@@ -105,6 +105,7 @@ export interface SuggestCropInput {
     longitude: number;
     climateDescription: string;
     currentCrop?: string;
+    language: string;
 }
 
 export interface SuggestCropOutput {
