@@ -6,28 +6,36 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from './ui/card';
 import { Input } from './ui/input';
 import { ScrollArea } from './ui/scroll-area';
-import { MessageSquare, Send, X, Loader2, Bot, Mic, Volume2, Play } from 'lucide-react';
-import { chatbotAction, textToSpeechAction } from '@/lib/actions';
+import { MessageSquare, Send, X, Loader2, Bot, Mic, Volume2, Play, Pause } from 'lucide-react';
+import { chatbotAction } from '@/lib/actions';
 import type { ChatMessage } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/hooks/use-language';
 
+type AudioState = 'idle' | 'playing' | 'paused';
+interface MessageWithAudio extends ChatMessage {
+    audioDataUri?: string;
+    audioState?: AudioState;
+}
+
 export function Chatbot({ lat, lon }: { lat?: string, lon?: string }) {
   const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<MessageWithAudio[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-  const [audioStates, setAudioStates] = useState<Record<number, 'idle' | 'loading' | 'playing'>>({});
+  
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const recognitionRef = useRef<any>(null);
+  const hasInteracted = useRef(false);
   const { toast } = useToast();
   
-  const recognitionRef = useRef<any>(null);
-  if (recognitionRef.current === null && typeof window !== 'undefined') {
+  // Initialize Speech Recognition
+  useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (SpeechRecognition) {
         const recognition = new SpeechRecognition();
@@ -49,13 +57,13 @@ export function Chatbot({ lat, lon }: { lat?: string, lon?: string }) {
         };
         recognitionRef.current = recognition;
     }
-  }
+  }, [t, toast]);
 
 
   useEffect(() => {
     if (isOpen && messages.length === 0) {
       setMessages([
-        { role: 'model', content: t('chatbot.greeting') }
+        { role: 'model', content: t('chatbot.greeting'), audioState: 'idle' }
       ]);
     }
   }, [isOpen, messages.length, t]);
@@ -83,72 +91,93 @@ export function Chatbot({ lat, lon }: { lat?: string, lon?: string }) {
     }
   };
   
-  const handlePlayAudio = async (text: string, index: number) => {
-    if (audioStates[index] === 'playing') {
-      audioRef.current?.pause();
-      setAudioStates(prev => ({...prev, [index]: 'idle'}));
-      return;
-    }
-    
-    setAudioStates(prev => ({...prev, [index]: 'loading'}));
-    const result = await textToSpeechAction(text);
-    if(result.error || !result.data) {
-        toast({ title: t('chatbot.error.audio.title'), description: result.error || t('chatbot.error.audio.description'), variant: "destructive" });
-        setAudioStates(prev => ({...prev, [index]: 'idle'}));
-        return;
-    }
+  const handlePlayAudio = (index: number) => {
+    const message = messages[index];
+    if (!message.audioDataUri || !audioRef.current) return;
 
-    if(audioRef.current) {
-        audioRef.current.src = result.data.audioDataUri;
-        audioRef.current.play();
-        setAudioStates(prev => ({...prev, [index]: 'playing'}));
-        audioRef.current.onended = () => {
-            setAudioStates(prev => ({...prev, [index]: 'idle'}));
-        }
+    if (audioRef.current.src === message.audioDataUri && message.audioState === 'playing') {
+      // Pause current audio
+      audioRef.current.pause();
+      setMessages(prev => prev.map((m, i) => i === index ? { ...m, audioState: 'paused' } : m));
+    } else {
+      // Stop any other audio that might be playing
+      if (!audioRef.current.paused) {
+          audioRef.current.pause();
+      }
+      setMessages(prev => prev.map((m) => ({...m, audioState: 'idle'})));
+      
+      // Play new audio
+      audioRef.current.src = message.audioDataUri;
+      audioRef.current.play();
+      setMessages(prev => prev.map((m, i) => i === index ? { ...m, audioState: 'playing' } : m));
+
+      audioRef.current.onended = () => {
+        setMessages(prev => prev.map((m, i) => i === index ? { ...m, audioState: 'idle' } : m));
+      };
     }
-  }
+  };
   
 
   const handleSend = async (textToSend?: string) => {
     const currentInput = textToSend || input;
     if (currentInput.trim() === '') return;
 
-    const userMessage: ChatMessage = { role: 'user', content: currentInput };
+    const userMessage: MessageWithAudio = { role: 'user', content: currentInput };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
 
-    const newMessages = [...messages, userMessage];
     const result = await chatbotAction({ 
-        messages: newMessages,
+        messages: [...messages, userMessage],
         latitude: lat ? parseFloat(lat) : undefined,
         longitude: lon ? parseFloat(lon) : undefined,
     });
 
     setIsLoading(false);
 
-    if (result.error) {
-      const errorMessage: ChatMessage = { role: 'model', content: t('chatbot.error.connection') };
+    if (result.error || !result.data) {
+      const errorMessage: MessageWithAudio = { role: 'model', content: t('chatbot.error.connection'), audioState: 'idle' };
       setMessages(prev => [...prev, errorMessage]);
-    } else if (result.data) {
-      const modelMessage: ChatMessage = { role: 'model', content: result.data.response };
+    } else {
+      const modelMessage: MessageWithAudio = { 
+        role: 'model', 
+        content: result.data.response,
+        audioDataUri: result.data.audioDataUri,
+        audioState: 'idle'
+      };
       setMessages(prev => [...prev, modelMessage]);
+      
+      if (result.data.audioDataUri && audioRef.current && hasInteracted.current) {
+         audioRef.current.src = result.data.audioDataUri;
+         audioRef.current.play();
+         const newIndex = messages.length + 1;
+         setMessages(prev => prev.map((m, i) => i === newIndex ? {...m, audioState: 'playing'} : m));
+         audioRef.current.onended = () => {
+             setMessages(prev => prev.map((m, i) => i === newIndex ? {...m, audioState: 'idle'} : m));
+         };
+      }
     }
   };
   
-  const renderAudioIcon = (text: string, index: number) => {
-      const state = audioStates[index] || 'idle';
+  const renderAudioIcon = (index: number) => {
+      const state = messages[index]?.audioState || 'idle';
 
-      if (state === 'loading') return <Loader2 className="h-4 w-4 animate-spin" />;
-      if (state === 'playing') return <Play className="h-4 w-4" />;
+      if (state === 'playing') return <Pause className="h-4 w-4" />;
+      if (state === 'paused') return <Play className="h-4 w-4" />;
       return <Volume2 className="h-4 w-4" />
+  }
+
+  const handleInteraction = () => {
+      if (!hasInteracted.current) {
+          hasInteracted.current = true;
+      }
   }
 
   return (
     <>
       <audio ref={audioRef} className="hidden" />
       {isOpen ? (
-        <Card className="fixed bottom-4 right-4 w-96 h-[600px] flex flex-col z-50 shadow-2xl rounded-lg">
+        <Card onClick={handleInteraction} className="fixed bottom-4 right-4 w-96 h-[600px] flex flex-col z-50 shadow-2xl rounded-lg">
           <CardHeader className="flex flex-row items-center justify-between p-4 border-b">
             <div className="flex items-center gap-2">
                 <Bot className="h-6 w-6 text-primary" />
@@ -173,9 +202,9 @@ export function Chatbot({ lat, lon }: { lat?: string, lon?: string }) {
                         message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'
                     )}>
                         <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                        {message.role === 'model' && (
-                            <Button size="icon" variant="ghost" className="absolute -right-10 top-1/2 -translate-y-1/2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handlePlayAudio(message.content, index)} disabled={audioStates[index] === 'loading'}>
-                               {renderAudioIcon(message.content, index)}
+                        {message.role === 'model' && message.audioDataUri && (
+                            <Button size="icon" variant="ghost" className="absolute -right-10 top-1/2 -translate-y-1/2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handlePlayAudio(index)}>
+                               {renderAudioIcon(index)}
                             </Button>
                         )}
                     </div>
@@ -219,7 +248,10 @@ export function Chatbot({ lat, lon }: { lat?: string, lon?: string }) {
         </Card>
       ) : (
         <Button
-          onClick={() => setIsOpen(true)}
+          onClick={() => {
+              setIsOpen(true);
+              handleInteraction();
+          }}
           className="fixed bottom-4 right-4 rounded-full w-16 h-16 shadow-lg"
           size="icon"
         >

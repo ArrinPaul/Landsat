@@ -27,43 +27,6 @@ export async function textToSpeech(input: TextToSpeechInput): Promise<TextToSpee
   return textToSpeechFlow(input);
 }
 
-const textToSpeechFlow = ai.defineFlow(
-  {
-    name: 'textToSpeechFlow',
-    inputSchema: TextToSpeechInputSchema,
-    outputSchema: TextToSpeechOutputSchema,
-  },
-  async ({ text }) => {
-    const { media } = await ai.generate({
-      model: googleAI.model('gemini-2.5-flash-preview-tts'),
-      config: {
-        responseModalities: ['AUDIO'],
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: 'Algenib' },
-          },
-        },
-      },
-      prompt: text,
-    });
-
-    if (!media) {
-      throw new Error('No audio was generated from the text.');
-    }
-
-    const audioBuffer = Buffer.from(
-      media.url.substring(media.url.indexOf(',') + 1),
-      'base64'
-    );
-
-    const wavData = await toWav(audioBuffer);
-    
-    return {
-      audioDataUri: 'data:audio/wav;base64,' + wavData,
-    };
-  }
-);
-
 
 async function toWav(
   pcmData: Buffer,
@@ -91,3 +54,56 @@ async function toWav(
     writer.end();
   });
 }
+
+export async function generateAudio(text: string): Promise<string | undefined> {
+    if (!text.trim()) return undefined;
+
+    try {
+        const { media } = await ai.generate({
+            model: googleAI.model('gemini-2.5-flash-preview-tts'),
+            config: {
+                responseModalities: ['AUDIO'],
+                speechConfig: {
+                voiceConfig: {
+                    prebuiltVoiceConfig: { voiceName: 'Algenib' },
+                },
+                },
+            },
+            prompt: text,
+        });
+
+        if (!media) {
+            return undefined;
+        }
+
+        const audioBuffer = Buffer.from(
+            media.url.substring(media.url.indexOf(',') + 1),
+            'base64'
+        );
+
+        const wavData = await toWav(audioBuffer);
+        return 'data:audio/wav;base64,' + wavData;
+
+    } catch (error) {
+        console.error("Error generating audio:", error);
+        return undefined;
+    }
+}
+
+
+const textToSpeechFlow = ai.defineFlow(
+  {
+    name: 'textToSpeechFlow',
+    inputSchema: TextToSpeechInputSchema,
+    outputSchema: TextToSpeechOutputSchema,
+  },
+  async ({ text }) => {
+    const audioDataUri = await generateAudio(text);
+
+    if (!audioDataUri) {
+        throw new Error('No audio was generated from the text.');
+    }
+    
+    return { audioDataUri };
+  }
+);
