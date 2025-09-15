@@ -301,6 +301,10 @@ const computeMetricsFlow = ai.defineFlow(
     const start = eeData.landCoverStart;
     const end = eeData.landCoverEnd;
     
+    if (!start || !end) {
+        throw new Error("Land cover data could not be computed for the start or end of the date range.");
+    }
+    
     const landCoverAnalysis = {
         vegetation: {
             startArea: start.vegetation,
