@@ -158,9 +158,16 @@ export interface TimeSeriesData {
     B12: DataPoint[];
 }
 
+export interface HistoricalDataPoint {
+  date: string;
+  temperature: number | null;
+  precipitation: number | null;
+}
+
 export interface AnalysisResult {
     timeSeries: TimeSeriesData;
     landCover: LandCoverAnalysis;
+    historicalWeather: HistoricalDataPoint[];
 }
 
 // New type for Drought & Flood Risk Analysis

@@ -1,12 +1,10 @@
 
 /**
- * @fileOverview A service to fetch agricultural data from the Open-Meteo API.
+ * @fileOverview A service to fetch agricultural and weather data from the Open-Meteo API.
  */
 
-// Soil & Weather API Docs: https://open-meteo.com/en/docs/soil_and_weather_api
-const SOIL_API_URL = "https://soil-api.open-meteo.com/v1/soil";
-// Climate API Docs: https://open-meteo.com/en/docs/climate-api
-const CLIMATE_API_URL = "https://climate-api.open-meteo.com/v1/climate";
+const API_URL = "https://api.open-meteo.com/v1/forecast";
+const ARCHIVE_API_URL = "https://archive-api.open-meteo.com/v1/archive";
 
 
 export interface SoilAndWeatherData {
@@ -37,6 +35,26 @@ export interface SoilAndWeatherData {
     };
 }
 
+export interface HistoricalWeatherData {
+    latitude: number,
+    longitude: number,
+    generationtime_ms: number,
+    utc_offset_seconds: number,
+    timezone: string,
+    timezone_abbreviation: string,
+    elevation: number,
+    daily_units: {
+        time: string,
+        temperature_2m_mean: string,
+        precipitation_sum: string
+    },
+    daily: {
+        time: string[],
+        temperature_2m_mean: (number | null)[],
+        precipitation_sum: (number | null)[]
+    }
+}
+
 export interface HistoricalPrecipitationData {
     latitude: number;
     longitude: number;
@@ -48,11 +66,11 @@ export interface HistoricalPrecipitationData {
     yearly_units: {
         time: string;
         precipitation_sum: string;
-    },
+    };
     yearly: {
         time: string[];
         precipitation_sum: (number | null)[];
-    }
+    };
 }
 
 
@@ -63,17 +81,10 @@ export interface HistoricalPrecipitationData {
  * @returns A promise that resolves to the soil and weather data.
  */
 export async function getSoilAndWeatherData(latitude: number, longitude: number): Promise<SoilAndWeatherData> {
-    const params = new URLSearchParams({
-        latitude: latitude.toString(),
-        longitude: longitude.toString(),
-        current: "soil_moisture_0_to_1cm",
-        hourly: "soil_type_0_to_10cm",
-    });
-
-    const url = `${SOIL_API_URL}?${params.toString()}`;
+    const url = `https://soil-api.open-meteo.com/v1/soil?latitude=${latitude}&longitude=${longitude}&current=soil_moisture_0_to_1cm&hourly=soil_type_0_to_10cm`;
 
     try {
-        const response = await fetch(url);
+        const response = await fetch(url, { cache: 'no-store' });
         if (!response.ok) {
             throw new Error(`Open-Meteo Soil API returned an error: ${response.status} ${response.statusText}`);
         }
@@ -86,33 +97,68 @@ export async function getSoilAndWeatherData(latitude: number, longitude: number)
 }
 
 /**
+ * Fetches historical daily weather data (temp and precipitation) for a given location and date range.
+ * @param latitude The latitude of the location.
+ * @param longitude The longitude of the location.
+ * @param startDate The start date in YYYY-MM-DD format.
+ * @param endDate The end date in YYYY-MM-DD format.
+ * @returns A promise that resolves to the historical weather data.
+ */
+export async function getHistoricalWeather(latitude: number, longitude: number, startDate: string, endDate: string): Promise<HistoricalWeatherData> {
+    const params = new URLSearchParams({
+        latitude: latitude.toString(),
+        longitude: longitude.toString(),
+        start_date: startDate,
+        end_date: endDate,
+        daily: "temperature_2m_mean,precipitation_sum",
+        timezone: "auto"
+    });
+
+    const url = `${API_URL}?${params.toString()}`;
+    
+    try {
+        const response = await fetch(url, { cache: 'no-store' });
+         if (!response.ok) {
+            throw new Error(`Open-Meteo Forecast API returned an error: ${response.status} ${response.statusText}`);
+        }
+        const data = await response.json();
+        return data as HistoricalWeatherData;
+    } catch (error: any) {
+        console.error("Error fetching historical weather data:", error);
+        throw new Error(`Could not retrieve historical weather info. Network request failed: ${error.message}`);
+    }
+}
+
+/**
  * Fetches the 30-year average annual precipitation for a given location.
  * @param latitude The latitude of the location.
  * @param longitude The longitude of the location.
  * @returns A promise that resolves to the historical precipitation data.
  */
 export async function getHistoricalPrecipitation(latitude: number, longitude: number): Promise<HistoricalPrecipitationData> {
+    // Fetches data for the climate normal period (1991-2020) to get a 30-year average.
+    // We only need one year from the period to get the yearly average sum.
     const params = new URLSearchParams({
         latitude: latitude.toString(),
         longitude: longitude.toString(),
-        start_date: "1991-01-01",
-        end_date: "2020-12-31",
-        models: "ERA5",
-        yearly: "precipitation_sum"
+        start_date: '1991-01-01',
+        end_date: '1991-12-31', 
+        yearly: "precipitation_sum",
+        models: "ERA5_ seamlessly", // Use climate reanalysis data
     });
 
-    const url = `${CLIMATE_API_URL}?${params.toString()}`;
+    const url = `${ARCHIVE_API_URL}?${params.toString()}`;
 
     try {
-        const response = await fetch(url);
+        const response = await fetch(url, { cache: 'no-store' });
         if (!response.ok) {
-            throw new Error(`Open-Meteo Climate API returned an error: ${response.status} ${response.statusText}`);
+            throw new Error(`Open-Meteo Archive API returned an error: ${response.status} ${response.statusText}`);
         }
         const data = await response.json();
         return data as HistoricalPrecipitationData;
     } catch (error: any) {
         console.error("Error fetching historical precipitation data:", error);
-        throw new Error(`Could not retrieve climate info. Network request failed: ${error.message}`);
+        throw new Error(`Could not retrieve historical precipitation info. Network request failed: ${error.message}`);
     }
 }
 
