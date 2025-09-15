@@ -162,6 +162,8 @@
     "dashboard.weather.humidity": "ഈർപ്പം",
     "dashboard.weather.wind": "കാറ്റ്",
     "dashboard.weather.hourly": "മണിക്കൂർ പ്രവചനം",
+    "dashboard.weather.precipitation": "മഴ",
+    "dashboard.weather.temperature": "താപനില",
     "dashboard.landCover.title": "ഭൂവിനിയോഗ മാറ്റ വിശകലനം",
     "dashboard.landCover.description": "തിരഞ്ഞെടുത്ത കാലയളവിൻ്റെ തുടക്കത്തിലും അവസാനത്തിലുമുള്ള വിവിധ ഭൂവിനിയോഗ வகைகளுக்கான വിസ്തീർണ്ണ സ്ഥിതിവിവരക്കണക്കുകളും ദൃശ്യവൽക്കരണവും.",
     "dashboard.landCover.class": "ഭൂവിനിയോഗ ക്ലാസ്",
@@ -232,7 +234,7 @@
     "settings.notifications.disabled.title": "വിവരം",
     "settings.notifications.disabled.description": "അറിയിപ്പുകൾ പ്രവർത്തനരഹിതമാക്കി.",
     "chatbot.title": "എർത്ത് ഇൻസൈറ്റ്സ് അസിസ്റ്റൻ്റ്",
-    "chatbot.greeting": "ഹലോ! ഞാൻ എർത്ത് ഇൻസൈറ്റ്സ് അസിസ്റ്റൻ്റാണ്. ഞാൻ നിങ്ങളെ എങ്ങനെ സഹായിക്കും?",
+    "chatbot.greeting": "ഹലോ! ഞാൻ സ്റ്റാർക്ക്. ഞാൻ നിങ്ങളെ എങ്ങനെ സഹായിക്കും?",
     "chatbot.placeholder": "ടൈപ്പ് ചെയ്യുക അല്ലെങ്കിൽ സംസാരിക്കുക...",
     "chatbot.error.voice.title": "വോയിസ് പിശക്",
     "chatbot.error.unsupported.title": "പിന്തുണയ്ക്കുന്നില്ല",
@@ -294,5 +296,6 @@
     "payment.upi.enterId": "UPI ഐഡി നൽകുക",
     "payment.netbanking.select": "നിങ്ങളുടെ ബാങ്ക് തിരഞ്ഞെടുക്കുക",
     "payment.netbanking.selectPlaceholder": "ഒരു ബാങ്ക് തിരഞ്ഞെടുക്കുക",
-    "payment.netbanking.note": "പേയ്‌മെൻ്റ് പൂർത്തിയാക്കാൻ നിങ്ങളെ നിങ്ങളുടെ ബാങ്കിൻ്റെ വെബ്സൈറ്റിലേക്ക് റീഡയറക്ട് ചെയ്യും."
+    "payment.netbanking.note": "പേയ്‌മെൻ്റ് പൂർത്തിയാക്കാൻ നിങ്ങളെ നിങ്ങളുടെ ബാങ്കിൻ്റെ വെബ്സൈറ്റിലേക്ക് റീഡയറക്ട് ചെയ്യും.",
+    "dashboard.monitoring.pass.in": "ൽ"
 }

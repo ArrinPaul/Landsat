@@ -10,6 +10,9 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import ee from '@google/earthengine';
+import { getHistoricalWeather } from '@/services/open-meteo';
+import type { HistoricalDataPoint } from '@/lib/types';
+
 
 // Helper function to calculate percentage change
 function getPercentageChange(start: number, end: number): number {
@@ -58,6 +61,12 @@ const timeSeriesSchema = z.object({
     B12: z.array(DataPointSchema),
 });
 
+const HistoricalDataPointSchema = z.object({
+  date: z.string(),
+  temperature: z.number().nullable(),
+  precipitation: z.number().nullable(),
+});
+
 const ComputeMetricsOutputSchema = z.object({
     timeSeries: timeSeriesSchema,
     landCover: z.object({
@@ -68,6 +77,7 @@ const ComputeMetricsOutputSchema = z.object({
         beforeMapUrl: z.string().url().describe('A data URI of the land cover map at the start date.'),
         afterMapUrl: z.string().url().describe('A data URI of the land cover map at the end date.'),
     }),
+    historicalWeather: z.array(HistoricalDataPointSchema),
 });
 export type ComputeMetricsOutput = z.infer<typeof ComputeMetricsOutputSchema>;
 
@@ -274,7 +284,18 @@ const computeMetricsFlow = ai.defineFlow(
     outputSchema: ComputeMetricsOutputSchema,
   },
   async (input) => {
-    const eeData = await runEeAnalysis(input);
+    
+    // Run EE analysis and historical weather fetching in parallel
+    const [eeData, weatherData] = await Promise.all([
+        runEeAnalysis(input),
+        getHistoricalWeather(input.latitude, input.longitude, input.startDate, input.endDate)
+    ]);
+    
+    const historicalWeatherResult: HistoricalDataPoint[] = weatherData.daily.time.map((date, index) => ({
+        date: date,
+        temperature: weatherData.daily.temperature_2m_mean[index],
+        precipitation: weatherData.daily.precipitation_sum[index],
+    }));
 
     const allBands = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B9', 'B11', 'B12'];
 
@@ -337,6 +358,7 @@ const computeMetricsFlow = ai.defineFlow(
     return { 
         timeSeries: timeSeriesResult,
         landCover: landCoverAnalysis,
+        historicalWeather: historicalWeatherResult,
      };
   }
 );

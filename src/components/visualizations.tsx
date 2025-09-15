@@ -1,9 +1,9 @@
 
 "use client";
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ScatterChart, Scatter, Label, Brush
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ScatterChart, Scatter, Label, Brush, Bar, ComposedChart
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,7 +13,7 @@ import { format } from 'date-fns';
 import type { DateRange } from "react-day-picker";
 import { useLanguage } from '@/hooks/use-language';
 import { Button } from './ui/button';
-import { Loader2, Video } from 'lucide-react';
+import { Loader2, Video, Droplets, Thermometer } from 'lucide-react';
 import { generateTimelapseVideoAction } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -32,9 +32,10 @@ const CustomTooltip = ({ active, payload, label }: any) => {
       <div className="bg-background/80 backdrop-blur-sm p-2 border border-border rounded-md shadow-lg">
         <p className="label font-bold">{formattedLabel}</p>
         {payload.map((pld: any, index: number) => (
-           <p key={index} style={{ color: pld.color }}>
+           <p key={index} style={{ color: pld.color || pld.stroke }}>
                {`${pld.name}: `}
                {pld.value !== null && pld.value !== undefined ? pld.value.toFixed(4) : 'N/A'}
+               {pld.unit}
             </p>
         ))}
       </div>
@@ -97,7 +98,23 @@ export function Visualizations({ analysisResult, groundTruthData, selectedMetric
       return indexA - indexB;
   });
   
-  const metric = analysisResult.timeSeries[selectedMetric as keyof typeof analysisResult.timeSeries];
+  const combinedChartData = useMemo(() => {
+    const metricData = analysisResult.timeSeries[selectedMetric as keyof typeof analysisResult.timeSeries];
+    const weatherMap = new Map(analysisResult.historicalWeather.map(d => [format(new Date(d.date), 'yyyy-MM-dd'), d]));
+
+    return metricData.map(metricPoint => {
+        const dateStr = format(new Date(metricPoint.date), 'yyyy-MM-dd');
+        const weatherPoint = weatherMap.get(dateStr);
+        return {
+            date: metricPoint.date,
+            value: metricPoint.value,
+            temperature: weatherPoint?.temperature,
+            precipitation: weatherPoint?.precipitation,
+        }
+    });
+
+  }, [analysisResult, selectedMetric]);
+  
   const comparisonData = combineAndSortData(analysisResult, groundTruthData);
   
   const handleBrushChange = (range: any) => {
@@ -164,20 +181,26 @@ export function Visualizations({ analysisResult, groundTruthData, selectedMetric
                     </SelectContent>
                 </Select>
             </div>
-            {metric && (
+            {combinedChartData && (
               <div ref={chartRef} className="h-[400px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={metric} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                  <ComposedChart data={combinedChartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis 
                         dataKey="date" 
                         tickFormatter={(str) => format(new Date(str), 'MMM yy')}
                         minTickGap={30}
                     />
-                    <YAxis domain={['auto', 'auto']} tickFormatter={(val) => typeof val === 'number' ? val.toFixed(2) : val} />
+                    <YAxis yAxisId="left" domain={['auto', 'auto']} tickFormatter={(val) => typeof val === 'number' ? val.toFixed(2) : val} />
+                    <YAxis yAxisId="right" orientation="right" tickFormatter={(val) => typeof val === 'number' ? val.toFixed(1) : val} />
+
                     <Tooltip content={<CustomTooltip />} />
                     <Legend />
-                    <Line type="monotone" dataKey="value" name={selectedMetric} stroke="hsl(var(--primary))" strokeWidth={2} dot={false} connectNulls />
+                    
+                    <Bar yAxisId="right" dataKey="precipitation" name={t('dashboard.weather.precipitation')} fill="hsl(var(--accent))" barSize={20} unit="mm" />
+                    <Line yAxisId="right" type="monotone" dataKey="temperature" name={t('dashboard.weather.temperature')} stroke="hsl(var(--destructive))" strokeWidth={2} dot={false} unit="°C" />
+                    <Line yAxisId="left" type="monotone" dataKey="value" name={selectedMetric} stroke="hsl(var(--primary))" strokeWidth={2} dot={false} connectNulls />
+                    
                      <Brush 
                         dataKey="date" 
                         height={30} 
@@ -187,7 +210,7 @@ export function Visualizations({ analysisResult, groundTruthData, selectedMetric
                         endIndex={brushEndIndex}
                         onChange={handleBrushChange}
                      />
-                  </LineChart>
+                  </ComposedChart>
                 </ResponsiveContainer>
               </div>
             )}
