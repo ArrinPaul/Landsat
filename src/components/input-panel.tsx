@@ -169,10 +169,10 @@ export function InputPanel({
             <Input id="csv-upload" type="file" accept=".csv" className="sr-only" onChange={handleFileChange} />
           </div>
         </div>
-         <div className="flex justify-between items-center">
+         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" disabled={history.length === 0}>
+                <Button variant="outline" disabled={history.length === 0} className="w-full sm:w-auto">
                   <History className="mr-2 h-4 w-4" /> {t('dashboard.history.button')}
                 </Button>
               </PopoverTrigger>
@@ -208,14 +208,14 @@ export function InputPanel({
               </PopoverContent>
             </Popover>
 
-            <div className="flex gap-2">
-                <Button variant="secondary" asChild>
+            <div className="flex gap-2 w-full sm:w-auto">
+                <Button variant="secondary" asChild className="flex-1 sm:flex-initial">
                     <Link href={`/crop-advisor?lat=${lat}&lon=${lon}`}>
                         <Wheat className="mr-2 h-4 w-4" />
                         {t('dashboard.input.cropAdvisor')}
                     </Link>
                 </Button>
-                <Button onClick={onCompute} disabled={isComputing}>
+                <Button onClick={onCompute} disabled={isComputing} className="flex-1 sm:flex-initial">
                 {isComputing ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
@@ -229,5 +229,3 @@ export function InputPanel({
     </Card>
   );
 }
-
-    

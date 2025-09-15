@@ -167,7 +167,7 @@ export function Dashboard() {
     : "N/A";
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
+    <div className="container mx-auto p-2 sm:p-4 space-y-6">
       <InputPanel
         lat={lat}
         setLat={setLat}
@@ -219,8 +219,8 @@ export function Dashboard() {
 
       {analysisResult && !isComputing && (
         <>
-          <div className="grid gap-6 lg:grid-cols-4">
-            <div className="lg:col-span-3">
+          <div className="grid gap-6 lg:grid-cols-1 xl:grid-cols-4">
+            <div className="xl:col-span-3">
               <SummaryCards 
                 landCover={analysisResult.landCover}
                 nextPass={nextPass}
@@ -228,7 +228,7 @@ export function Dashboard() {
                 onFetchPass={fetchNextPass}
               />
             </div>
-            <div className="lg:col-span-1">
+            <div className="xl:col-span-1">
                 <WeatherReport 
                     weather={weather} 
                     isLoading={isFetchingWeather} 
@@ -260,5 +260,3 @@ export function Dashboard() {
     </div>
   );
 }
-
-    

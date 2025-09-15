@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { Globe2, LayoutDashboard, Settings, BrainCircuit, Mail } from "lucide-react";
+import { Globe2, LayoutDashboard, Settings, BrainCircuit, Mail, Menu } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "./ui/button";
 import React, { useState, useEffect } from "react";
@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { ContactSheet } from "./contact-sheet";
 import { LanguageSwitcher } from "./language-switcher";
 import { useLanguage } from "@/hooks/use-language";
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 
 export function Header() {
   const { t } = useLanguage();
@@ -18,6 +19,7 @@ export function Header() {
   const pathname = usePathname();
   const isLandingPage = pathname === '/';
   const [isContactOpen, setContactOpen] = useState(false);
+  const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -53,6 +55,12 @@ export function Header() {
                     {t('header.dashboard')}
                 </Link>
             </Button>
+             <Button variant="ghost" asChild className={buttonLinkClass}>
+                <Link href="/crop-advisor">
+                    <BrainCircuit className="mr-2 h-4 w-4"/>
+                    {t('dashboard.input.cropAdvisor')}
+                </Link>
+            </Button>
             <Button variant="ghost" asChild className={buttonLinkClass}>
                 <Link href="/predict">
                     <BrainCircuit className="mr-2 h-4 w-4"/>
@@ -67,18 +75,62 @@ export function Header() {
             </Button>
         </nav>
 
-        <div className="flex flex-1 items-center justify-end space-x-2">
-            <LanguageSwitcher className={buttonLinkClass} />
-            <ThemeToggle />
-             <Button variant="secondary" size="sm" onClick={() => setContactOpen(true)}>
-                <Mail className="mr-2 h-4 w-4" />
-                {t('header.contact')}
-            </Button>
+        <div className="flex items-center justify-end space-x-2 md:ml-4">
+            <div className="hidden sm:flex items-center space-x-2">
+                <LanguageSwitcher className={buttonLinkClass} />
+                <ThemeToggle />
+                 <Button variant="secondary" size="sm" onClick={() => setContactOpen(true)}>
+                    <Mail className="mr-2 h-4 w-4" />
+                    {t('header.contact')}
+                </Button>
+            </div>
+            
+            <div className="md:hidden">
+                <Sheet open={isMobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                    <SheetTrigger asChild>
+                        <Button variant="ghost" size="icon" className={buttonLinkClass}>
+                            <Menu className="h-6 w-6" />
+                            <span className="sr-only">Open menu</span>
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent side="right" className="w-[300px]">
+                        <nav className="flex flex-col gap-4 mt-8">
+                            <SheetClose asChild>
+                                <Link href="/dashboard" className="flex items-center gap-2 text-lg font-medium">
+                                    <LayoutDashboard className="h-5 w-5" /> {t('header.dashboard')}
+                                </Link>
+                            </SheetClose>
+                             <SheetClose asChild>
+                                <Link href="/crop-advisor" className="flex items-center gap-2 text-lg font-medium">
+                                    <BrainCircuit className="h-5 w-5" /> {t('dashboard.input.cropAdvisor')}
+                                </Link>
+                            </SheetClose>
+                            <SheetClose asChild>
+                                <Link href="/predict" className="flex items-center gap-2 text-lg font-medium">
+                                    <BrainCircuit className="h-5 w-5" /> {t('landing.hero.predictiveTools')}
+                                </Link>
+                            </SheetClose>
+                            <SheetClose asChild>
+                                <Link href="/settings" className="flex items-center gap-2 text-lg font-medium">
+                                    <Settings className="h-5 w-5" /> {t('header.settings')}
+                                </Link>
+                            </SheetClose>
+                            <SheetClose asChild>
+                                <Button variant="ghost" className="w-full justify-start gap-2 text-lg font-medium" onClick={() => setContactOpen(true)}>
+                                    <Mail className="h-5 w-5" /> {t('header.contact')}
+                                </Button>
+                            </SheetClose>
+                            <div className="flex items-center justify-between pt-4 border-t">
+                                <LanguageSwitcher />
+                                <ThemeToggle />
+                            </div>
+                        </nav>
+                    </SheetContent>
+                </Sheet>
+            </div>
         </div>
       </div>
       <ContactSheet open={isContactOpen} onOpenChange={setContactOpen} />
     </header>
   );
 }
-
-    
