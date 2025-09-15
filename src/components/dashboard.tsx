@@ -15,7 +15,7 @@ import type { GroundTruthDataPoint, SatellitePassData, WeatherData, HistoryEntry
 import { Skeleton } from "@/components/ui/skeleton";
 import { predictSatellitePassAction, getWeatherReportAction, computeMetricsAction } from "@/lib/actions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
-import { BarChart, Search, SlidersHorizontal, Map } from "lucide-react";
+import { Map } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
 import { Chatbot } from "./chatbot";
 import { MonitoringCard } from "./monitoring-card";

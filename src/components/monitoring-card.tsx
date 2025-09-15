@@ -7,7 +7,7 @@ import { Button } from './ui/button';
 import { Switch } from './ui/switch';
 import { Label } from './ui/label';
 import { Input } from './ui/input';
-import { Bell, AlertTriangle } from 'lucide-react';
+import { Bell } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/hooks/use-language';
 
