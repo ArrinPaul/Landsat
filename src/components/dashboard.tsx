@@ -15,7 +15,7 @@ import type { GroundTruthDataPoint, SatellitePassData, WeatherData, HistoryEntry
 import { Skeleton } from "@/components/ui/skeleton";
 import { predictSatellitePassAction, getWeatherReportAction, computeMetricsAction } from "@/lib/actions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
-import { Map } from "lucide-react";
+import { Map, AlertTriangle } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
 import { Chatbot } from "./chatbot";
 import { MonitoringCard } from "./monitoring-card";
@@ -32,6 +32,7 @@ export function Dashboard() {
   });
   const [groundTruthData, setGroundTruthData] = useState<GroundTruthDataPoint[] | null>(null);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [errorState, setErrorState] = useState<string | null>(null);
   const [isComputing, setIsComputing] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState<string>("NDVI");
   const [nextPass, setNextPass] = useState<SatellitePassData | null>(null);
@@ -73,37 +74,31 @@ export function Dashboard() {
   }, [nextPass, lat, lon, notificationsEnabled]);
 
 
-  const fetchNextPass = useCallback(async () => {
-      if (!lat || !lon) {
-           toast({ title: t('dashboard.error.noCoords.title'), description: t('dashboard.error.noCoords.description'), variant: "destructive" });
-           return;
-      }
+  const fetchAncillaryData = useCallback(async (currentLat: string, currentLon: string) => {
       setIsFetchingPass(true);
-      const result = await predictSatellitePassAction({ latitude: parseFloat(lat), longitude: parseFloat(lon) });
-      if (result.error) {
-          toast({ title: t('predict.error.aiError.title'), description: result.error, variant: "destructive" });
+      setIsFetchingWeather(true);
+
+      const passPromise = predictSatellitePassAction({ latitude: parseFloat(currentLat), longitude: parseFloat(currentLon) });
+      const weatherPromise = getWeatherReportAction({ latitude: parseFloat(currentLat), longitude: parseFloat(currentLon) });
+
+      const [passResult, weatherResult] = await Promise.all([passPromise, weatherPromise]);
+
+      if (passResult.error) {
+          toast({ title: t('predict.error.aiError.title'), description: passResult.error, variant: "destructive" });
           setNextPass(null);
-      } else if (result.data) {
-          setNextPass(result.data);
+      } else {
+          setNextPass(passResult.data);
       }
       setIsFetchingPass(false);
-  }, [lat, lon, toast, t]);
 
-  const fetchWeather = useCallback(async () => {
-    if (!lat || !lon) {
-        toast({ title: t('dashboard.error.noCoords.title'), description: t('dashboard.error.noCoords.description'), variant: "destructive" });
-        return;
-    }
-    setIsFetchingWeather(true);
-    const result = await getWeatherReportAction({ latitude: parseFloat(lat), longitude: parseFloat(lon) });
-    if (result.error) {
-      toast({ title: t('predict.error.aiError.title'), description: result.error, variant: "destructive" });
-      setWeather(null);
-    } else if (result.data) {
-      setWeather(result.data);
-    }
-    setIsFetchingWeather(false);
-  }, [lat, lon, toast, t]);
+      if (weatherResult.error) {
+          toast({ title: t('predict.error.aiError.title'), description: weatherResult.error, variant: "destructive" });
+          setWeather(null);
+      } else {
+          setWeather(weatherResult.data);
+      }
+      setIsFetchingWeather(false);
+  }, [toast, t]);
   
   const handleHistorySelect = (entry: HistoryEntry) => {
     setLat(entry.lat);
@@ -126,6 +121,7 @@ export function Dashboard() {
     setIsComputing(true);
     setActiveComputation(true);
     setAnalysisResult(null);
+    setErrorState(null);
     setNextPass(null);
     setWeather(null);
     
@@ -139,9 +135,7 @@ export function Dashboard() {
     };
     setHistory(prev => [newHistoryEntry, ...prev.slice(0, 9)]);
 
-    // Fetch ancillary data in parallel with the main computation
-    fetchNextPass();
-    fetchWeather();
+    fetchAncillaryData(lat, lon);
 
     const result = await computeMetricsAction({
         latitude: parseFloat(lat),
@@ -151,7 +145,9 @@ export function Dashboard() {
     });
 
     if (result.error || !result.data) {
-        toast({ title: t('dashboard.error.compute.title'), description: result.error || t('dashboard.error.compute.description'), variant: "destructive" });
+        const errorMessage = result.error || t('dashboard.error.compute.description');
+        setErrorState(errorMessage);
+        toast({ title: t('dashboard.error.compute.title'), description: errorMessage, variant: "destructive" });
         setAnalysisResult(null);
     } else {
         setAnalysisResult(result.data);
@@ -161,11 +157,100 @@ export function Dashboard() {
     
     setIsComputing(false);
 
-  }, [lat, lon, locationDesc, dateRange, toast, t, fetchNextPass, fetchWeather]);
+  }, [lat, lon, locationDesc, dateRange, toast, t, fetchAncillaryData]);
   
   const dateRangeString = dateRange?.from && dateRange?.to 
     ? `${format(dateRange.from, "LLL dd, y")} - ${format(dateRange.to, "LLL dd, y")}`
     : "N/A";
+
+  const renderContent = () => {
+      if (isComputing) {
+          return (
+            <div className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <Skeleton className="h-28" />
+                    <Skeleton className="h-28" />
+                    <Skeleton className="h-28" />
+                    <Skeleton className="h-28" />
+                </div>
+                <Skeleton className="h-48" />
+                <Skeleton className="h-96" />
+            </div>
+          );
+      }
+
+      if (!activeComputation) {
+          return (
+              <Card className="text-center py-16">
+                <CardHeader>
+                    <div className="mx-auto bg-primary/10 text-primary p-3 rounded-full w-fit">
+                        <Map className="h-10 w-10" />
+                    </div>
+                    <CardTitle>{t('dashboard.welcome.title')}</CardTitle>
+                    <CardDescription className="max-w-md mx-auto">{t('dashboard.welcome.description')}</CardDescription>
+                </CardHeader>
+              </Card>
+          );
+      }
+      
+       if (errorState) {
+          return (
+              <Card className="text-center py-16 border-destructive">
+                <CardHeader>
+                    <div className="mx-auto bg-destructive/10 text-destructive p-3 rounded-full w-fit">
+                        <AlertTriangle className="h-10 w-10" />
+                    </div>
+                    <CardTitle>{t('dashboard.error.compute.title')}</CardTitle>
+                    <CardDescription className="max-w-md mx-auto text-destructive">
+                        {errorState}
+                    </CardDescription>
+                </CardHeader>
+              </Card>
+          );
+      }
+
+      if (analysisResult) {
+          return (
+            <>
+              <div className="grid gap-6 lg:grid-cols-1 xl:grid-cols-4">
+                <div className="xl:col-span-3 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  <SummaryCards 
+                    landCover={analysisResult.landCover}
+                  />
+                </div>
+                <div className="xl:col-span-1 grid gap-6">
+                     <WeatherReport 
+                        weather={weather} 
+                        isLoading={isFetchingWeather} 
+                        showForecast={false}
+                        onFetchWeather={() => fetchAncillaryData(lat, lon)}
+                    />
+                     <MonitoringCard nextPass={nextPass} isLoading={isFetchingPass} />
+                </div>
+              </div>
+    
+              <LandCoverAnalysis landCover={analysisResult.landCover} />
+    
+              <MetricsTable 
+                analysisResult={analysisResult} 
+                location={`${lat}, ${lon}`}
+                dateRange={dateRangeString}
+              />
+    
+              <Visualizations
+                analysisResult={analysisResult}
+                groundTruthData={groundTruthData}
+                selectedMetric={selectedMetric}
+                setSelectedMetric={setSelectedMetric}
+                locationDescription={locationDesc}
+                dateRange={dateRange}
+              />
+            </>
+          )
+      }
+      
+      return null;
+  }
 
   return (
     <div className="container mx-auto p-2 sm:p-4 space-y-6">
@@ -185,76 +270,8 @@ export function Dashboard() {
         onHistorySelect={handleHistorySelect}
       />
 
-      {isComputing && (
-        <div className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Skeleton className="h-28" />
-                <Skeleton className="h-28" />
-                <Skeleton className="h-28" />
-                <Skeleton className="h-28" />
-            </div>
-             <Skeleton className="h-48" />
-            <Skeleton className="h-96" />
-        </div>
-      )}
+      {renderContent()}
       
-      {!activeComputation && !isComputing && (
-          <Card className="text-center py-16">
-            <CardHeader>
-                <div className="mx-auto bg-primary/10 text-primary p-3 rounded-full w-fit">
-                    <Map className="h-10 w-10" />
-                </div>
-                <CardTitle>{t('dashboard.welcome.title')}</CardTitle>
-                <CardDescription className="max-w-md mx-auto">{t('dashboard.welcome.description')}</CardDescription>
-            </CardHeader>
-          </Card>
-      )}
-
-      {activeComputation && !isComputing && !analysisResult && (
-          <Card className="text-center py-16">
-            <CardContent>
-                <p className="text-muted-foreground">{t('dashboard.compute.failure')}</p>
-            </CardContent>
-          </Card>
-      )}
-
-      {analysisResult && !isComputing && (
-        <>
-          <div className="grid gap-6 lg:grid-cols-1 xl:grid-cols-4">
-            <div className="xl:col-span-3 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              <SummaryCards 
-                landCover={analysisResult.landCover}
-              />
-            </div>
-            <div className="xl:col-span-1 grid gap-6">
-                 <WeatherReport 
-                    weather={weather} 
-                    isLoading={isFetchingWeather} 
-                    showForecast={false}
-                    onFetchWeather={fetchWeather}
-                />
-                 <MonitoringCard />
-            </div>
-          </div>
-
-          <LandCoverAnalysis landCover={analysisResult.landCover} />
-
-          <MetricsTable 
-            analysisResult={analysisResult} 
-            location={`${lat}, ${lon}`}
-            dateRange={dateRangeString}
-          />
-
-          <Visualizations
-            analysisResult={analysisResult}
-            groundTruthData={groundTruthData}
-            selectedMetric={selectedMetric}
-            setSelectedMetric={setSelectedMetric}
-            locationDescription={locationDesc}
-            dateRange={dateRange}
-          />
-        </>
-      )}
       <Chatbot lat={lat} lon={lon} />
     </div>
   );

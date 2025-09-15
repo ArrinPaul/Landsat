@@ -294,5 +294,6 @@
     "payment.upi.enterId": "UPI IDని నమోదు చేయండి",
     "payment.netbanking.select": "మీ బ్యాంకును ఎంచుకోండి",
     "payment.netbanking.selectPlaceholder": "ఒక బ్యాంకును ఎంచుకోండి",
-    "payment.netbanking.note": "చెల్లింపును పూర్తి చేయడానికి మిమ్మల్ని మీ బ్యాంక్ వెబ్‌సైట్‌కు మళ్లించబడతారు."
+    "payment.netbanking.note": "చెల్లింపును పూర్తి చేయడానికి మిమ్మల్ని మీ బ్యాంక్ వెబ్‌సైట్‌కు మళ్లించబడతారు.",
+    "dashboard.monitoring.pass.in": "లో"
 }

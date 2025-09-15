@@ -207,7 +207,7 @@
     "dashboard.video.modal.title": "{metric} Time-Lapse",
     "dashboard.video.modal.description": "A generated video showing the change in {metric} over {location}.",
     "dashboard.monitoring.title": "Automated Monitoring",
-    "dashboard.monitoring.description": "Set up alerts for this Area of Interest.",
+    "dashboard.monitoring.description": "Set up satellite passes and alerts for this Area of Interest.",
     "dashboard.monitoring.toggle": "Enable alerts for significant changes",
     "dashboard.monitoring.threshold.label": "Alert Threshold (NDVI Change)",
     "dashboard.monitoring.threshold.description": "Get notified if NDVI change exceeds this %.",
@@ -294,5 +294,6 @@
     "payment.upi.enterId": "Enter UPI ID",
     "payment.netbanking.select": "Select Your Bank",
     "payment.netbanking.selectPlaceholder": "Choose a bank",
-    "payment.netbanking.note": "You will be redirected to your bank's website to complete the payment."
+    "payment.netbanking.note": "You will be redirected to your bank's website to complete the payment.",
+    "dashboard.monitoring.pass.in": "in"
 }

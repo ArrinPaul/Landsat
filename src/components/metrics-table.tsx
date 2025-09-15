@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -249,7 +250,7 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button variant="ghost" size="icon" onClick={() => !metric.insight && getInsight(metric.name)} disabled={!!insightLoading}>
-                          {insightLoading === metric.name ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+                          {insightLoading === metric.name ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className={`h-4 w-4 ${insightLoading ? 'animate-pulse' : ''}`} />}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-80">
