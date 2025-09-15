@@ -36,8 +36,9 @@ export default function PricingPage() {
             features: [
                 "Everything in Free, plus:",
                 "Unlimited metric computations",
-                "Access to all Predictive Tools",
+                "All Predictive Tools",
                 "Advanced AI Insights & 'What-If' Scenarios",
+                "Video Generation Feature",
                 "Priority email support"
             ],
             buttonText: "Upgrade to Pro",
@@ -114,4 +115,3 @@ export default function PricingPage() {
         </div>
     );
 }
-
