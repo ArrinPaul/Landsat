@@ -5,6 +5,7 @@
     "header.about": "About",
     "header.contact": "Contact",
     "header.dashboard": "Dashboard",
+    "header.pricing": "Pricing",
     "header.settings": "Settings",
     "header.getStarted": "Get Started",
     "landing.hero.title": "Turn Satellite Data into Actionable Insights",
@@ -259,5 +260,19 @@
     "cropAdvisor.advanced.result.title": "Advanced Advice for {crop}",
     "cropAdvisor.advanced.result.plantingDensity": "Planting Density",
     "cropAdvisor.advanced.result.pests": "Pest & Disease Risks",
-    "cropAdvisor.advanced.result.fertilization": "Fertilization Strategy"
+    "cropAdvisor.advanced.result.fertilization": "Fertilization Strategy",
+    "pricing.title": "Choose Your Plan",
+    "pricing.subtitle": "Start for free and scale up as you grow. No credit card required for the Free plan.",
+    "pricing.popular": "Most Popular",
+    "payment.title": "Secure Payment",
+    "payment.description": "Upgrade to the Pro plan to unlock all features.",
+    "payment.cardNumber": "Card Number",
+    "payment.expiryDate": "Expiry Date",
+    "payment.cvc": "CVC",
+    "payment.nameOnCard": "Name on Card",
+    "payment.nameOnCardPlaceholder": "Enter full name",
+    "payment.payButton": "Pay {amount} Now",
+    "payment.summary.title": "Order Summary",
+    "payment.summary.plan": "Plan:",
+    "payment.summary.total": "Total:"
 }

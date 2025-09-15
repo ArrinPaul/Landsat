@@ -5,6 +5,7 @@
     "header.about": "हमारे बारे में",
     "header.contact": "संपर्क करें",
     "header.dashboard": "डैशबोर्ड",
+    "header.pricing": "मूल्य निर्धारण",
     "header.settings": "सेटिंग्स",
     "header.getStarted": "शुरू करें",
     "landing.hero.title": "सैटेलाइट डेटा को कार्रवाई योग्य अंतर्दृष्टि में बदलें",
@@ -259,5 +260,19 @@
     "cropAdvisor.advanced.result.title": "{crop} के लिए उन्नत सलाह",
     "cropAdvisor.advanced.result.plantingDensity": "रोपण घनत्व",
     "cropAdvisor.advanced.result.pests": "कीट और रोग जोखिम",
-    "cropAdvisor.advanced.result.fertilization": "उर्वरीकरण रणनीति"
+    "cropAdvisor.advanced.result.fertilization": "उर्वरीकरण रणनीति",
+    "pricing.title": "अपनी योजना चुनें",
+    "pricing.subtitle": "मुफ्त में शुरू करें और जैसे-जैसे आप बढ़ते हैं, वैसे-वैसे बढ़ाएँ। मुफ्त योजना के लिए किसी क्रेडिट कार्ड की आवश्यकता नहीं है।",
+    "pricing.popular": "सबसे लोकप्रिय",
+    "payment.title": "सुरक्षित भुगतान",
+    "payment.description": "सभी सुविधाओं को अनलॉक करने के लिए प्रो योजना में अपग्रेड करें।",
+    "payment.cardNumber": "कार्ड नंबर",
+    "payment.expiryDate": "समाप्ति तिथि",
+    "payment.cvc": "CVC",
+    "payment.nameOnCard": "कार्ड पर नाम",
+    "payment.nameOnCardPlaceholder": "पूरा नाम दर्ज करें",
+    "payment.payButton": "अभी {amount} का भुगतान करें",
+    "payment.summary.title": "आदेश सारांश",
+    "payment.summary.plan": "योजना:",
+    "payment.summary.total": "कुल:"
 }
