@@ -7,11 +7,19 @@ import { Button } from './ui/button';
 import { Switch } from './ui/switch';
 import { Label } from './ui/label';
 import { Input } from './ui/input';
-import { Bell } from 'lucide-react';
+import { Bell, Satellite, Bot } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/hooks/use-language';
+import type { SatellitePassData } from '@/lib/types';
+import { Skeleton } from './ui/skeleton';
+import { formatDistanceToNow } from 'date-fns';
 
-export function MonitoringCard() {
+interface MonitoringCardProps {
+    nextPass: SatellitePassData | null;
+    isLoading: boolean;
+}
+
+export function MonitoringCard({ nextPass, isLoading }: MonitoringCardProps) {
     const { toast } = useToast();
     const { t } = useLanguage();
     const [isMonitoring, setIsMonitoring] = useState(false);
@@ -28,14 +36,34 @@ export function MonitoringCard() {
         <Card>
             <CardHeader className="pb-4">
                 <div className="flex items-center gap-2">
-                    <Bell className="h-5 w-5" />
+                    <Satellite className="h-5 w-5" />
                     <CardTitle className="text-xl">{t('dashboard.monitoring.title')}</CardTitle>
                 </div>
                 <CardDescription>{t('dashboard.monitoring.description')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                <div className="flex items-center justify-between space-x-2">
-                    <Label htmlFor="monitoring-switch" className="flex-grow">{t('dashboard.monitoring.toggle')}</Label>
+
+                {isLoading && (
+                    <div className="space-y-2">
+                        <Skeleton className="h-5 w-3/4" />
+                        <Skeleton className="h-4 w-1/2" />
+                    </div>
+                )}
+
+                {!isLoading && nextPass && (
+                    <div className="p-4 rounded-lg bg-muted/50">
+                        <p className="font-semibold text-sm">{t('dashboard.summary.nextPass')}</p>
+                        <p className="text-muted-foreground text-sm">
+                            {nextPass.satelliteName} {t('dashboard.monitoring.pass.in')} {formatDistanceToNow(new Date(nextPass.passTime), { addSuffix: true })}
+                        </p>
+                    </div>
+                )}
+                
+                <div className="flex items-center justify-between space-x-2 pt-4 border-t">
+                    <Label htmlFor="monitoring-switch" className="flex-grow flex items-center gap-2">
+                        <Bot className="h-5 w-5" />
+                        {t('dashboard.monitoring.toggle')}
+                    </Label>
                     <Switch
                         id="monitoring-switch"
                         checked={isMonitoring}

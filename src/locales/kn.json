@@ -294,5 +294,6 @@
     "payment.upi.enterId": "UPI ಐಡಿಯನ್ನು ನಮೂದಿಸಿ",
     "payment.netbanking.select": "ನಿಮ್ಮ ಬ್ಯಾಂಕ್ ಆಯ್ಕೆಮಾಡಿ",
     "payment.netbanking.selectPlaceholder": "ಒಂದು ಬ್ಯಾಂಕ್ ಆಯ್ಕೆಮಾಡಿ",
-    "payment.netbanking.note": "ಪಾವತಿಯನ್ನು ಪೂರ್ಣಗೊಳಿಸಲು ನಿಮ್ಮನ್ನು ನಿಮ್ಮ ಬ್ಯಾಂಕಿನ ವೆಬ್‌ಸೈಟ್‌ಗೆ ಮರುನಿರ್ದೇಶಿಸಲಾಗುತ್ತದೆ."
+    "payment.netbanking.note": "ಪಾವತಿಯನ್ನು ಪೂರ್ಣಗೊಳಿಸಲು ನಿಮ್ಮನ್ನು ನಿಮ್ಮ ಬ್ಯಾಂಕಿನ ವೆಬ್‌ಸೈಟ್‌ಗೆ ಮರುನಿರ್ದೇಶಿಸಲಾಗುತ್ತದೆ.",
+    "dashboard.monitoring.pass.in": "ನಲ್ಲಿ"
 }
