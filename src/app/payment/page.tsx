@@ -1,7 +1,8 @@
 
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
+import Link from 'next/link';
 import { Header } from "@/components/header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,10 +13,12 @@ import { useLanguage } from "@/hooks/use-language";
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ContactSheet } from '@/components/contact-sheet';
 
 export default function PaymentPage() {
     const { t } = useLanguage();
     const { toast } = useToast();
+    const [isContactOpen, setContactOpen] = useState(false);
 
     const handlePaymentSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -151,6 +154,16 @@ export default function PaymentPage() {
                     </div>
                 </div>
             </main>
+            <footer id="contact" className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
+                <p className="text-xs text-muted-foreground">
+                  {t('footer.copyright')}
+                </p>
+                <nav className="sm:ml-auto flex gap-4 sm:gap-6">
+                    <Link href="/#about" className="text-xs hover:underline underline-offset-4 text-muted-foreground">{t('footer.about')}</Link>
+                    <Link href="#contact" className="text-xs hover:underline underline-offset-4 text-muted-foreground" onClick={(e) => { e.preventDefault(); setContactOpen(true)}}>{t('footer.contact')}</Link>
+                </nav>
+            </footer>
+            <ContactSheet open={isContactOpen} onOpenChange={setContactOpen} />
         </div>
     );
 }

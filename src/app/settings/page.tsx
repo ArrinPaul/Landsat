@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { Header } from "@/components/header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -9,12 +10,14 @@ import { Switch } from "@/components/ui/switch";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/hooks/use-language";
+import { ContactSheet } from "@/components/contact-sheet";
 
 export default function SettingsPage() {
   const { toast } = useToast();
   const { t } = useLanguage();
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [permission, setPermission] = useState<NotificationPermission>("default");
+  const [isContactOpen, setContactOpen] = useState(false);
 
   useEffect(() => {
     if ("Notification" in window) {
@@ -90,6 +93,16 @@ export default function SettingsPage() {
             </CardContent>
             </Card>
       </main>
+      <footer id="contact" className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
+        <p className="text-xs text-muted-foreground">
+          {t('footer.copyright')}
+        </p>
+        <nav className="sm:ml-auto flex gap-4 sm:gap-6">
+            <Link href="/#about" className="text-xs hover:underline underline-offset-4 text-muted-foreground">{t('footer.about')}</Link>
+            <Link href="#contact" className="text-xs hover:underline underline-offset-4 text-muted-foreground" onClick={(e) => { e.preventDefault(); setContactOpen(true)}}>{t('footer.contact')}</Link>
+        </nav>
+      </footer>
+      <ContactSheet open={isContactOpen} onOpenChange={setContactOpen} />
     </div>
   );
 }

@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { Header } from "@/components/header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ import { useLanguage } from "@/hooks/use-language";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ContactSheet } from "@/components/contact-sheet";
 
 const cropOptions = ["Corn", "Wheat", "Rice", "Soybeans", "Cotton", "Potatoes", "Tomatoes", "Barley", "Sorghum"];
 
@@ -46,6 +48,7 @@ export default function PredictPage() {
     const [scenario, setScenario] = useState("a 2-degree temperature increase");
     const [scenarioResult, setScenarioResult] = useState<ScenarioAnalysis | null>(null);
     const [selectedCrop, setSelectedCrop] = useState("Corn");
+    const [isContactOpen, setContactOpen] = useState(false);
 
     type PredictionType = 'weather' | 'crops' | 'irrigation' | 'soil' | 'yield' | 'risk' | 'scenario';
 
@@ -451,6 +454,16 @@ export default function PredictPage() {
 
                 </div>
             </main>
+            <footer id="contact" className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
+                <p className="text-xs text-muted-foreground">
+                    {t('footer.copyright')}
+                </p>
+                <nav className="sm:ml-auto flex gap-4 sm:gap-6">
+                    <Link href="/#about" className="text-xs hover:underline underline-offset-4 text-muted-foreground">{t('footer.about')}</Link>
+                    <Link href="#contact" className="text-xs hover:underline underline-offset-4 text-muted-foreground" onClick={(e) => { e.preventDefault(); setContactOpen(true)}}>{t('footer.contact')}</Link>
+                </nav>
+            </footer>
+            <ContactSheet open={isContactOpen} onOpenChange={setContactOpen} />
         </div>
     );
 }
