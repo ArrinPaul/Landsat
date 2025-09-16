@@ -96,10 +96,6 @@ export async function suggestCropAction(input: SuggestCropInput): Promise<{ data
     return handleAction(suggestCrop, input);
 }
 
-export async function analyzeDroughtAndFloodRiskAction(input: { latitude: number; longitude: number; }): Promise<{ data: DroughtFloodRisk | null; error: string | null; }> {
-    return handleAction(analyzeDroughtAndFloodRisk, input);
-}
-
 export async function getAdvancedCropAdviceAction(input: AdvancedCropAdviceInput): Promise<{ data: AdvancedCropAdvice | null; error: string | null; }> {
     return handleAction(getAdvancedCropAdvice, input);
 }
