@@ -114,12 +114,12 @@ export async function getHistoricalWeather(latitude: number, longitude: number, 
         timezone: "auto"
     });
 
-    const url = `${API_URL}?${params.toString()}`;
+    const url = `${ARCHIVE_API_URL}?${params.toString()}`;
     
     try {
         const response = await fetch(url, { cache: 'no-store' });
          if (!response.ok) {
-            throw new Error(`Open-Meteo Forecast API returned an error: ${response.status} ${response.statusText}`);
+            throw new Error(`Open-Meteo Archive API returned an error: ${response.status} ${response.statusText}`);
         }
         const data = await response.json();
         return data as HistoricalWeatherData;
@@ -144,7 +144,7 @@ export async function getHistoricalPrecipitation(latitude: number, longitude: nu
         start_date: '1991-01-01',
         end_date: '1991-12-31', 
         yearly: "precipitation_sum",
-        models: "ERA5_ seamlessly", // Use climate reanalysis data
+        models: "ERA5_seamless", // Use climate reanalysis data
     });
 
     const url = `${ARCHIVE_API_URL}?${params.toString()}`;
