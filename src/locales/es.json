@@ -122,7 +122,6 @@
     "dashboard.input.groundTruth": "Datos de Campo (CSV)",
     "dashboard.input.uploadFile": "Subir archivo",
     "dashboard.input.cropAdvisor": "Asesor de Cultivos",
-
     "dashboard.input.compute": "Calcular Métricas",
     "dashboard.error.noCoords.title": "Faltan coordenadas",
     "dashboard.error.noCoords.description": "Por favor, proporciona latitud y longitud.",
@@ -219,6 +218,7 @@
     "dashboard.monitoring.alert.enabled.description": "Se te alertará si el NDVI cambia en más de un {threshold}%.",
     "dashboard.monitoring.alert.disabled.title": "Monitoreo Deshabilitado",
     "dashboard.monitoring.alert.disabled.description": "Las alertas para esta área han sido desactivadas.",
+    "dashboard.monitoring.pass.in": "en",
     "settings.title": "Ajustes",
     "settings.description": "Gestiona tus preferencias y la configuración de la aplicación.",
     "settings.darkMode": "Modo Oscuro",
@@ -297,6 +297,7 @@
     "payment.upi.enterId": "Introduce el ID de UPI",
     "payment.netbanking.select": "Selecciona Tu Banco",
     "payment.netbanking.selectPlaceholder": "Elige un banco",
-    "payment.netbanking.note": "Serás redirigido al sitio web de tu banco para completar el pago.",
-    "dashboard.monitoring.pass.in": "en"
+    "payment.netbanking.note": "Serás redirigido al sitio web de tu banco para completar el pago."
 }
+
+    
