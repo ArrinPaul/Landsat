@@ -218,6 +218,7 @@
     "dashboard.monitoring.alert.enabled.description": "NDVI {threshold}% এর বেশি পরিবর্তন হলে আপনাকে সতর্ক করা হবে।",
     "dashboard.monitoring.alert.disabled.title": "মনিটরিং অক্ষম",
     "dashboard.monitoring.alert.disabled.description": "এই এলাকার জন্য সতর্কতা বন্ধ করা হয়েছে।",
+    "dashboard.monitoring.pass.in": "ভিতরে",
     "settings.title": "সেটিংস",
     "settings.description": "আপনার পছন্দ এবং অ্যাপ্লিকেশন সেটিংস পরিচালনা করুন।",
     "settings.darkMode": "ডার্ক মোড",
@@ -296,6 +297,7 @@
     "payment.upi.enterId": "UPI আইডি লিখুন",
     "payment.netbanking.select": "আপনার ব্যাংক নির্বাচন করুন",
     "payment.netbanking.selectPlaceholder": "একটি ব্যাংক বাছুন",
-    "payment.netbanking.note": "পেমেন্ট সম্পূর্ণ করতে আপনাকে আপনার ব্যাংকের ওয়েবসাইটে পুনঃনির্দেশিত করা হবে।",
-    "dashboard.monitoring.pass.in": "ভিতরে"
+    "payment.netbanking.note": "পেমেন্ট সম্পূর্ণ করতে আপনাকে আপনার ব্যাংকের ওয়েবসাইটে পুনঃনির্দেশিত করা হবে।"
 }
+
+    

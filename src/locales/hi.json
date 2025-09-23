@@ -218,6 +218,7 @@
     "dashboard.monitoring.alert.enabled.description": "NDVI {threshold}% से अधिक बदलने पर आपको सतर्क किया जाएगा।",
     "dashboard.monitoring.alert.disabled.title": "निगरानी अक्षम",
     "dashboard.monitoring.alert.disabled.description": "इस क्षेत्र के लिए अलर्ट बंद कर दिए गए हैं।",
+    "dashboard.monitoring.pass.in": "में",
     "settings.title": "सेटिंग्स",
     "settings.description": "अपनी प्राथमिकताएँ और एप्लिकेशन सेटिंग्स प्रबंधित करें।",
     "settings.darkMode": "डार्क मोड",
@@ -296,6 +297,7 @@
     "payment.upi.enterId": "UPI आईडी दर्ज करें",
     "payment.netbanking.select": "अपना बैंक चुनें",
     "payment.netbanking.selectPlaceholder": "एक बैंक चुनें",
-    "payment.netbanking.note": "भुगतान पूरा करने के लिए आपको अपने बैंक की वेबसाइट पर रीडायरेक्ट किया जाएगा।",
-    "dashboard.monitoring.pass.in": "में"
+    "payment.netbanking.note": "भुगतान पूरा करने के लिए आपको अपने बैंक की वेबसाइट पर रीडायरेक्ट किया जाएगा।"
 }
+
+    

@@ -93,3 +93,5 @@ export function MonitoringCard({ nextPass, isLoading }: MonitoringCardProps) {
         </Card>
     );
 }
+
+    

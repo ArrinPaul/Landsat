@@ -218,6 +218,7 @@
     "dashboard.monitoring.alert.enabled.description": "You will be alerted if NDVI changes by more than {threshold}%.",
     "dashboard.monitoring.alert.disabled.title": "Monitoring Disabled",
     "dashboard.monitoring.alert.disabled.description": "Alerts for this area have been turned off.",
+    "dashboard.monitoring.pass.in": "in",
     "settings.title": "Settings",
     "settings.description": "Manage your preferences and application settings.",
     "settings.darkMode": "Dark Mode",
@@ -296,6 +297,7 @@
     "payment.upi.enterId": "Enter UPI ID",
     "payment.netbanking.select": "Select Your Bank",
     "payment.netbanking.selectPlaceholder": "Choose a bank",
-    "payment.netbanking.note": "You will be redirected to your bank's website to complete the payment.",
-    "dashboard.monitoring.pass.in": "in"
+    "payment.netbanking.note": "You will be redirected to your bank's website to complete the payment."
 }
+
+    
