@@ -208,10 +208,10 @@ function CropAdvisorContent() {
                                                 <SelectValue placeholder={t('cropAdvisor.advanced.selectCrop.placeholder')} />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {cropOptions.map(crop => <SelectItem key={crop} value={crop}>{crop}</SelectItem>)}
                                                 {suggestionResult.suggestedCrop && !cropOptions.includes(suggestionResult.suggestedCrop) && (
                                                     <SelectItem value={suggestionResult.suggestedCrop}>{suggestionResult.suggestedCrop}</SelectItem>
                                                 )}
+                                                {cropOptions.map(crop => <SelectItem key={crop} value={crop}>{crop}</SelectItem>)}
                                             </SelectContent>
                                         </Select>
                                         <Button onClick={handleAdvancedAdviceSubmit} disabled={!!isLoading || !selectedCropForAdvice} className="w-full sm:w-auto">
@@ -312,3 +312,5 @@ export default function CropAdvisorPage() {
         </Suspense>
     )
 }
+
+    

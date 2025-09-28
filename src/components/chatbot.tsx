@@ -66,7 +66,7 @@ export function Chatbot({ lat, lon }: { lat?: string, lon?: string }) {
         { role: 'model', content: t('chatbot.greeting'), audioState: 'idle' }
       ]);
     }
-  }, [isOpen, messages.length, t]);
+  }, [isOpen, t]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -95,6 +95,12 @@ export function Chatbot({ lat, lon }: { lat?: string, lon?: string }) {
     const message = messages[index];
     if (!message.audioDataUri || !audioRef.current) return;
 
+    // A crucial check to ensure audio only plays after user interaction
+    if (!hasInteracted.current) {
+        toast({ title: "Audio disabled", description: "Interact with the page to enable audio playback."});
+        return;
+    }
+
     if (audioRef.current.src === message.audioDataUri && message.audioState === 'playing') {
       // Pause current audio
       audioRef.current.pause();
@@ -104,16 +110,26 @@ export function Chatbot({ lat, lon }: { lat?: string, lon?: string }) {
       if (!audioRef.current.paused) {
           audioRef.current.pause();
       }
-      setMessages(prev => prev.map((m) => ({...m, audioState: 'idle'})));
+      // Reset all other message audio states to idle
+      const newMessages = messages.map((m, i) => {
+          if (i === index) {
+              return {...m, audioState: 'playing'};
+          }
+          return {...m, audioState: 'idle'};
+      });
+      setMessages(newMessages);
       
       // Play new audio
       audioRef.current.src = message.audioDataUri;
       audioRef.current.play();
-      setMessages(prev => prev.map((m, i) => i === index ? { ...m, audioState: 'playing' } : m));
 
       audioRef.current.onended = () => {
         setMessages(prev => prev.map((m, i) => i === index ? { ...m, audioState: 'idle' } : m));
       };
+      audioRef.current.onerror = () => {
+        toast({title: t('chatbot.error.audio.title'), description: t('chatbot.error.audio.description'), variant: "destructive"});
+        setMessages(prev => prev.map((m, i) => i === index ? { ...m, audioState: 'idle' } : m));
+      }
     }
   };
   
@@ -139,6 +155,7 @@ export function Chatbot({ lat, lon }: { lat?: string, lon?: string }) {
       const errorMessage: MessageWithAudio = { role: 'model', content: t('chatbot.error.connection'), audioState: 'idle' };
       setMessages(prev => [...prev, errorMessage]);
     } else {
+      const newIndex = messages.length + 1;
       const modelMessage: MessageWithAudio = { 
         role: 'model', 
         content: result.data.response,
@@ -149,9 +166,11 @@ export function Chatbot({ lat, lon }: { lat?: string, lon?: string }) {
       
       if (result.data.audioDataUri && audioRef.current && hasInteracted.current) {
          audioRef.current.src = result.data.audioDataUri;
-         audioRef.current.play();
-         const newIndex = messages.length + 1;
-         setMessages(prev => prev.map((m, i) => i === newIndex ? {...m, audioState: 'playing'} : m));
+         audioRef.current.play().then(() => {
+             setMessages(prev => prev.map((m, i) => i === newIndex ? {...m, audioState: 'playing'} : m));
+         }).catch(() => {
+             // Autoplay was blocked, user will have to click to play.
+         });
          audioRef.current.onended = () => {
              setMessages(prev => prev.map((m, i) => i === newIndex ? {...m, audioState: 'idle'} : m));
          };
@@ -170,12 +189,16 @@ export function Chatbot({ lat, lon }: { lat?: string, lon?: string }) {
   const handleInteraction = () => {
       if (!hasInteracted.current) {
           hasInteracted.current = true;
+          // Preload the audio element to prepare it for playback
+          if(audioRef.current) {
+              audioRef.current.load();
+          }
       }
   }
 
   return (
     <>
-      <audio ref={audioRef} className="hidden" />
+      <audio ref={audioRef} className="hidden" preload="auto" />
       {isOpen ? (
         <Card onClick={handleInteraction} className="fixed bottom-4 right-4 w-96 h-[600px] flex flex-col z-50 shadow-2xl rounded-lg">
           <CardHeader className="flex flex-row items-center justify-between p-4 border-b">
@@ -261,3 +284,5 @@ export function Chatbot({ lat, lon }: { lat?: string, lon?: string }) {
     </>
   );
 }
+
+    
