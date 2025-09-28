@@ -18,6 +18,7 @@ import { analyzeDroughtAndFloodRisk } from "@/ai/flows/analyze-drought-flood-ris
 import { getAdvancedCropAdvice, type AdvancedCropAdviceInput } from "@/ai/flows/get-advanced-crop-advice";
 import { generateTimelapseVideo } from "@/ai/flows/generate-timelapse-video";
 import { runScenarioAnalysis } from "@/ai/tools/run-scenario-analysis";
+import { getDroughtAndFloodRiskData } from "@/ai/tools/get-drought-flood-risk-data";
 
 
 import type { AnalysisResult, AdvancedCropAdvice, DroughtFloodRisk, GenerateTimelapseVideoInput, GenerateTimelapseVideoOutput, ScenarioAnalysis, CropPlan, CropYieldPrediction, IrrigationSchedule, SatellitePassData, SoilMoisturePrediction, WeatherData } from "@/lib/types";
@@ -106,4 +107,8 @@ export async function generateTimelapseVideoAction(input: GenerateTimelapseVideo
 
 export async function runScenarioAnalysisAction(input: { latitude: number; longitude: number; scenarioDescription: string; }): Promise<{ data: ScenarioAnalysis | null; error: string | null; }> {
     return handleAction(runScenarioAnalysis, input);
+}
+
+export async function analyzeDroughtAndFloodRiskAction(input: { latitude: number; longitude: number; }): Promise<{ data: DroughtFloodRisk | null; error: string | null; }> {
+    return handleAction(analyzeDroughtAndFloodRisk, input);
 }
