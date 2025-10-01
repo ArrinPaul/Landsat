@@ -312,5 +312,3 @@ export default function CropAdvisorPage() {
         </Suspense>
     )
 }
-
-    
