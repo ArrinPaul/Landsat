@@ -10,7 +10,7 @@ import { chatbot } from "@/ai/flows/chatbot";
 import { planCrops } from "@/ai/flows/plan-crops";
 import { scheduleIrrigation } from "@/ai/flows/schedule-irrigation";
 import { textToSpeech } from "@/ai/flows/text-to-speech";
-import { computeMetrics } from "@/ai/flows/compute-metrics";
+import { startMetricsComputation, getMetricsResult, type ComputeMetricsInput, type JobResultOutput, type StartComputationOutput } from "@/ai/flows/compute-metrics";
 import { predictSoilMoisture } from "@/ai/flows/predict-soil-moisture";
 import { predictCropYield } from "@/ai/flows/predict-crop-yield";
 import { suggestCrop, type SuggestCropInput, type SuggestCropOutput } from "@/ai/flows/suggest-crop";
@@ -45,8 +45,12 @@ async function handleAction<T, U>(action: (input: T) => Promise<U>, input: T): P
 }
 
 
-export async function computeMetricsAction(input: { latitude: number; longitude: number; startDate: string; endDate: string; }): Promise<{data: AnalysisResult | null, error: string | null}> {
-    return handleAction(computeMetrics, input);
+export async function startMetricsComputationAction(input: ComputeMetricsInput): Promise<{data: StartComputationOutput | null, error: string | null}> {
+    return handleAction(startMetricsComputation, input);
+}
+
+export async function getMetricsResultAction(jobId: string): Promise<{data: JobResultOutput | null, error: string | null}> {
+    return handleAction(getMetricsResult, jobId);
 }
 
 export async function suggestCoordinatesAction(locationDescription: string) {
@@ -112,3 +116,5 @@ export async function runScenarioAnalysisAction(input: { latitude: number; longi
 export async function analyzeDroughtAndFloodRiskAction(input: { latitude: number; longitude: number; }): Promise<{ data: DroughtFloodRisk | null; error: string | null; }> {
     return handleAction(analyzeDroughtAndFloodRisk, input);
 }
+
+    

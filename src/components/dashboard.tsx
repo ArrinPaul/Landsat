@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { addDays, format, formatISO } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { InputPanel } from "@/components/input-panel";
@@ -13,12 +13,14 @@ import { LandCoverAnalysis } from "@/components/land-cover-analysis";
 import { useToast } from "@/hooks/use-toast";
 import type { GroundTruthDataPoint, SatellitePassData, WeatherData, HistoryEntry, AnalysisResult } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
-import { predictSatellitePassAction, getWeatherReportAction, computeMetricsAction } from "@/lib/actions";
+import { predictSatellitePassAction, getWeatherReportAction, startMetricsComputationAction, getMetricsResultAction } from "@/lib/actions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
-import { Map, AlertTriangle } from "lucide-react";
+import { Map, AlertTriangle, Loader2 } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
 import { Chatbot } from "./chatbot";
 import { MonitoringCard } from "./monitoring-card";
+
+type ComputationStatus = 'idle' | 'computing' | 'polling' | 'completed' | 'error';
 
 export function Dashboard() {
   const { t } = useLanguage();
@@ -33,7 +35,7 @@ export function Dashboard() {
   const [groundTruthData, setGroundTruthData] = useState<GroundTruthDataPoint[] | null>(null);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [errorState, setErrorState] = useState<string | null>(null);
-  const [isComputing, setIsComputing] = useState(false);
+  const [computationStatus, setComputationStatus] = useState<ComputationStatus>('idle');
   const [selectedMetric, setSelectedMetric] = useState<string>("NDVI");
   const [nextPass, setNextPass] = useState<SatellitePassData | null>(null);
   const [isFetchingPass, setIsFetchingPass] = useState(false);
@@ -41,7 +43,8 @@ export function Dashboard() {
   const [isFetchingWeather, setIsFetchingWeather] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [activeComputation, setActiveComputation] = useState(false);
+  
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if ("Notification" in window) {
@@ -50,64 +53,43 @@ export function Dashboard() {
       }
     }
   }, []);
-
+  
   useEffect(() => {
-    if (!nextPass || !notificationsEnabled || !("Notification" in window) || Notification.permission !== "granted") {
-      return;
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
+  }, []);
+
+  const pollForResults = useCallback((jobId: string) => {
+    if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
     }
 
-    const passTime = new Date(nextPass.passTime);
-    const now = new Date();
-    const notificationTime = passTime.getTime() - 60000; 
-    const delay = notificationTime - now.getTime();
-
-    if (delay > 0) {
-      const timerId = setTimeout(() => {
-        new Notification("Satellite Alert", {
-          body: `Satellite ${nextPass.satelliteName} will pass over your selected location (${lat}, ${lon}) in 1 minute.`,
-          icon: "/favicon.ico",
-        });
-      }, delay);
-
-      return () => clearTimeout(timerId);
-    }
-  }, [nextPass, lat, lon, notificationsEnabled]);
-
-
-  const fetchAncillaryData = useCallback(async (currentLat: string, currentLon: string) => {
-      setIsFetchingPass(true);
-      setIsFetchingWeather(true);
-
-      const passPromise = predictSatellitePassAction({ latitude: parseFloat(currentLat), longitude: parseFloat(currentLon) });
-      const weatherPromise = getWeatherReportAction({ latitude: parseFloat(currentLat), longitude: parseFloat(currentLon) });
-
-      const [passResult, weatherResult] = await Promise.all([passPromise, weatherPromise]);
-
-      if (passResult.error) {
-          toast({ title: t('predict.error.aiError.title'), description: passResult.error, variant: "destructive" });
-          setNextPass(null);
-      } else {
-          setNextPass(passResult.data);
+    pollingIntervalRef.current = setInterval(async () => {
+      const response = await getMetricsResultAction(jobId);
+      if (response.data) {
+        if (response.data.status === 'completed') {
+          if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+          setAnalysisResult(response.data.result || null);
+          setComputationStatus('completed');
+          toast({ title: t('dashboard.compute.success.title'), description: t('dashboard.compute.success.description') });
+        } else if (response.data.status === 'error') {
+          if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+          setErrorState(response.data.error || 'An unknown error occurred.');
+          setComputationStatus('error');
+          toast({ title: t('dashboard.error.compute.title'), description: response.data.error, variant: "destructive" });
+        }
+      } else if (response.error) {
+         if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+         setErrorState(response.error);
+         setComputationStatus('error');
       }
-      setIsFetchingPass(false);
-
-      if (weatherResult.error) {
-          toast({ title: t('predict.error.aiError.title'), description: weatherResult.error, variant: "destructive" });
-          setWeather(null);
-      } else {
-          setWeather(weatherResult.data);
-      }
-      setIsFetchingWeather(false);
+    }, 5000); // Poll every 5 seconds
   }, [toast, t]);
-  
-  const handleHistorySelect = (entry: HistoryEntry) => {
-    setLat(entry.lat);
-    setLon(entry.lon);
-    setLocationDesc(entry.locationDesc);
-    setDateRange(entry.dateRange);
-    toast({ title: t('dashboard.history.toast.title'), description: t('dashboard.history.toast.description', { location: entry.locationDesc })});
-  };
-  
+
+
   const handleCompute = useCallback(async () => {
     if (!lat || !lon) {
       toast({ title: t('dashboard.error.invalidCoords.title'), description: t('dashboard.error.invalidCoords.description'), variant: "destructive" });
@@ -118,26 +100,20 @@ export function Dashboard() {
       return;
     }
 
-    setIsComputing(true);
-    setActiveComputation(true);
+    setComputationStatus('computing');
     setAnalysisResult(null);
     setErrorState(null);
     setNextPass(null);
     setWeather(null);
     
-    const newHistoryEntry: HistoryEntry = {
-      id: new Date().toISOString(),
-      lat,
-      lon,
-      locationDesc,
-      dateRange,
-      timestamp: new Date(),
-    };
+    const newHistoryEntry: HistoryEntry = { id: new Date().toISOString(), lat, lon, locationDesc, dateRange, timestamp: new Date() };
     setHistory(prev => [newHistoryEntry, ...prev.slice(0, 9)]);
 
-    fetchAncillaryData(lat, lon);
+    // Don't await ancillary data, let it fetch in the background
+    predictSatellitePassAction({ latitude: parseFloat(lat), longitude: parseFloat(lon) }).then(res => setNextPass(res.data));
+    getWeatherReportAction({ latitude: parseFloat(lat), longitude: parseFloat(lon) }).then(res => setWeather(res.data));
 
-    const result = await computeMetricsAction({
+    const result = await startMetricsComputationAction({
         latitude: parseFloat(lat),
         longitude: parseFloat(lon),
         startDate: formatISO(dateRange.from, { representation: 'date' }),
@@ -145,41 +121,45 @@ export function Dashboard() {
     });
 
     if (result.error || !result.data) {
-        const errorMessage = result.error || t('dashboard.error.compute.description');
-        setErrorState(errorMessage);
-        toast({ title: t('dashboard.error.compute.title'), description: errorMessage, variant: "destructive" });
-        setAnalysisResult(null);
+        setErrorState(result.error || t('dashboard.error.compute.description'));
+        setComputationStatus('error');
+        toast({ title: "Failed to Start Computation", description: result.error || t('dashboard.error.compute.description'), variant: "destructive" });
     } else {
-        setAnalysisResult(result.data);
-        setSelectedMetric('NDVI');
-        toast({ title: t('dashboard.compute.success.title'), description: t('dashboard.compute.success.description') });
+        setComputationStatus('polling');
+        pollForResults(result.data.jobId);
     }
-    
-    setIsComputing(false);
 
-  }, [lat, lon, locationDesc, dateRange, toast, t, fetchAncillaryData]);
+  }, [lat, lon, locationDesc, dateRange, toast, t, pollForResults]);
+  
+  const handleHistorySelect = (entry: HistoryEntry) => {
+    setLat(entry.lat);
+    setLon(entry.lon);
+    setLocationDesc(entry.locationDesc);
+    setDateRange(entry.dateRange);
+    toast({ title: t('dashboard.history.toast.title'), description: t('dashboard.history.toast.description', { location: entry.locationDesc })});
+  };
   
   const dateRangeString = dateRange?.from && dateRange?.to 
     ? `${format(dateRange.from, "LLL dd, y")} - ${format(dateRange.to, "LLL dd, y")}`
     : "N/A";
+    
+  const isProcessing = computationStatus === 'computing' || computationStatus === 'polling';
 
   const renderContent = () => {
-      if (isComputing) {
+      if (isProcessing) {
           return (
-            <div className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <Skeleton className="h-28" />
-                    <Skeleton className="h-28" />
-                    <Skeleton className="h-28" />
-                    <Skeleton className="h-28" />
-                </div>
-                <Skeleton className="h-48" />
-                <Skeleton className="h-96" />
-            </div>
+            <Card>
+                <CardContent className="pt-6">
+                    <div className="flex flex-col items-center justify-center h-48 gap-4">
+                        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                        <p className="text-muted-foreground">{computationStatus === 'computing' ? 'Sending request...' : 'Analysis in progress, fetching results...'}</p>
+                    </div>
+                </CardContent>
+            </Card>
           );
       }
 
-      if (!activeComputation) {
+      if (computationStatus === 'idle') {
           return (
               <Card className="text-center py-16">
                 <CardHeader>
@@ -193,7 +173,7 @@ export function Dashboard() {
           );
       }
       
-       if (errorState) {
+       if (computationStatus === 'error') {
           return (
               <Card className="text-center py-16 border-destructive">
                 <CardHeader>
@@ -209,7 +189,7 @@ export function Dashboard() {
           );
       }
 
-      if (analysisResult) {
+      if (computationStatus === 'completed' && analysisResult) {
           return (
             <>
               <div className="grid gap-6 lg:grid-cols-1 xl:grid-cols-4">
@@ -223,7 +203,6 @@ export function Dashboard() {
                         weather={weather} 
                         isLoading={isFetchingWeather} 
                         showForecast={false}
-                        onFetchWeather={() => fetchAncillaryData(lat, lon)}
                     />
                      <MonitoringCard nextPass={nextPass} isLoading={isFetchingPass} />
                 </div>
@@ -264,7 +243,7 @@ export function Dashboard() {
         dateRange={dateRange}
         setDateRange={setDateRange}
         onCompute={handleCompute}
-        isComputing={isComputing}
+        isComputing={isProcessing}
         onFileUpload={setGroundTruthData}
         history={history}
         onHistorySelect={handleHistorySelect}

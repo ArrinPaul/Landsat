@@ -2,9 +2,9 @@
 'use server';
 /**
  * @fileOverview A flow for computing environmental metrics using Google Earth Engine.
- * - computeMetrics - A function that computes metrics for a given location and date range.
- * - ComputeMetricsInput - The input type for the computeMetrics function.
- * - ComputeMetricsOutput - The return type for the computeMetrics function.
+ * This has been refactored to support asynchronous job processing.
+ * - startMetricsComputation - Kicks off a new analysis job.
+ * - getMetricsResult - Fetches the result of a completed job.
  */
 
 import { ai } from '@/ai/genkit';
@@ -13,6 +13,9 @@ import ee from '@google/earthengine';
 import { getHistoricalWeather } from '@/services/open-meteo';
 import type { HistoricalDataPoint } from '@/lib/types';
 
+
+// In-memory store for job results. In a production system, use a database like Firestore or Redis.
+const jobResults = new Map<string, { status: 'pending' | 'completed' | 'error', data?: any, error?: string }>();
 
 // Helper function to calculate percentage change
 function getPercentageChange(start: number, end: number): number {
@@ -81,10 +84,50 @@ const ComputeMetricsOutputSchema = z.object({
 });
 export type ComputeMetricsOutput = z.infer<typeof ComputeMetricsOutputSchema>;
 
-// This function needs to be an exported async function
-export async function computeMetrics(input: ComputeMetricsInput): Promise<ComputeMetricsOutput> {
-    return computeMetricsFlow(input);
+
+const StartComputationOutputSchema = z.object({
+    jobId: z.string(),
+});
+export type StartComputationOutput = z.infer<typeof StartComputationOutputSchema>;
+
+const JobResultOutputSchema = z.object({
+    status: z.enum(['pending', 'completed', 'error']),
+    result: ComputeMetricsOutputSchema.optional(),
+    error: z.string().optional(),
+});
+export type JobResultOutput = z.infer<typeof JobResultOutputSchema>;
+
+
+// This function starts the computation and immediately returns a job ID.
+export async function startMetricsComputation(input: ComputeMetricsInput): Promise<StartComputationOutput> {
+  const jobId = `job-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  jobResults.set(jobId, { status: 'pending' });
+
+  // Do not await this. Let it run in the background.
+  computeMetricsFlow(input, jobId);
+
+  return { jobId };
 }
+
+// This function retrieves the result of a computation.
+export async function getMetricsResult(jobId: string): Promise<JobResultOutput> {
+    const job = jobResults.get(jobId);
+
+    if (!job) {
+        return { status: 'error', error: 'Job not found.' };
+    }
+
+    if (job.status === 'completed') {
+        return { status: 'completed', result: job.data };
+    }
+
+    if (job.status === 'error') {
+        return { status: 'error', error: job.error };
+    }
+    
+    return { status: 'pending' };
+}
+
 
 // Promisify the ee.data.authenticateViaPrivateKey and ee.initialize functions
 const authenticate = (key: any) => new Promise<void>((resolve, reject) => {
@@ -114,20 +157,17 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
                 .filterBounds(areaOfInterest)
                 .filterDate(input.startDate, input.endDate)
                 .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 75));
-
-            // First, evaluate the size of the collection. This is the critical step.
+            
             collection.size().evaluate((size, error) => {
                 if (error) {
                     return reject(new Error(`Earth Engine Error during size evaluation: ${error}`));
                 }
                 if (size === 0) {
-                    // If there are no images, reject the promise immediately with a user-friendly error.
                     return reject(new Error("No valid satellite imagery found for the selected location, date range, and cloud cover settings. Try expanding the date range or choosing a different area."));
                 }
                 
                 const allBands = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B9', 'B11', 'B12'];
 
-                // If we have images, proceed with the full analysis.
                 const withMetrics = collection.map(image => {
                     const ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI');
                     const ndwi = image.normalizedDifference(['B3', 'B8']).rename('NDWI');
@@ -156,115 +196,35 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
                     return ee.Feature(null, featureProps);
                 });
 
-                // Land cover analysis
                 const firstImage = withMetrics.first();
                 const lastImage = withMetrics.sort('system:time_start', false).first();
-                
-                const landCoverPalette = [
-                    '666666', // Other (gray)
-                    '00FF00', // Vegetation (green)
-                    'FF0000', // Built-up (red)
-                    '0000FF', // Water (blue)
-                ];
 
-                const createClassifiedImage = (image: ee.Image) => {
-                    const ndvi = image.select('NDVI');
-                    const ndwi = image.select('NDWI');
-                    const ndbi = image.select('NDBI');
-
-                    const water = ndwi.gt(0.0).rename('water');
-                    const vegetation = ndvi.gt(0.2).and(water.not()).rename('vegetation');
-                    const builtUp = ndbi.gt(0.0).and(vegetation.not()).and(water.not()).rename('builtUp');
-                    
-                    // Create a single-band image where pixel values represent classes
-                    // 0=Other, 1=Vegetation, 2=Built-up, 3=Water
-                    const classified = ee.Image(0)
-                        .where(vegetation, 1)
-                        .where(builtUp, 2)
-                        .where(water, 3)
-                        .rename('landcover');
-                        
-                    return classified.visualize({
-                        min: 0,
-                        max: 3,
-                        palette: landCoverPalette
-                    });
-                };
-                
-                const calculateLandCoverStats = (image: ee.Image) => {
-                    const ndvi = image.select('NDVI');
-                    const ndwi = image.select('NDWI');
-                    const ndbi = image.select('NDBI');
-
-                    const water = ndwi.gt(0.0);
-                    const vegetation = ndvi.gt(0.2).and(water.not());
-                    const builtUp = ndbi.gt(0.0).and(vegetation.not()).and(water.not());
-                    const other = water.not().and(vegetation.not()).and(builtUp.not());
-
-                    const areaImage = ee.Image.pixelArea().divide(1e6); // to sq km
-
-                    const calculateArea = (cover: ee.Image) => cover.multiply(areaImage).reduceRegion({
-                        reducer: ee.Reducer.sum(),
-                        geometry: areaOfInterest,
-                        scale: 30,
-                        maxPixels: 1e10
-                    }).get(cover.bandNames().get(0));
-
-                    return ee.Dictionary({
-                        vegetation: calculateArea(vegetation),
-                        water: calculateArea(water),
-                        builtUp: calculateArea(builtUp),
-                        other: calculateArea(other),
-                    });
-                };
-                
-                const landCoverStart = calculateLandCoverStats(firstImage);
-                const landCoverEnd = calculateLandCoverStats(lastImage);
-
-                // Now evaluate the full results.
-                ee.Dictionary({
+                const evaluateAll = ee.Dictionary({
                     timeSeries: chartData.toList(chartData.size()),
-                    landCoverStart: landCoverStart,
-                    landCoverEnd: landCoverEnd,
-                    regionGeoJSON: areaOfInterest, // Pass the computed object directly
-                }).evaluate((result: any, error) => {
-                    if (error) {
-                        return reject(new Error(`Earth Engine Error during final evaluation: ${error}`));
-                    }
-                    if (!result || !result.timeSeries || !Array.isArray(result.timeSeries)) {
-                        return reject(new Error("No time-series data returned from Earth Engine."));
-                    }
-                     if (!result.landCoverStart || !result.landCoverEnd) {
-                        return reject(new Error("Could not compute land cover analysis. The area might be too small or lack valid imagery at the start/end dates."));
-                    }
-                    if (!result.regionGeoJSON) {
-                        return reject(new Error("Could not evaluate the region geometry for map generation."));
-                    }
-                    
-                    // With the evaluated GeoJSON, we can now safely get the URLs synchronously.
+                    landCoverStart: calculateLandCoverStats(firstImage, areaOfInterest),
+                    landCoverEnd: calculateLandCoverStats(lastImage, areaOfInterest),
+                    regionGeoJSON: areaOfInterest,
+                });
+
+                evaluateAll.evaluate((result: any, error) => {
+                    if (error) return reject(new Error(`Earth Engine Error during final evaluation: ${error}`));
+                    if (!result || !result.timeSeries || !Array.isArray(result.timeSeries)) return reject(new Error("No time-series data returned from Earth Engine."));
+                    if (!result.landCoverStart || !result.landCoverEnd) return reject(new Error("Could not compute land cover analysis. The area might be too small or lack valid imagery at the start/end dates."));
+                    if (!result.regionGeoJSON) return reject(new Error("Could not evaluate the region geometry for map generation."));
+
+                    const landCoverPalette = ['666666', '00FF00', 'FF0000', '0000FF'];
+                    const createClassifiedImage = (image: ee.Image) => {
+                        return ee.Image(0).where(image.select('NDWI').gt(0.0), 3).where(image.select('NDVI').gt(0.2).and(image.select('NDWI').lte(0.0)), 1).where(image.select('NDBI').gt(0.0).and(image.select('NDVI').lte(0.2)).and(image.select('NDWI').lte(0.0)), 2).rename('landcover').visualize({min: 0, max: 3, palette: landCoverPalette});
+                    };
+
                     const beforeVis = createClassifiedImage(firstImage);
                     const afterVis = createClassifiedImage(lastImage);
-
-                    const beforeMapUrl = beforeVis.getThumbURL({
-                        dimensions: '512x512',
-                        region: result.regionGeoJSON,
-                        format: 'png'
-                    });
-
-                    const afterMapUrl = afterVis.getThumbURL({
-                        dimensions: '512x512',
-                        region: result.regionGeoJSON,
-                        format: 'png'
-                    });
-
-                    if (!beforeMapUrl || !afterMapUrl) {
-                        return reject(new Error("Could not generate land cover map URLs."));
-                    }
                     
-                    // Attach the URLs to the result object
-                    result.beforeMapUrl = beforeMapUrl;
-                    result.afterMapUrl = afterMapUrl;
+                    result.beforeMapUrl = beforeVis.getThumbURL({ dimensions: '512x512', region: result.regionGeoJSON, format: 'png' });
+                    result.afterMapUrl = afterVis.getThumbURL({ dimensions: '512x512', region: result.regionGeoJSON, format: 'png' });
 
+                    if (!result.beforeMapUrl || !result.afterMapUrl) return reject(new Error("Could not generate land cover map URLs."));
+                    
                     resolve(result);
                 });
             });
@@ -276,16 +236,36 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
     });
 }
 
+const calculateLandCoverStats = (image: ee.Image, areaOfInterest: ee.Geometry) => {
+    const ndvi = image.select('NDVI');
+    const ndwi = image.select('NDWI');
+    const ndbi = image.select('NDBI');
 
-const computeMetricsFlow = ai.defineFlow(
-  {
-    name: 'computeMetricsFlow',
-    inputSchema: ComputeMetricsInputSchema,
-    outputSchema: ComputeMetricsOutputSchema,
-  },
-  async (input) => {
-    
-    // Run EE analysis and historical weather fetching in parallel
+    const water = ndwi.gt(0.0);
+    const vegetation = ndvi.gt(0.2).and(water.not());
+    const builtUp = ndbi.gt(0.0).and(vegetation.not()).and(water.not());
+    const other = water.not().and(vegetation.not()).and(builtUp.not());
+
+    const areaImage = ee.Image.pixelArea().divide(1e6); // to sq km
+
+    const calculateArea = (cover: ee.Image) => cover.multiply(areaImage).reduceRegion({
+        reducer: ee.Reducer.sum(),
+        geometry: areaOfInterest,
+        scale: 30,
+        maxPixels: 1e10
+    }).get(cover.bandNames().get(0));
+
+    return ee.Dictionary({
+        vegetation: calculateArea(vegetation),
+        water: calculateArea(water),
+        builtUp: calculateArea(builtUp),
+        other: calculateArea(other),
+    });
+};
+
+
+const computeMetricsFlow = async (input: ComputeMetricsInput, jobId: string) => {
+  try {
     const [eeData, weatherData] = await Promise.all([
         runEeAnalysis(input),
         getHistoricalWeather(input.latitude, input.longitude, input.startDate, input.endDate)
@@ -298,7 +278,6 @@ const computeMetricsFlow = ai.defineFlow(
     }));
 
     const allBands = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B9', 'B11', 'B12'];
-
     const timeSeriesResult: any = {
         NDVI: [], NDWI: [], NDBI: [], NBR: [],
         ...Object.fromEntries(allBands.map(band => [band, []]))
@@ -327,38 +306,26 @@ const computeMetricsFlow = ai.defineFlow(
     }
     
     const landCoverAnalysis = {
-        vegetation: {
-            startArea: start.vegetation,
-            endArea: end.vegetation,
-            absoluteChange: end.vegetation - start.vegetation,
-            percentageChange: getPercentageChange(start.vegetation, end.vegetation),
-        },
-        water: {
-            startArea: start.water,
-            endArea: end.water,
-            absoluteChange: end.water - start.water,
-            percentageChange: getPercentageChange(start.water, end.water),
-        },
-        builtUp: {
-            startArea: start.builtUp,
-            endArea: end.builtUp,
-            absoluteChange: end.builtUp - start.builtUp,
-            percentageChange: getPercentageChange(start.builtUp, end.builtUp),
-        },
-        other: {
-            startArea: start.other,
-            endArea: end.other,
-            absoluteChange: end.other - start.other,
-            percentageChange: getPercentageChange(start.other, end.other),
-        },
+        vegetation: { startArea: start.vegetation, endArea: end.vegetation, absoluteChange: end.vegetation - start.vegetation, percentageChange: getPercentageChange(start.vegetation, end.vegetation) },
+        water: { startArea: start.water, endArea: end.water, absoluteChange: end.water - start.water, percentageChange: getPercentageChange(start.water, end.water) },
+        builtUp: { startArea: start.builtUp, endArea: end.builtUp, absoluteChange: end.builtUp - start.builtUp, percentageChange: getPercentageChange(start.builtUp, end.builtUp) },
+        other: { startArea: start.other, endArea: end.other, absoluteChange: end.other - start.other, percentageChange: getPercentageChange(start.other, end.other) },
         beforeMapUrl: eeData.beforeMapUrl,
         afterMapUrl: eeData.afterMapUrl
     };
 
-    return { 
+    const finalResult = { 
         timeSeries: timeSeriesResult,
         landCover: landCoverAnalysis,
         historicalWeather: historicalWeatherResult,
-     };
+    };
+    
+    jobResults.set(jobId, { status: 'completed', data: finalResult });
+
+  } catch (error: any) {
+    console.error(`Error in computeMetricsFlow for job ${jobId}:`, error);
+    jobResults.set(jobId, { status: 'error', error: error.message || 'An unknown error occurred during computation.' });
   }
-);
+};
+
+    
