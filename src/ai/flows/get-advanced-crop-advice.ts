@@ -73,10 +73,10 @@ const prompt = ai.definePrompt({
 
   **Output Requirements:**
   Your response must be a structured JSON object containing the following:
-  1.  'Planting Density': Recommend an ideal planting density.
-  2.  'Pest & Disease Risks': Identify 2-3 specific, high-probability risks for this crop in this region.
-  3.  'Fertilization Strategy': Provide at least two stage-specific fertilizer recommendations.
-  4.  'Notes': Provide a concluding summary. In this summary, you MUST explicitly mention the soil type and moisture level you fetched with your tools and explain how they influenced your recommendations.
+  1.  'plantingDensity': Recommend an ideal planting density with a 'value' and 'unit'.
+  2.  'pestAndDiseaseRisks': Identify 2-3 specific, high-probability risks for this crop in this region. Each risk should have a 'name' and a 'description'.
+  3.  'fertilizationStrategy': Provide at least two stage-specific fertilizer recommendations. Each should have a 'timing' and a 'recommendation'.
+  4.  'notes': Provide a concluding summary. In this summary, you MUST explicitly mention the soil type and moisture level you fetched with your tools and explain how they influenced your recommendations.
   `,
 });
 
