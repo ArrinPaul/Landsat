@@ -116,5 +116,3 @@ export async function runScenarioAnalysisAction(input: { latitude: number; longi
 export async function analyzeDroughtAndFloodRiskAction(input: { latitude: number; longitude: number; }): Promise<{ data: DroughtFloodRisk | null; error: string | null; }> {
     return handleAction(analyzeDroughtAndFloodRisk, input);
 }
-
-    
