@@ -36,12 +36,8 @@ const generateTimelapseVideoFlow = ai.defineFlow(
     let operation;
     try {
         const result = await ai.generate({
-            model: googleAI.model('veo-2.0-generate-001'),
+            model: googleAI.model('veo-3.0-generate-preview'),
             prompt,
-            config: {
-                durationSeconds: 6,
-                aspectRatio: '16:9',
-            },
         });
         operation = result.operation;
     } catch (e: any) {

@@ -137,12 +137,11 @@ export async function getHistoricalWeather(latitude: number, longitude: number, 
  */
 export async function getHistoricalPrecipitation(latitude: number, longitude: number): Promise<HistoricalPrecipitationData> {
     // Fetches data for the climate normal period (1991-2020) to get a 30-year average.
-    // We only need one year from the period to get the yearly average sum.
     const params = new URLSearchParams({
         latitude: latitude.toString(),
         longitude: longitude.toString(),
         start_date: '1991-01-01',
-        end_date: '1991-12-31', 
+        end_date: '2020-12-31', 
         yearly: "precipitation_sum",
         models: "ERA5_seamless", // Use climate reanalysis data
     });
@@ -155,6 +154,16 @@ export async function getHistoricalPrecipitation(latitude: number, longitude: nu
             throw new Error(`Open-Meteo Archive API returned an error: ${response.status} ${response.statusText}`);
         }
         const data = await response.json();
+        
+        // The API returns yearly data for the whole range. We need to average it.
+        if (data.yearly && data.yearly.precipitation_sum && data.yearly.precipitation_sum.length > 0) {
+            const validValues = data.yearly.precipitation_sum.filter((p: number | null) => p !== null);
+            const average = validValues.reduce((a: number, b: number) => a + b, 0) / validValues.length;
+            // We'll return the average as if it were a single yearly value for simplicity.
+            data.yearly.precipitation_sum = [average];
+            data.yearly.time = [ '1991-2020 Average' ];
+        }
+        
         return data as HistoricalPrecipitationData;
     } catch (error: any) {
         console.error("Error fetching historical precipitation data:", error);
