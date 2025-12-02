@@ -27,11 +27,7 @@ const DroughtFloodRiskOutputSchema = z.object({
 export type DroughtFloodRiskOutput = z.infer<typeof DroughtFloodRiskOutputSchema>;
 
 
-export async function analyzeDroughtAndFloodRisk(input: DroughtFloodRiskInput): Promise<DroughtFloodRiskOutput> {
-  return analyzeDroughtAndFloodRiskFlow(input);
-}
-
-const prompt = ai.definePrompt({
+const analyzeDroughtAndFloodRiskPrompt = ai.definePrompt({
   name: 'droughtFloodRiskPrompt',
   input: { schema: DroughtFloodRiskInputSchema },
   output: { schema: DroughtFloodRiskOutputSchema },
@@ -58,19 +54,12 @@ const prompt = ai.definePrompt({
   `,
 });
 
-const analyzeDroughtAndFloodRiskFlow = ai.defineFlow(
-  {
-    name: 'analyzeDroughtAndFloodRiskFlow',
-    inputSchema: DroughtFloodRiskInputSchema,
-    outputSchema: DroughtFloodRiskOutputSchema,
-  },
-  async input => {
-    const { output } = await prompt(input);
+export async function analyzeDroughtAndFloodRisk(input: DroughtFloodRiskInput): Promise<DroughtFloodRiskOutput> {
+    const { output } = await analyzeDroughtAndFloodRiskPrompt(input);
     
     if (!output) {
       throw new Error("The AI model did not return a risk analysis output. Please try again.");
     }
     
     return output;
-  }
-);
+}

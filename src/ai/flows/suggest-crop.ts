@@ -34,11 +34,7 @@ const SuggestCropOutputSchema = z.object({
 export type SuggestCropOutput = z.infer<typeof SuggestCropOutputSchema>;
 
 
-export async function suggestCrop(input: SuggestCropInput): Promise<SuggestCropOutput> {
-  return suggestCropFlow(input);
-}
-
-const prompt = ai.definePrompt({
+const suggestCropPrompt = ai.definePrompt({
   name: 'suggestCropPrompt',
   input: { schema: SuggestCropInputSchema },
   output: { schema: SuggestCropOutputSchema },
@@ -71,19 +67,12 @@ const prompt = ai.definePrompt({
   `,
 });
 
-const suggestCropFlow = ai.defineFlow(
-  {
-    name: 'suggestCropFlow',
-    inputSchema: SuggestCropInputSchema,
-    outputSchema: SuggestCropOutputSchema,
-  },
-  async input => {
-    const { output } = await prompt(input);
+export async function suggestCrop(input: SuggestCropInput): Promise<SuggestCropOutput> {
+    const { output } = await suggestCropPrompt(input);
     
     if (!output) {
       throw new Error("The AI model did not return an output. Please try again.");
     }
     
     return output;
-  }
-);
+}

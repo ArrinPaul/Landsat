@@ -38,11 +38,7 @@ const GetWeatherReportOutputSchema = z.object({
 });
 export type GetWeatherReportOutput = z.infer<typeof GetWeatherReportOutputSchema>;
 
-export async function getWeatherReport(input: GetWeatherReportInput): Promise<GetWeatherReportOutput> {
-  return getWeatherReportFlow(input);
-}
-
-const prompt = ai.definePrompt({
+const getWeatherReportPrompt = ai.definePrompt({
   name: 'getWeatherReportPrompt',
   input: {schema: GetWeatherReportInputSchema},
   output: {schema: GetWeatherReportOutputSchema},
@@ -86,14 +82,10 @@ const prompt = ai.definePrompt({
 `,
 });
 
-const getWeatherReportFlow = ai.defineFlow(
-  {
-    name: 'getWeatherReportFlow',
-    inputSchema: GetWeatherReportInputSchema,
-    outputSchema: GetWeatherReportOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
-  }
-);
+export async function getWeatherReport(input: GetWeatherReportInput): Promise<GetWeatherReportOutput> {
+    const {output} = await getWeatherReportPrompt(input);
+    if (!output) {
+      throw new Error('AI failed to generate a weather report.');
+    }
+    return output;
+}

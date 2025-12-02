@@ -33,12 +33,7 @@ const PlanCropsOutputSchema = z.object({
 });
 export type PlanCropsOutput = z.infer<typeof PlanCropsOutputSchema>;
 
-
-export async function planCrops(input: PlanCropsInput): Promise<PlanCropsOutput> {
-  return planCropsFlow(input);
-}
-
-const prompt = ai.definePrompt({
+const planCropsPrompt = ai.definePrompt({
   name: 'planCropsPrompt',
   input: { schema: PlanCropsInputSchema },
   output: { schema: PlanCropsOutputSchema },
@@ -83,14 +78,10 @@ const prompt = ai.definePrompt({
   `,
 });
 
-const planCropsFlow = ai.defineFlow(
-  {
-    name: 'planCropsFlow',
-    inputSchema: PlanCropsInputSchema,
-    outputSchema: PlanCropsOutputSchema,
-  },
-  async input => {
-    const { output } = await prompt(input);
-    return output!;
-  }
-);
+export async function planCrops(input: PlanCropsInput): Promise<PlanCropsOutput> {
+    const { output } = await planCropsPrompt(input);
+    if (!output) {
+      throw new Error('AI failed to generate a crop plan.');
+    }
+    return output;
+}

@@ -27,11 +27,7 @@ const PredictCropYieldOutputSchema = z.object({
 });
 export type PredictCropYieldOutput = z.infer<typeof PredictCropYieldOutputSchema>;
 
-export async function predictCropYield(input: PredictCropYieldInput): Promise<PredictCropYieldOutput> {
-  return predictCropYieldFlow(input);
-}
-
-const prompt = ai.definePrompt({
+const predictCropYieldPrompt = ai.definePrompt({
   name: 'predictCropYieldPrompt',
   input: { schema: PredictCropYieldInputSchema },
   output: { schema: PredictCropYieldOutputSchema },
@@ -63,19 +59,12 @@ const prompt = ai.definePrompt({
   `,
 });
 
-const predictCropYieldFlow = ai.defineFlow(
-  {
-    name: 'predictCropYieldFlow',
-    inputSchema: PredictCropYieldInputSchema,
-    outputSchema: PredictCropYieldOutputSchema,
-  },
-  async input => {
-    const { output } = await prompt(input);
+export async function predictCropYield(input: PredictCropYieldInput): Promise<PredictCropYieldOutput> {
+    const { output } = await predictCropYieldPrompt(input);
     
     if (!output) {
         throw new Error("The AI model did not return a crop yield prediction.");
     }
     
     return output;
-  }
-);
+}

@@ -29,11 +29,7 @@ const SuggestCoordinatesOutputSchema = z.object({
 });
 export type SuggestCoordinatesOutput = z.infer<typeof SuggestCoordinatesOutputSchema>;
 
-export async function suggestCoordinates(input: SuggestCoordinatesInput): Promise<SuggestCoordinatesOutput> {
-  return suggestCoordinatesFlow(input);
-}
-
-const prompt = ai.definePrompt({
+const suggestCoordinatesPrompt = ai.definePrompt({
   name: 'suggestCoordinatesPrompt',
   input: {schema: SuggestCoordinatesInputSchema},
   output: {schema: SuggestCoordinatesOutputSchema},
@@ -52,14 +48,10 @@ The confidence score should be between 0 and 1, indicating the accuracy of the s
 `,
 });
 
-const suggestCoordinatesFlow = ai.defineFlow(
-  {
-    name: 'suggestCoordinatesFlow',
-    inputSchema: SuggestCoordinatesInputSchema,
-    outputSchema: SuggestCoordinatesOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
-  }
-);
+export async function suggestCoordinates(input: SuggestCoordinatesInput): Promise<SuggestCoordinatesOutput> {
+    const {output} = await suggestCoordinatesPrompt(input);
+    if (!output) {
+      throw new Error('AI failed to suggest coordinates.');
+    }
+    return output;
+}
