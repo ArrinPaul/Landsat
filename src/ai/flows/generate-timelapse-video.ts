@@ -10,22 +10,7 @@ import { googleAI } from '@genkit-ai/google-genai';
 import { GenerateTimelapseVideoInputSchema, GenerateTimelapseVideoOutputSchema, type GenerateTimelapseVideoInput, type GenerateTimelapseVideoOutput } from '@/lib/types';
 
 
-export async function generateTimelapseVideo(input: GenerateTimelapseVideoInput): Promise<GenerateTimelapseVideoOutput> {
-  return generateTimelapseVideoFlow(input);
-}
-
-const generateTimelapseVideoFlow = ai.defineFlow(
-  {
-    name: 'generateTimelapseVideoFlow',
-    inputSchema: GenerateTimelapseVideoInputSchema,
-    outputSchema: GenerateTimelapseVideoOutputSchema,
-    // Increase timeout for video generation
-    serverActionConfig: {
-      maxDuration: 120, // 2 minutes
-    },
-  },
-  async ({ metricName, locationDescription, startDate, endDate }) => {
-
+export async function generateTimelapseVideo({ metricName, locationDescription, startDate, endDate }: GenerateTimelapseVideoInput): Promise<GenerateTimelapseVideoOutput> {
     const prompt = `Create a cinematic, realistic time-lapse video showing the change in ${metricName} over the ${locationDescription} from ${startDate} to ${endDate}. 
       Show the landscape from a satellite's perspective. 
       If the metric is NDVI, visualize the change in vegetation greenness. 
@@ -93,5 +78,4 @@ const generateTimelapseVideoFlow = ai.defineFlow(
     const videoDataUri = `data:video/mp4;base64,${videoBase64}`;
 
     return { videoDataUri };
-  }
-);
+}

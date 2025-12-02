@@ -27,11 +27,8 @@ const ScheduleIrrigationOutputSchema = z.object({
 });
 export type ScheduleIrrigationOutput = z.infer<typeof ScheduleIrrigationOutputSchema>;
 
-export async function scheduleIrrigation(input: ScheduleIrrigationInput): Promise<ScheduleIrrigationOutput> {
-  return scheduleIrrigationFlow(input);
-}
 
-const prompt = ai.definePrompt({
+const scheduleIrrigationPrompt = ai.definePrompt({
   name: 'scheduleIrrigationPrompt',
   input: { schema: ScheduleIrrigationInputSchema },
   output: { schema: ScheduleIrrigationOutputSchema },
@@ -62,15 +59,10 @@ const prompt = ai.definePrompt({
   `,
 });
 
-
-const scheduleIrrigationFlow = ai.defineFlow(
-  {
-    name: 'scheduleIrrigationFlow',
-    inputSchema: ScheduleIrrigationInputSchema,
-    outputSchema: ScheduleIrrigationOutputSchema,
-  },
-  async input => {
-    const { output } = await prompt(input);
-    return output!;
-  }
-);
+export async function scheduleIrrigation(input: ScheduleIrrigationInput): Promise<ScheduleIrrigationOutput> {
+    const { output } = await scheduleIrrigationPrompt(input);
+    if (!output) {
+      throw new Error('AI failed to generate an irrigation schedule.');
+    }
+    return output;
+}

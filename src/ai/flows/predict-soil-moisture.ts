@@ -25,11 +25,7 @@ const PredictSoilMoistureOutputSchema = z.object({
 });
 export type PredictSoilMoistureOutput = z.infer<typeof PredictSoilMoistureOutputSchema>;
 
-export async function predictSoilMoisture(input: PredictSoilMoistureInput): Promise<PredictSoilMoistureOutput> {
-  return predictSoilMoistureFlow(input);
-}
-
-const prompt = ai.definePrompt({
+const predictSoilMoisturePrompt = ai.definePrompt({
   name: 'predictSoilMoisturePrompt',
   input: { schema: PredictSoilMoistureInputSchema },
   output: { schema: PredictSoilMoistureOutputSchema },
@@ -58,14 +54,10 @@ const prompt = ai.definePrompt({
   `,
 });
 
-const predictSoilMoistureFlow = ai.defineFlow(
-  {
-    name: 'predictSoilMoistureFlow',
-    inputSchema: PredictSoilMoistureInputSchema,
-    outputSchema: PredictSoilMoistureOutputSchema,
-  },
-  async input => {
-    const { output } = await prompt(input);
-    return output!;
-  }
-);
+export async function predictSoilMoisture(input: PredictSoilMoistureInput): Promise<PredictSoilMoistureOutput> {
+    const { output } = await predictSoilMoisturePrompt(input);
+    if (!output) {
+      throw new Error('AI failed to generate soil moisture data.');
+    }
+    return output;
+}

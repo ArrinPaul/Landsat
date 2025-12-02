@@ -23,10 +23,6 @@ const TextToSpeechOutputSchema = z.object({
 });
 export type TextToSpeechOutput = z.infer<typeof TextToSpeechOutputSchema>;
 
-export async function textToSpeech(input: TextToSpeechInput): Promise<TextToSpeechOutput> {
-  return textToSpeechFlow(input);
-}
-
 
 async function toWav(
   pcmData: Buffer,
@@ -91,13 +87,7 @@ export async function generateAudio(text: string): Promise<string | undefined> {
 }
 
 
-const textToSpeechFlow = ai.defineFlow(
-  {
-    name: 'textToSpeechFlow',
-    inputSchema: TextToSpeechInputSchema,
-    outputSchema: TextToSpeechOutputSchema,
-  },
-  async ({ text }) => {
+export async function textToSpeech({ text }: TextToSpeechInput): Promise<TextToSpeechOutput> {
     const audioDataUri = await generateAudio(text);
 
     if (!audioDataUri) {
@@ -105,5 +95,4 @@ const textToSpeechFlow = ai.defineFlow(
     }
     
     return { audioDataUri };
-  }
-);
+}

@@ -4,8 +4,8 @@
  * @fileOverview This file defines a Genkit flow for generating a summary report of key findings from computed environmental metrics.
  *
  * - generateReportSummary - A function that generates a summary report of environmental metrics.
- * - ReportSummaryInput - The input type for the generateReportSummary function.
- * - ReportSummaryOutput - The return type for the generateReportSummary function.
+ * - ReportSummaryInput - The input type for the generateReportsummary function.
+ * - ReportSummaryOutput - The return type for the generateReportsummary function.
  */
 
 import {ai} from '@/ai/genkit';
@@ -23,11 +23,7 @@ const ReportSummaryOutputSchema = z.object({
 });
 export type ReportSummaryOutput = z.infer<typeof ReportSummaryOutputSchema>;
 
-export async function generateReportSummary(input: ReportSummaryInput): Promise<ReportSummaryOutput> {
-  return generateReportSummaryFlow(input);
-}
-
-const prompt = ai.definePrompt({
+const generateReportSummaryPrompt = ai.definePrompt({
   name: 'generateReportSummaryPrompt',
   input: {schema: ReportSummaryInputSchema},
   output: {schema: ReportSummaryOutputSchema},
@@ -53,15 +49,9 @@ The tone should be objective, scientific, and clear. The final output must be a 
 `,
 });
 
-const generateReportSummaryFlow = ai.defineFlow(
-  {
-    name: 'generateReportSummaryFlow',
-    inputSchema: ReportSummaryInputSchema,
-    outputSchema: ReportSummaryOutputSchema,
-  },
-  async input => {
+export async function generateReportSummary(input: ReportSummaryInput): Promise<ReportSummaryOutput> {
     try {
-      const {output} = await prompt(input);
+      const {output} = await generateReportSummaryPrompt(input);
       if (!output) {
           throw new Error("The AI model did not return a summary report. Please try again.");
       }
@@ -70,5 +60,4 @@ const generateReportSummaryFlow = ai.defineFlow(
       console.error('Error generating report summary:', error);
       throw new Error(`Failed to generate report summary: ${(error as any).message || 'Unknown error'}`);
     }
-  }
-);
+}

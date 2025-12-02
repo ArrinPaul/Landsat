@@ -48,11 +48,7 @@ const AdvancedCropAdviceOutputSchema = z.object({
 export type AdvancedCropAdviceOutput = z.infer<typeof AdvancedCropAdviceOutputSchema>;
 
 
-export async function getAdvancedCropAdvice(input: AdvancedCropAdviceInput): Promise<AdvancedCropAdvice> {
-  return getAdvancedCropAdviceFlow(input);
-}
-
-const prompt = ai.definePrompt({
+const getAdvancedCropAdvicePrompt = ai.definePrompt({
   name: 'advancedCropAdvicePrompt',
   input: { schema: AdvancedCropAdviceInputSchema },
   output: { schema: AdvancedCropAdviceOutputSchema },
@@ -80,14 +76,8 @@ const prompt = ai.definePrompt({
   `,
 });
 
-const getAdvancedCropAdviceFlow = ai.defineFlow(
-  {
-    name: 'getAdvancedCropAdviceFlow',
-    inputSchema: AdvancedCropAdviceInputSchema,
-    outputSchema: AdvancedCropAdviceOutputSchema,
-  },
-  async input => {
-    const { output } = await prompt(input);
+export async function getAdvancedCropAdvice(input: AdvancedCropAdviceInput): Promise<AdvancedCropAdvice> {
+    const { output } = await getAdvancedCropAdvicePrompt(input);
     
     if (!output) {
       throw new Error("The AI model did not return an output for advanced crop advice. Please try again.");
@@ -95,5 +85,4 @@ const getAdvancedCropAdviceFlow = ai.defineFlow(
     
     // Ensure the output matches the expected interface. The Zod schema in the prompt handles this.
     return output as AdvancedCropAdvice;
-  }
-);
+}

@@ -27,11 +27,8 @@ const ChatbotOutputSchema = z.object({
 });
 export type ChatbotOutput = z.infer<typeof ChatbotOutputSchema>;
 
-export async function chatbot(input: ChatbotInput): Promise<ChatbotOutput> {
-  return chatbotFlow(input);
-}
 
-const prompt = ai.definePrompt({
+const chatbotPrompt = ai.definePrompt({
   name: 'chatbotPrompt',
   input: { schema: z.object({messages: z.array(ChatMessageSchema), latitude: z.number().optional(), longitude: z.number().optional()}) },
   output: { schema: z.object({response: z.string()}) },
@@ -55,15 +52,8 @@ Current location context: Latitude {{latitude}}, Longitude {{longitude}}.
 model:`,
 });
 
-
-const chatbotFlow = ai.defineFlow(
-  {
-    name: 'chatbotFlow',
-    inputSchema: ChatbotInputSchema,
-    outputSchema: ChatbotOutputSchema,
-  },
-  async (input) => {
-    const { output } = await prompt(input);
+export async function chatbot(input: ChatbotInput): Promise<ChatbotOutput> {
+    const { output } = await chatbotPrompt(input);
     
     if (!output) {
       throw new Error("The AI model did not return a response.");
@@ -76,5 +66,4 @@ const chatbotFlow = ai.defineFlow(
         response: output.response,
         audioDataUri,
     };
-  }
-);
+}

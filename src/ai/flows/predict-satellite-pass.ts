@@ -26,11 +26,7 @@ const PredictSatellitePassOutputSchema = z.object({
 });
 export type PredictSatellitePassOutput = z.infer<typeof PredictSatellitePassOutputSchema>;
 
-export async function predictSatellitePass(input: PredictSatellitePassInput): Promise<PredictSatellitePassOutput> {
-  return predictSatellitePassFlow(input);
-}
-
-const prompt = ai.definePrompt({
+const predictSatellitePassPrompt = ai.definePrompt({
   name: 'predictSatellitePassPrompt',
   input: {schema: PredictSatellitePassInputSchema},
   output: {schema: PredictSatellitePassOutputSchema},
@@ -50,14 +46,10 @@ const prompt = ai.definePrompt({
 `,
 });
 
-const predictSatellitePassFlow = ai.defineFlow(
-  {
-    name: 'predictSatellitePassFlow',
-    inputSchema: PredictSatellitePassInputSchema,
-    outputSchema: PredictSatellitePassOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
-  }
-);
+export async function predictSatellitePass(input: PredictSatellitePassInput): Promise<PredictSatellitePassOutput> {
+    const {output} = await predictSatellitePassPrompt(input);
+    if (!output) {
+      throw new Error('AI failed to generate satellite pass data.');
+    }
+    return output;
+}
