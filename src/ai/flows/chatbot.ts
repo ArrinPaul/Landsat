@@ -13,6 +13,9 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { ChatMessageSchema } from '@/lib/types';
 import { generateAudio } from '@/ai/flows/text-to-speech';
+import { predictCropYield, type PredictCropYieldInput } from '@/ai/flows/predict-crop-yield';
+import { suggestCrop, type SuggestCropInput } from '@/ai/flows/suggest-crop';
+import { getAdvancedCropAdvice, type AdvancedCropAdviceInput } from '@/ai/flows/get-advanced-crop-advice';
 
 const ChatbotInputSchema = z.object({
   messages: z.array(ChatMessageSchema),
