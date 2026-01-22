@@ -28,19 +28,40 @@ import type { GenerateDataInsightsInput } from "@/ai/flows/generate-insights";
 
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) {
-    return error.message;
+    // Check for nested errors or specific properties on the error object
+    const anyError = error as any;
+    if (anyError.cause) {
+      return getErrorMessage(anyError.cause);
+    }
+    return anyError.message || 'An unknown error occurred.';
   }
   return String(error);
 };
 
 // Generic action creator
 async function handleAction<T, U>(action: (input: T) => Promise<U>, input: T): Promise<{ data: U | null; error: string | null; }> {
+    // Explicitly check for credentials and provide a clear error message.
+    if (!process.env.GEMINI_API_KEY && !process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
+        const errorMessage = "AI features are disabled. No GEMINI_API_KEY or GOOGLE_APPLICATION_CREDENTIALS_JSON found in environment variables. Please add your credentials to the .env file.";
+        console.error(errorMessage);
+        return { data: null, error: errorMessage };
+    }
+
     try {
         const result = await action(input);
         return { data: result, error: null };
     } catch (error) {
-        console.error(`${action.name} Error:`, error);
-        return { data: null, error: getErrorMessage(error) };
+        console.error(`Action '${action.name}' failed:`, error);
+        const errorMessage = getErrorMessage(error);
+        
+        if (errorMessage.includes('403')) {
+             return { data: null, error: `Authentication Error (403): The request was forbidden. This may be due to missing IAM permissions. Please ensure your API key or service account has the 'Vertex AI User' or 'Generative Language AI User' role.` };
+        }
+        if (errorMessage.includes('400')) {
+             return { data: null, error: `Bad Request (400): The AI model rejected the request, likely due to an invalid input format. Details: ${errorMessage}` };
+        }
+        
+        return { data: null, error: `Failed to fetch from AI model. Reason: ${errorMessage}` };
     }
 }
 
