@@ -30,7 +30,6 @@ export type DroughtFloodRiskOutput = z.infer<typeof DroughtFloodRiskOutputSchema
 const analyzeDroughtAndFloodRiskPrompt = ai.definePrompt({
   name: 'droughtFloodRiskPrompt',
   input: { schema: DroughtFloodRiskInputSchema },
-  output: { schema: DroughtFloodRiskOutputSchema },
   tools: [getDroughtAndFloodRiskData],
   prompt: `You are an expert hydrologist and climate scientist AI. Your task is to assess the drought and flood risk for a specific geographic location using real-time data.
 
@@ -46,20 +45,33 @@ const analyzeDroughtAndFloodRiskPrompt = ai.definePrompt({
   - Longitude: {{{longitude}}}
   
   **Output Requirements:**
-  Your response must be a structured JSON object containing:
-  1.  'droughtRisk': Assessed drought risk as 'Low', 'Medium', or 'High'.
-  2.  'floodRisk': Assessed flood risk as 'Low', 'Medium', or 'High'.
-  3.  'summary': A concise explanation for your ratings. You MUST explicitly reference the fetched precipitation and soil moisture data in your summary.
-  4.  'confidence': Your confidence level (0.0 to 1.0) in this assessment.
+  Your response MUST be a valid JSON object ONLY. Do not include any other text or formatting. Your response must conform to the following JSON schema:
+  {
+    "type": "object",
+    "properties": {
+        "droughtRisk": { "type": "string", "enum": ["Low", "Medium", "High"] },
+        "floodRisk": { "type": "string", "enum": ["Low", "Medium", "High"] },
+        "summary": { "type": "string" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+    },
+    "required": ["droughtRisk", "floodRisk", "summary", "confidence"]
+  }
   `,
 });
 
 export async function analyzeDroughtAndFloodRisk(input: DroughtFloodRiskInput): Promise<DroughtFloodRiskOutput> {
-    const { output } = await analyzeDroughtAndFloodRiskPrompt(input);
+    const response = await analyzeDroughtAndFloodRiskPrompt(input);
+    const textResponse = response.text;
     
-    if (!output) {
+    if (!textResponse) {
       throw new Error("The AI model did not return a risk analysis output. Please try again.");
     }
     
-    return output;
+    try {
+        const parsedJson = JSON.parse(textResponse);
+        return DroughtFloodRiskOutputSchema.parse(parsedJson);
+    } catch (e) {
+        console.error("Failed to parse JSON response from AI:", textResponse);
+        throw new Error("AI returned invalid JSON format.");
+    }
 }

@@ -32,16 +32,20 @@ export type SuggestCoordinatesOutput = z.infer<typeof SuggestCoordinatesOutputSc
 const suggestCoordinatesPrompt = ai.definePrompt({
   name: 'suggestCoordinatesPrompt',
   input: {schema: SuggestCoordinatesInputSchema},
-  output: {schema: SuggestCoordinatesOutputSchema},
   prompt: `You are a geography expert. Given a location description, suggest relevant latitude and longitude coordinates.
 
 Location Description: {{{locationDescription}}}
 
-Respond with JSON in the following format:
+You MUST respond with a valid JSON object ONLY. Do not include any other text, formatting, or code fences.
+Your response should conform to the following JSON schema:
 {
-  "latitude": <latitude>,
-  "longitude": <longitude>,
-  "confidence": <confidence>
+  "type": "object",
+  "properties": {
+    "latitude": { "type": "number" },
+    "longitude": { "type": "number" },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+  },
+  "required": ["latitude", "longitude", "confidence"]
 }
 
 The confidence score should be between 0 and 1, indicating the accuracy of the suggested coordinates. Consider the precision of the location description when determining the confidence score. For example, a general description like 'Amazon rainforest' should have a lower confidence score than a specific address.
@@ -49,9 +53,18 @@ The confidence score should be between 0 and 1, indicating the accuracy of the s
 });
 
 export async function suggestCoordinates(input: SuggestCoordinatesInput): Promise<SuggestCoordinatesOutput> {
-    const {output} = await suggestCoordinatesPrompt(input);
-    if (!output) {
+    const response = await suggestCoordinatesPrompt(input);
+    const textResponse = response.text;
+
+    if (!textResponse) {
       throw new Error('AI failed to suggest coordinates.');
     }
-    return output;
+
+    try {
+      const parsedJson = JSON.parse(textResponse);
+      return SuggestCoordinatesOutputSchema.parse(parsedJson);
+    } catch (e) {
+      console.error("Failed to parse JSON response from AI:", textResponse);
+      throw new Error("AI returned invalid JSON format.");
+    }
 }

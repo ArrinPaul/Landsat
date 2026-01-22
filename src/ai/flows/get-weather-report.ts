@@ -41,51 +41,31 @@ export type GetWeatherReportOutput = z.infer<typeof GetWeatherReportOutputSchema
 const getWeatherReportPrompt = ai.definePrompt({
   name: 'getWeatherReportPrompt',
   input: {schema: GetWeatherReportInputSchema},
-  output: {schema: GetWeatherReportOutputSchema},
   prompt: `You are a weather reporting service. Given the coordinates, provide a detailed and realistic weather report for the entire day. The report must be plausible for the given location and the current time of year.
 
   The current date is ${new Date().toISOString()}.
 
-  Your response must be a structured JSON object and include:
-  1.  The 'current' weather conditions: temperature (Celsius), a brief text description of conditions, humidity (%), wind speed (km/h), and a suitable 'iconName' from the lucide-react library (e.g., Sun, Cloudy, Wind, Umbrella, CloudRain, Snowflake).
-  2.  An 'forecast' array of hourly predictions for the next 24 hours. Each entry must have a time, temperature, conditions, and iconName. The first entry should be for the current hour, labeled 'Now'.
-  3.  A concise, one-sentence 'summary' of the day's weather outlook.
+  Your response MUST be a valid JSON object ONLY that conforms to the GetWeatherReportOutput schema. Do not add any other text or formatting. Ensure 'iconName' is a valid string from the lucide-react library (e.g., Sun, Cloudy, Wind, Umbrella, CloudRain, Snowflake, Moon).
 
   **Location:**
   - Latitude: {{{latitude}}}
   - Longitude: {{{longitude}}}
-
-  **Example Input:**
-  { "latitude": 28.6139, "longitude": 77.2090 }
-
-  **Example Output (ensure values are realistic for the location and time):**
-  {
-    "current": {
-      "temperature": 34,
-      "conditions": "Hazy Sunshine",
-      "humidity": 45,
-      "windSpeed": 10,
-      "iconName": "Sun"
-    },
-    "forecast": [
-      {"time": "Now", "temperature": 34, "conditions": "Hazy", "iconName": "Sun"},
-      {"time": "2 PM", "temperature": 35, "conditions": "Sunny", "iconName": "Sun"},
-      {"time": "3 PM", "temperature": 36, "conditions": "Sunny", "iconName": "Sun"},
-      {"time": "4 PM", "temperature": 35, "conditions": "Sunny", "iconName": "Sun"},
-      {"time": "5 PM", "temperature": 34, "conditions": "Partly Cloudy", "iconName": "Cloudy"},
-      {"time": "6 PM", "temperature": 33, "conditions": "Partly Cloudy", "iconName": "Cloudy"},
-      {"time": "7 PM", "temperature": 32, "conditions": "Clear", "iconName": "Moon"},
-      {"time": "8 PM", "temperature": 31, "conditions": "Clear", "iconName": "Moon"}
-    ],
-    "summary": "Expect a hot and hazy day with clear skies in the evening."
-  }
 `,
 });
 
 export async function getWeatherReport(input: GetWeatherReportInput): Promise<GetWeatherReportOutput> {
-    const {output} = await getWeatherReportPrompt(input);
-    if (!output) {
+    const response = await getWeatherReportPrompt(input);
+    const textResponse = response.text;
+
+    if (!textResponse) {
       throw new Error('AI failed to generate a weather report.');
     }
-    return output;
+
+    try {
+      const parsedJson = JSON.parse(textResponse);
+      return GetWeatherReportOutputSchema.parse(parsedJson);
+    } catch (e) {
+      console.error("Failed to parse JSON response from AI:", textResponse);
+      throw new Error("AI returned invalid JSON format.");
+    }
 }

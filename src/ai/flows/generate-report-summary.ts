@@ -26,7 +26,6 @@ export type ReportSummaryOutput = z.infer<typeof ReportSummaryOutputSchema>;
 const generateReportSummaryPrompt = ai.definePrompt({
   name: 'generateReportSummaryPrompt',
   input: {schema: ReportSummaryInputSchema},
-  output: {schema: ReportSummaryOutputSchema},
   prompt: `You are an expert environmental data analyst AI. Your task is to generate a comprehensive, professional, and insightful report based on satellite data.
 
 **Analysis Context:**
@@ -34,8 +33,8 @@ const generateReportSummaryPrompt = ai.definePrompt({
 - Date Range: {{{dateRange}}}
 - Metrics Data (JSON string): {{{metricsData}}}
 
-**Report Structure:**
-Your output must be a single string containing a well-formatted report with the following sections, using Markdown for formatting:
+**Report Structure and Output Format:**
+Your output MUST be a valid JSON object ONLY, with a single key "summaryReport". The value of this key must be a single string containing a well-formatted report with the following sections, using Markdown for formatting:
 
 1.  **Executive Summary:** Start with a high-level overview of the most critical changes and their potential significance in 2-3 sentences.
 
@@ -45,17 +44,21 @@ Your output must be a single string containing a well-formatted report with the 
 
 4.  **Potential Implications & Recommendations:** Based on the analysis, briefly suggest potential real-world implications (e.g., potential impact on local agriculture, water resource strain, habitat loss). If applicable, suggest one or two areas for further investigation.
 
-The tone should be objective, scientific, and clear. The final output must be a single string encapsulated in the 'summaryReport' field of the JSON object.
+The tone should be objective, scientific, and clear.
 `,
 });
 
 export async function generateReportSummary(input: ReportSummaryInput): Promise<ReportSummaryOutput> {
     try {
-      const {output} = await generateReportSummaryPrompt(input);
-      if (!output) {
+      const response = await generateReportSummaryPrompt(input);
+      const textResponse = response.text;
+      if (!textResponse) {
           throw new Error("The AI model did not return a summary report. Please try again.");
       }
-      return output;
+      
+      const parsedJson = JSON.parse(textResponse);
+      return ReportSummaryOutputSchema.parse(parsedJson);
+
     } catch (error) {
       console.error('Error generating report summary:', error);
       throw new Error(`Failed to generate report summary: ${(error as any).message || 'Unknown error'}`);

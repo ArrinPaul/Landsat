@@ -37,7 +37,6 @@ export type SuggestCropOutput = z.infer<typeof SuggestCropOutputSchema>;
 const suggestCropPrompt = ai.definePrompt({
   name: 'suggestCropPrompt',
   input: { schema: SuggestCropInputSchema },
-  output: { schema: SuggestCropOutputSchema },
   tools: [getSoilMoisture, getSoilType],
   prompt: `You are an expert agronomist and soil scientist AI model advising a farmer. Your task is to recommend the best possible crop for their field based on real-time, location-specific data.
 
@@ -58,21 +57,28 @@ const suggestCropPrompt = ai.definePrompt({
   - Previous/Current Crop: {{{currentCrop}}}
   {{/if}}
 
-  Your final output must be structured precisely as follows:
-  1.  'Suggested Crop': Identify the single best crop for these exact conditions.
-  2.  'Suitability Score': Provide a percentage score (0-100) representing your confidence. Base this score on how perfectly the crop's needs match the specific, real-world data you fetched.
-  3.  'Reasoning': Give a detailed but easy-to-understand explanation IN THE REQUESTED LANGUAGE ({{{language}}}). Justify your choice by explicitly referencing the climate description and, most importantly, the soil and moisture data you fetched using your tools.
-  4.  'Alternative Crop': Suggest one other viable crop as an alternative.
-  5.  'Fetched Data': Ensure you populate the 'fetchedSoilType' and 'fetchedMoistureLevel' fields in the output with the exact results from your tool calls.
+  Your final output MUST be a valid JSON object ONLY that conforms to the SuggestCropOutput schema.
+  - 'suggestedCrop': Identify the single best crop for these exact conditions.
+  - 'suitabilityScore': Provide a percentage score (0-100) representing your confidence. Base this score on how perfectly the crop's needs match the specific, real-world data you fetched.
+  - 'reasoning': Give a detailed but easy-to-understand explanation IN THE REQUESTED LANGUAGE ({{{language}}}). Justify your choice by explicitly referencing the climate description and, most importantly, the soil and moisture data you fetched using your tools.
+  - 'alternativeCrop': Suggest one other viable crop as an alternative.
+  - 'fetchedSoilType' and 'fetchedMoistureLevel': Populate these fields with the exact results from your tool calls.
   `,
 });
 
 export async function suggestCrop(input: SuggestCropInput): Promise<SuggestCropOutput> {
-    const { output } = await suggestCropPrompt(input);
+    const response = await suggestCropPrompt(input);
+    const textResponse = response.text;
     
-    if (!output) {
+    if (!textResponse) {
       throw new Error("The AI model did not return an output. Please try again.");
     }
     
-    return output;
+    try {
+        const parsedJson = JSON.parse(textResponse);
+        return SuggestCropOutputSchema.parse(parsedJson);
+    } catch (e) {
+        console.error("Failed to parse JSON response from AI:", textResponse);
+        throw new Error("AI returned invalid JSON format.");
+    }
 }
