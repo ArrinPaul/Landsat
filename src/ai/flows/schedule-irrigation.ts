@@ -31,38 +31,30 @@ export type ScheduleIrrigationOutput = z.infer<typeof ScheduleIrrigationOutputSc
 const scheduleIrrigationPrompt = ai.definePrompt({
   name: 'scheduleIrrigationPrompt',
   input: { schema: ScheduleIrrigationInputSchema },
-  output: { schema: ScheduleIrrigationOutputSchema },
   prompt: `You are an agricultural water management specialist. Based on the provided latitude and longitude, analyze simulated soil moisture, local climate patterns, and typical crop water needs for the region to provide a realistic irrigation recommendation.
 
   The current date is ${new Date().toISOString()}.
 
-  Your response must be a structured JSON object and include:
-  1.  A clear 'recommendation' (e.g., "Irrigate within 24 hours," "No irrigation needed for 5-7 days").
-  2.  The suggested 'nextIrrigationDate' in YYYY-MM-DD format.
-  3.  The recommended 'wateringDepthInches'.
-  4.  A brief 'notes' section explaining your reasoning, referencing factors like recent weather patterns or soil type.
+  Your response MUST be a valid JSON object ONLY that conforms to the ScheduleIrrigationOutput schema. Do not add any other text or formatting.
 
   **Location:**
   - Latitude: {{{latitude}}}
   - Longitude: {{{longitude}}}
-
-  **Example Input:**
-  { "latitude": 28.4595, "longitude": 77.0266 }
-
-  **Example Output (ensure this is realistic for Gurgaon, India, and considers monsoon season):**
-  {
-    "recommendation": "Delay irrigation",
-    "nextIrrigationDate": "${new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}",
-    "wateringDepthInches": 1.5,
-    "notes": "No irrigation needed for 5-7 days. The region is currently in its monsoon season, and recent showers have likely replenished soil moisture. NDWI values are typically high during this period."
-  }
   `,
 });
 
 export async function scheduleIrrigation(input: ScheduleIrrigationInput): Promise<ScheduleIrrigationOutput> {
-    const { output } = await scheduleIrrigationPrompt(input);
-    if (!output) {
+    const response = await scheduleIrrigationPrompt(input);
+    const textResponse = response.text;
+    if (!textResponse) {
       throw new Error('AI failed to generate an irrigation schedule.');
     }
-    return output;
+    
+    try {
+        const parsedJson = JSON.parse(textResponse);
+        return ScheduleIrrigationOutputSchema.parse(parsedJson);
+    } catch (e) {
+        console.error("Failed to parse JSON response from AI:", textResponse);
+        throw new Error("AI returned invalid JSON format.");
+    }
 }

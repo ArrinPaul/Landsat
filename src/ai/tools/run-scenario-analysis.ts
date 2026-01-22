@@ -25,14 +25,12 @@ export const runScenarioAnalysis = ai.defineTool(
     name: 'runScenarioAnalysis',
     description: 'Analyzes the likely impact of a hypothetical environmental scenario for a given location, such as changes in temperature or rainfall. Use this tool when the user asks a "what if" question about environmental changes.',
     inputSchema: ScenarioAnalysisInputSchema,
-    outputSchema: ScenarioAnalysisOutputSchema
   },
   async (input) => {
     // In a real-world application, this could trigger complex models.
     // For now, we'll use a powerful LLM to generate a data-grounded, speculative answer.
     const scenarioPrompt = ai.definePrompt({
         name: 'runScenarioAnalysisPrompt',
-        output: { schema: ScenarioAnalysisOutputSchema },
         prompt: `You are an expert environmental scientist and agronomist.
           Analyze the following hypothetical scenario for the location at latitude ${input.latitude} and longitude ${input.longitude}.
           
@@ -43,16 +41,25 @@ export const runScenarioAnalysis = ai.defineTool(
           - How might this affect common agricultural crops grown in this area?
           - What are the secondary or cascading effects (e.g., on soil erosion, biodiversity, local economy)?
           
-          Provide a comprehensive summary of the likely impact and a confidence score for your analysis. Your response must be grounded in plausible scientific reasoning, even though it is a simulation.
-          The 'scenario' field in your output should be a confirmation of the scenario being analyzed.`,
+          Your response MUST be a valid JSON object ONLY that conforms to the ScenarioAnalysisOutput schema.
+          - The 'scenario' field in your output should be a confirmation of the scenario being analyzed.
+          - Provide a comprehensive summary of the likely impact and a confidence score for your analysis. Your response must be grounded in plausible scientific reasoning, even though it is a simulation.
+          `,
     });
 
-    const { output } = await scenarioPrompt(input);
+    const response = await scenarioPrompt(input);
+    const textResponse = response.text;
 
-    if (!output) {
+    if (!textResponse) {
       throw new Error("Failed to generate a scenario analysis output.");
     }
     
-    return output;
+    try {
+        const parsedJson = JSON.parse(textResponse);
+        return ScenarioAnalysisOutputSchema.parse(parsedJson);
+    } catch(e) {
+        console.error("Failed to parse JSON response from AI:", textResponse);
+        throw new Error("AI returned invalid JSON format.");
+    }
   }
 );

@@ -51,7 +51,6 @@ export type AdvancedCropAdviceOutput = z.infer<typeof AdvancedCropAdviceOutputSc
 const getAdvancedCropAdvicePrompt = ai.definePrompt({
   name: 'advancedCropAdvicePrompt',
   input: { schema: AdvancedCropAdviceInputSchema },
-  output: { schema: AdvancedCropAdviceOutputSchema },
   tools: [getSoilMoisture, getSoilType],
   prompt: `You are a world-class agronomist AI, providing detailed, actionable advice to a farmer.
   Your task is to generate a specialized plan for a specific crop using real-time data.
@@ -68,21 +67,23 @@ const getAdvancedCropAdvicePrompt = ai.definePrompt({
   - Output Language: {{{language}}}
 
   **Output Requirements:**
-  Your response must be a structured JSON object containing the following:
-  1.  'plantingDensity': Recommend an ideal planting density with a 'value' and 'unit'.
-  2.  'pestAndDiseaseRisks': Identify 2-3 specific, high-probability risks for this crop in this region. Each risk should have a 'name' and a 'description'.
-  3.  'fertilizationStrategy': Provide at least two stage-specific fertilizer recommendations. Each should have a 'timing' and a 'recommendation'.
-  4.  'notes': Provide a concluding summary. In this summary, you MUST explicitly mention the soil type and moisture level you fetched with your tools and explain how they influenced your recommendations.
+  Your response MUST be a valid JSON object ONLY that conforms to the schema of the 'AdvancedCropAdviceOutput' type. Do not include any other text or formatting.
   `,
 });
 
 export async function getAdvancedCropAdvice(input: AdvancedCropAdviceInput): Promise<AdvancedCropAdvice> {
-    const { output } = await getAdvancedCropAdvicePrompt(input);
+    const response = await getAdvancedCropAdvicePrompt(input);
+    const textResponse = response.text;
     
-    if (!output) {
+    if (!textResponse) {
       throw new Error("The AI model did not return an output for advanced crop advice. Please try again.");
     }
-    
-    // Ensure the output matches the expected interface. The Zod schema in the prompt handles this.
-    return output as AdvancedCropAdvice;
+
+    try {
+        const parsedJson = JSON.parse(textResponse);
+        return AdvancedCropAdviceOutputSchema.parse(parsedJson);
+    } catch (e) {
+        console.error("Failed to parse JSON response from AI:", textResponse);
+        throw new Error("AI returned invalid JSON format.");
+    }
 }

@@ -28,36 +28,29 @@ export type PredictSoilMoistureOutput = z.infer<typeof PredictSoilMoistureOutput
 const predictSoilMoisturePrompt = ai.definePrompt({
   name: 'predictSoilMoisturePrompt',
   input: { schema: PredictSoilMoistureInputSchema },
-  output: { schema: PredictSoilMoistureOutputSchema },
   prompt: `You are a soil scientist and hydrologist. Based on the provided latitude and longitude, analyze typical soil type for the region, recent precipitation patterns, and time of year to generate a realistic prediction of the current soil moisture at a depth of 10cm.
 
   The current date is ${new Date().toISOString()}.
 
-  Your response must be a structured JSON object and include:
-  1.  'volumetricWaterContent': The predicted soil moisture as a percentage (e.g., a value from 5.0 for very dry to 40.0 for saturated).
-  2.  'summary': A brief, actionable summary of the conditions (e.g., "Soil is moderately dry. Irrigation may be needed...").
-  3.  'confidence': A confidence score for your prediction (from 0.0 to 1.0).
+  Your response MUST be a valid JSON object ONLY that conforms to the PredictSoilMoistureOutput schema. Do not add any other text or formatting.
 
   **Location:**
   - Latitude: {{{latitude}}}
   - Longitude: {{{longitude}}}
-
-  **Example Input:**
-  { "latitude": 34.05, "longitude": -118.25 }
-
-  **Example Output (ensure this is realistic for Los Angeles, California):**
-  {
-    "volumetricWaterContent": 18.2,
-    "summary": "Soil is moderately dry. Irrigation may be needed for sensitive crops within the next 48 hours if no rain is forecast, which is typical for this arid climate.",
-    "confidence": 0.78
-  }
   `,
 });
 
 export async function predictSoilMoisture(input: PredictSoilMoistureInput): Promise<PredictSoilMoistureOutput> {
-    const { output } = await predictSoilMoisturePrompt(input);
-    if (!output) {
+    const response = await predictSoilMoisturePrompt(input);
+    const textResponse = response.text;
+    if (!textResponse) {
       throw new Error('AI failed to generate soil moisture data.');
     }
-    return output;
+    try {
+        const parsedJson = JSON.parse(textResponse);
+        return PredictSoilMoistureOutputSchema.parse(parsedJson);
+    } catch(e) {
+        console.error("Failed to parse JSON response from AI:", textResponse);
+        throw new Error("AI returned invalid JSON format.");
+    }
 }

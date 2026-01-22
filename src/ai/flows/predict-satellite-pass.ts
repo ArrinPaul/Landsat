@@ -29,7 +29,6 @@ export type PredictSatellitePassOutput = z.infer<typeof PredictSatellitePassOutp
 const predictSatellitePassPrompt = ai.definePrompt({
   name: 'predictSatellitePassPrompt',
   input: {schema: PredictSatellitePassInputSchema},
-  output: {schema: PredictSatellitePassOutputSchema},
   prompt: `You are a satellite tracking expert. Given the coordinates, predict the next pass for a major, relevant public earth observation satellite (e.g., Landsat 9, Sentinel-2, GOES-18).
 
   The current date is ${new Date().toISOString()}. The returned pass time must be in the near future (within the next 24 hours).
@@ -38,18 +37,23 @@ const predictSatellitePassPrompt = ai.definePrompt({
   - Latitude: {{{latitude}}}
   - Longitude: {{{longitude}}}
 
-  Your response must be a structured JSON object containing:
-  1.  'passTime': The predicted next pass time in UTC ISO 8601 format.
-  2.  'satelliteName': The specific name of the satellite.
-  3.  'status': The satellite's current operational status (e.g., 'Active', 'Maintenance').
-  4.  'speed': The satellite's approximate orbital speed in km/s (typically around 7.5 km/s for LEO satellites).
+  Your response MUST be a valid JSON object ONLY that conforms to the PredictSatellitePassOutput schema. Do not add any other text or formatting.
 `,
 });
 
 export async function predictSatellitePass(input: PredictSatellitePassInput): Promise<PredictSatellitePassOutput> {
-    const {output} = await predictSatellitePassPrompt(input);
-    if (!output) {
+    const response = await predictSatellitePassPrompt(input);
+    const textResponse = response.text;
+
+    if (!textResponse) {
       throw new Error('AI failed to generate satellite pass data.');
     }
-    return output;
+
+    try {
+      const parsedJson = JSON.parse(textResponse);
+      return PredictSatellitePassOutputSchema.parse(parsedJson);
+    } catch (e) {
+      console.error("Failed to parse JSON response from AI:", textResponse);
+      throw new Error("AI returned invalid JSON format.");
+    }
 }

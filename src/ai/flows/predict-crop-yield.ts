@@ -30,41 +30,32 @@ export type PredictCropYieldOutput = z.infer<typeof PredictCropYieldOutputSchema
 const predictCropYieldPrompt = ai.definePrompt({
   name: 'predictCropYieldPrompt',
   input: { schema: PredictCropYieldInputSchema },
-  output: { schema: PredictCropYieldOutputSchema },
   prompt: `You are an agricultural scientist specializing in crop yield prediction. Based on the provided latitude, longitude, and crop type, analyze known climate patterns, typical soil data, and regional agricultural productivity to predict the potential crop yield.
 
   The current date is ${new Date().toISOString()}.
 
-  Your response must be a structured JSON object and include:
-  1.  The 'predictedYield' in tons per hectare. This should be a realistic figure for the specified crop and region.
-  2.  The 'crop' name matching the input 'cropType'.
-  3.  A 'confidence' score for your prediction (from 0.0 to 1.0), reflecting the typical variability for that region.
-  4.  A brief 'notes' section explaining the key factors influencing this prediction (e.g., expected rainfall, general soil quality, temperature trends).
+  Your response MUST be a valid JSON object ONLY that conforms to the PredictCropYieldOutput schema. Do not add any other text or formatting.
 
   **Location & Crop:**
   - Latitude: {{{latitude}}}
   - Longitude: {{{longitude}}}
   - Crop Type: {{{cropType}}}
-
-  **Example Input:**
-  { "latitude": 41.6, "longitude": -93.6, "cropType": "Corn" }
-
-  **Example Output (ensure this is realistic for Iowa, USA):**
-  {
-    "predictedYield": 12.5,
-    "crop": "Corn",
-    "confidence": 0.85,
-    "notes": "The prediction is based on the location's highly fertile Mollisol soils and historically consistent rainfall during the growing season. The forecast suggests slightly warmer than average temperatures, which could positively impact yield if moisture is sufficient."
-  }
   `,
 });
 
 export async function predictCropYield(input: PredictCropYieldInput): Promise<PredictCropYieldOutput> {
-    const { output } = await predictCropYieldPrompt(input);
+    const response = await predictCropYieldPrompt(input);
+    const textResponse = response.text;
     
-    if (!output) {
+    if (!textResponse) {
         throw new Error("The AI model did not return a crop yield prediction.");
     }
     
-    return output;
+    try {
+        const parsedJson = JSON.parse(textResponse);
+        return PredictCropYieldOutputSchema.parse(parsedJson);
+    } catch(e) {
+        console.error("Failed to parse JSON response from AI:", textResponse);
+        throw new Error("AI returned invalid JSON format.");
+    }
 }

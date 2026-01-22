@@ -29,10 +29,9 @@ export type GenerateDataInsightsOutput = z.infer<typeof GenerateDataInsightsOutp
 const generateDataInsightsPrompt = ai.definePrompt({
   name: 'generateDataInsightsPrompt',
   input: {schema: GenerateDataInsightsInputSchema},
-  output: {schema: GenerateDataInsightsOutputSchema},
-  prompt: `You are an AI assistant that analyzes environmental metrics and generates insights.
+  prompt: `You are an AI assistant that analyzes environmental metrics and generates a concise, insightful, single-sentence summary.
 
-  Given the following data, provide a concise insight about the data, such as anomalies or significant trends.
+  Given the following data, provide a single sentence about an interesting trend or anomaly.
 
   Metric Name: {{{metricName}}}
   First Value: {{{firstValue}}}
@@ -40,13 +39,24 @@ const generateDataInsightsPrompt = ai.definePrompt({
   Percentage Change: {{{percentageChange}}}
   Number of Valid Points: {{{numberOfValidPoints}}}
 
-  Insight: `,
+  Your response MUST be a valid JSON object ONLY, with a single key "insight" containing the string insight.
+  Example: {"insight": "The significant decrease in NDVI suggests a potential loss of vegetation in the area."}
+  `,
 });
 
 export async function generateDataInsights(input: GenerateDataInsightsInput): Promise<GenerateDataInsightsOutput> {
-    const {output} = await generateDataInsightsPrompt(input);
-    if (!output) {
+    const response = await generateDataInsightsPrompt(input);
+    const textResponse = response.text;
+    
+    if (!textResponse) {
       throw new Error('AI failed to generate an insight.');
     }
-    return output;
+
+    try {
+      const parsedJson = JSON.parse(textResponse);
+      return GenerateDataInsightsOutputSchema.parse(parsedJson);
+    } catch (e) {
+      console.error("Failed to parse JSON response from AI:", textResponse);
+      throw new Error("AI returned invalid JSON format.");
+    }
 }
