@@ -14,6 +14,7 @@ import { getSoilMoisture } from '@/ai/tools/get-soil-moisture';
 import { getSoilType } from '@/ai/tools/get-soil-type';
 import { z } from 'genkit';
 import type { AdvancedCropAdvice } from '@/lib/types';
+import { executePromptWithFallback, safeParseAIJson } from '@/ai/ai-utils';
 
 const AdvancedCropAdviceInputSchema = z.object({
   latitude: z.number().describe('The latitude of the farm location.'),
@@ -72,7 +73,7 @@ const getAdvancedCropAdvicePrompt = ai.definePrompt({
 });
 
 export async function getAdvancedCropAdvice(input: AdvancedCropAdviceInput): Promise<AdvancedCropAdvice> {
-    const response = await getAdvancedCropAdvicePrompt(input);
+    const response = await executePromptWithFallback(getAdvancedCropAdvicePrompt, input);
     const textResponse = response.text;
     
     if (!textResponse) {
@@ -80,10 +81,10 @@ export async function getAdvancedCropAdvice(input: AdvancedCropAdviceInput): Pro
     }
 
     try {
-        const parsedJson = JSON.parse(textResponse);
-        return AdvancedCropAdviceOutputSchema.parse(parsedJson);
+        const parsedJson = safeParseAIJson(textResponse, (data) => AdvancedCropAdviceOutputSchema.parse(data));
+        return parsedJson;
     } catch (e) {
         console.error("Failed to parse JSON response from AI:", textResponse);
-        throw new Error("AI returned invalid JSON format.");
+        throw new Error("AI returned invalid JSON format. Please try again.");
     }
 }

@@ -11,6 +11,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { executePromptWithFallback, safeParseAIJson } from '@/ai/ai-utils';
 
 const PredictSatellitePassInputSchema = z.object({
   latitude: z.number().describe('The latitude of the location.'),
@@ -42,7 +43,7 @@ const predictSatellitePassPrompt = ai.definePrompt({
 });
 
 export async function predictSatellitePass(input: PredictSatellitePassInput): Promise<PredictSatellitePassOutput> {
-    const response = await predictSatellitePassPrompt(input);
+    const response = await executePromptWithFallback(predictSatellitePassPrompt, input);
     const textResponse = response.text;
 
     if (!textResponse) {
@@ -50,10 +51,10 @@ export async function predictSatellitePass(input: PredictSatellitePassInput): Pr
     }
 
     try {
-      const parsedJson = JSON.parse(textResponse);
-      return PredictSatellitePassOutputSchema.parse(parsedJson);
+      const parsedJson = safeParseAIJson(textResponse, (data) => PredictSatellitePassOutputSchema.parse(data));
+      return parsedJson;
     } catch (e) {
       console.error("Failed to parse JSON response from AI:", textResponse);
-      throw new Error("AI returned invalid JSON format.");
+      throw new Error("AI returned invalid JSON format. Please try again.");
     }
 }

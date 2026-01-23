@@ -9,6 +9,12 @@ import { ai } from '@/ai/genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 import { GenerateTimelapseVideoInputSchema, GenerateTimelapseVideoOutputSchema, type GenerateTimelapseVideoInput, type GenerateTimelapseVideoOutput } from '@/lib/types';
 
+// Video model options to try in order
+const VIDEO_MODELS = [
+  'veo-3.0-generate-preview',
+  'veo-2.0-generate-preview',
+  'imagen-3.0-generate-001',
+];
 
 export async function generateTimelapseVideo({ metricName, locationDescription, startDate, endDate }: GenerateTimelapseVideoInput): Promise<GenerateTimelapseVideoOutput> {
     const prompt = `Create a cinematic, realistic time-lapse video showing the change in ${metricName} over the ${locationDescription} from ${startDate} to ${endDate}. 
@@ -19,23 +25,46 @@ export async function generateTimelapseVideo({ metricName, locationDescription, 
       The video should be a smooth and continuous evolution.`;
     
     let operation;
-    try {
+    let lastError: Error | null = null;
+
+    // Try each video model in order
+    for (const modelName of VIDEO_MODELS) {
+      try {
         const result = await ai.generate({
-            model: googleAI.model('veo-3.0-generate-preview'),
+            model: googleAI.model(modelName),
             prompt,
         });
         operation = result.operation;
-    } catch (e: any) {
+        if (operation) break; // Success, exit the loop
+      } catch (e: any) {
+        lastError = e;
         const errorMessage = e.message || '';
+        
+        // Billing/precondition errors - give specific message
         if (errorMessage.includes('FAILED_PRECONDITION') || errorMessage.includes('billing enabled')) {
             throw new Error("Video generation with Veo requires Google Cloud Platform billing to be enabled for your project. Please enable billing in your GCP account settings to use this feature.");
         }
+        
+        // Model not found - try next model
+        if (errorMessage.includes('404') || errorMessage.includes('not found') || errorMessage.includes('not supported')) {
+          console.warn(`Video model ${modelName} not available, trying fallback...`);
+          continue;
+        }
+        
+        // Rate limit - try next model
+        if (errorMessage.includes('429') || errorMessage.includes('quota') || errorMessage.includes('RESOURCE_EXHAUSTED')) {
+          console.warn(`Rate limit hit on video model ${modelName}, trying fallback...`);
+          continue;
+        }
+        
+        // Unknown error, throw
         throw e;
+      }
     }
 
 
     if (!operation) {
-      throw new Error('Video generation did not start correctly.');
+      throw lastError || new Error('Video generation did not start correctly. All video models failed or are unavailable.');
     }
 
     // Poll for completion

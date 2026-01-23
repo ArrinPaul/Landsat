@@ -11,6 +11,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { executePromptWithFallback, safeParseAIJson } from '@/ai/ai-utils';
 
 const GetWeatherReportInputSchema = z.object({
   latitude: z.number().describe('The latitude of the location.'),
@@ -54,7 +55,7 @@ const getWeatherReportPrompt = ai.definePrompt({
 });
 
 export async function getWeatherReport(input: GetWeatherReportInput): Promise<GetWeatherReportOutput> {
-    const response = await getWeatherReportPrompt(input);
+    const response = await executePromptWithFallback(getWeatherReportPrompt, input);
     const textResponse = response.text;
 
     if (!textResponse) {
@@ -62,10 +63,10 @@ export async function getWeatherReport(input: GetWeatherReportInput): Promise<Ge
     }
 
     try {
-      const parsedJson = JSON.parse(textResponse);
-      return GetWeatherReportOutputSchema.parse(parsedJson);
+      const parsedJson = safeParseAIJson(textResponse, (data) => GetWeatherReportOutputSchema.parse(data));
+      return parsedJson;
     } catch (e) {
       console.error("Failed to parse JSON response from AI:", textResponse);
-      throw new Error("AI returned invalid JSON format.");
+      throw new Error("AI returned invalid JSON format. Please try again.");
     }
 }

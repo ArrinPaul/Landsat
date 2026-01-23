@@ -11,6 +11,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { executePromptWithFallback, safeParseAIJson } from '@/ai/ai-utils';
 
 const ScheduleIrrigationInputSchema = z.object({
   latitude: z.number().describe('The latitude of the location.'),
@@ -44,17 +45,17 @@ const scheduleIrrigationPrompt = ai.definePrompt({
 });
 
 export async function scheduleIrrigation(input: ScheduleIrrigationInput): Promise<ScheduleIrrigationOutput> {
-    const response = await scheduleIrrigationPrompt(input);
+    const response = await executePromptWithFallback(scheduleIrrigationPrompt, input);
     const textResponse = response.text;
     if (!textResponse) {
       throw new Error('AI failed to generate an irrigation schedule.');
     }
     
     try {
-        const parsedJson = JSON.parse(textResponse);
-        return ScheduleIrrigationOutputSchema.parse(parsedJson);
+        const parsedJson = safeParseAIJson(textResponse, (data) => ScheduleIrrigationOutputSchema.parse(data));
+        return parsedJson;
     } catch (e) {
         console.error("Failed to parse JSON response from AI:", textResponse);
-        throw new Error("AI returned invalid JSON format.");
+        throw new Error("AI returned invalid JSON format. Please try again.");
     }
 }

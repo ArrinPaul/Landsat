@@ -11,6 +11,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { executePromptWithFallback, safeParseAIJson } from '@/ai/ai-utils';
 
 const PlanCropsInputSchema = z.object({
   latitude: z.number().describe('The latitude of the location.'),
@@ -49,17 +50,17 @@ const planCropsPrompt = ai.definePrompt({
 });
 
 export async function planCrops(input: PlanCropsInput): Promise<PlanCropsOutput> {
-    const response = await planCropsPrompt(input);
+    const response = await executePromptWithFallback(planCropsPrompt, input);
     const textResponse = response.text;
     if (!textResponse) {
       throw new Error('AI failed to generate a crop plan.');
     }
 
     try {
-        const parsedJson = JSON.parse(textResponse);
-        return PlanCropsOutputSchema.parse(parsedJson);
+        const parsedJson = safeParseAIJson(textResponse, (data) => PlanCropsOutputSchema.parse(data));
+        return parsedJson;
     } catch(e) {
         console.error("Failed to parse JSON response from AI:", textResponse);
-        throw new Error("AI returned invalid JSON format.");
+        throw new Error("AI returned invalid JSON format. Please try again.");
     }
 }

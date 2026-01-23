@@ -10,6 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { executePromptWithFallback, safeParseAIJson } from '@/ai/ai-utils';
 
 const ReportSummaryInputSchema = z.object({
   metricsData: z.string().describe('A JSON string containing the computed environmental metrics data. Should include metric name, start/end values, percentage change, and number of valid data points (n).'),
@@ -50,14 +51,14 @@ The tone should be objective, scientific, and clear.
 
 export async function generateReportSummary(input: ReportSummaryInput): Promise<ReportSummaryOutput> {
     try {
-      const response = await generateReportSummaryPrompt(input);
+      const response = await executePromptWithFallback(generateReportSummaryPrompt, input);
       const textResponse = response.text;
       if (!textResponse) {
           throw new Error("The AI model did not return a summary report. Please try again.");
       }
       
-      const parsedJson = JSON.parse(textResponse);
-      return ReportSummaryOutputSchema.parse(parsedJson);
+      const parsedJson = safeParseAIJson(textResponse, (data) => ReportSummaryOutputSchema.parse(data));
+      return parsedJson;
 
     } catch (error) {
       console.error('Error generating report summary:', error);

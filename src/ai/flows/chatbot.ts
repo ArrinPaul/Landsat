@@ -16,6 +16,7 @@ import { generateAudio } from '@/ai/flows/text-to-speech';
 import { predictCropYield, type PredictCropYieldInput } from '@/ai/flows/predict-crop-yield';
 import { suggestCrop, type SuggestCropInput } from '@/ai/flows/suggest-crop';
 import { getAdvancedCropAdvice, type AdvancedCropAdviceInput } from '@/ai/flows/get-advanced-crop-advice';
+import { executePromptWithFallback } from '@/ai/ai-utils';
 
 const ChatbotInputSchema = z.object({
   messages: z.array(ChatMessageSchema),
@@ -58,18 +59,43 @@ model:`,
 });
 
 export async function chatbot(input: ChatbotInput): Promise<ChatbotOutput> {
-    const response = await chatbotPrompt(input);
-    const textResponse = response.text;
-    
-    if (!textResponse) {
-      throw new Error("The AI model did not return a response.");
-    }
-    
-    // Generate audio for the response
-    const audioDataUri = await generateAudio(textResponse);
+    try {
+      // Use the fallback mechanism for better resilience
+      const response = await executePromptWithFallback(chatbotPrompt, input, {
+        retryConfig: { maxRetries: 3, retryDelayMs: 1000 }
+      });
+      
+      const textResponse = response.text;
+      
+      if (!textResponse) {
+        throw new Error("The AI model did not return a response.");
+      }
+      
+      // Generate audio for the response (non-blocking, with fallback)
+      let audioDataUri: string | undefined;
+      try {
+        audioDataUri = await generateAudio(textResponse);
+      } catch (audioError) {
+        console.warn("Audio generation failed, returning response without audio:", audioError);
+        // Continue without audio - it's optional
+      }
 
-    return { 
-        response: textResponse,
-        audioDataUri,
-    };
+      return { 
+          response: textResponse,
+          audioDataUri,
+      };
+    } catch (error: any) {
+      console.error("Chatbot error:", error);
+      
+      // Provide a helpful fallback response
+      const errorMessage = error?.message || 'Unknown error';
+      if (errorMessage.includes('quota') || errorMessage.includes('rate limit') || errorMessage.includes('429')) {
+        return {
+          response: "I'm currently experiencing high demand. Please try again in a moment. 🙏",
+          audioDataUri: undefined,
+        };
+      }
+      
+      throw error;
+    }
 }

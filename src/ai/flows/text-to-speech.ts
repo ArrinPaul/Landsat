@@ -51,25 +51,35 @@ async function toWav(
   });
 }
 
+// TTS model options to try in order
+const TTS_MODELS = [
+  'gemini-2.5-flash-preview-tts',
+  'gemini-2.0-flash-preview-tts', 
+  'gemini-2.0-flash',
+];
+
 export async function generateAudio(text: string): Promise<string | undefined> {
     if (!text.trim()) return undefined;
 
-    try {
+    let lastError: Error | null = null;
+
+    for (const modelName of TTS_MODELS) {
+      try {
         const { media } = await ai.generate({
-            model: googleAI.model('gemini-2.5-flash-preview-tts'),
+            model: googleAI.model(modelName),
             config: {
                 responseModalities: ['AUDIO'],
                 speechConfig: {
-                voiceConfig: {
-                    prebuiltVoiceConfig: { voiceName: 'Algenib' },
-                },
+                  voiceConfig: {
+                      prebuiltVoiceConfig: { voiceName: 'Algenib' },
+                  },
                 },
             },
             prompt: text,
         });
 
         if (!media) {
-            return undefined;
+            continue; // Try next model
         }
 
         const audioBuffer = Buffer.from(
@@ -80,10 +90,31 @@ export async function generateAudio(text: string): Promise<string | undefined> {
         const wavData = await toWav(audioBuffer);
         return 'data:audio/wav;base64,' + wavData;
 
-    } catch (error) {
-        console.error("Error generating audio:", error);
-        return undefined;
+      } catch (error: any) {
+        lastError = error;
+        const errorMessage = error?.message || '';
+        
+        // If model not found or not supported, try next model
+        if (errorMessage.includes('404') || 
+            errorMessage.includes('not found') ||
+            errorMessage.includes('not supported')) {
+          console.warn(`TTS model ${modelName} not available, trying fallback...`);
+          continue;
+        }
+        
+        // For rate limit errors, log and continue to next model
+        if (errorMessage.includes('429') || errorMessage.includes('quota')) {
+          console.warn(`Rate limit hit on TTS model ${modelName}, trying fallback...`);
+          continue;
+        }
+        
+        console.error(`Error with TTS model ${modelName}:`, error);
+      }
     }
+
+    // If all TTS models fail, return undefined (audio is optional)
+    console.warn("All TTS models failed, returning without audio.", lastError?.message);
+    return undefined;
 }
 
 

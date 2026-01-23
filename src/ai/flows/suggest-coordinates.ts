@@ -10,6 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { executePromptWithFallback, safeParseAIJson } from '@/ai/ai-utils';
 
 const SuggestCoordinatesInputSchema = z.object({
   locationDescription: z
@@ -53,7 +54,7 @@ The confidence score should be between 0 and 1, indicating the accuracy of the s
 });
 
 export async function suggestCoordinates(input: SuggestCoordinatesInput): Promise<SuggestCoordinatesOutput> {
-    const response = await suggestCoordinatesPrompt(input);
+    const response = await executePromptWithFallback(suggestCoordinatesPrompt, input);
     const textResponse = response.text;
 
     if (!textResponse) {
@@ -61,10 +62,10 @@ export async function suggestCoordinates(input: SuggestCoordinatesInput): Promis
     }
 
     try {
-      const parsedJson = JSON.parse(textResponse);
-      return SuggestCoordinatesOutputSchema.parse(parsedJson);
+      const parsedJson = safeParseAIJson(textResponse, (data) => SuggestCoordinatesOutputSchema.parse(data));
+      return parsedJson;
     } catch (e) {
       console.error("Failed to parse JSON response from AI:", textResponse);
-      throw new Error("AI returned invalid JSON format.");
+      throw new Error("AI returned invalid JSON format. Please try again.");
     }
 }
