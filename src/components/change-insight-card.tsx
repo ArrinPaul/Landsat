@@ -1,71 +1,88 @@
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Lightbulb, CheckCircle, AlertTriangle, AlertCircle, XCircle } from "lucide-react";
-import { AnalyzeChangeOutput } from "@/ai/flows/analyze-change";
 import React from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { AnalyzeChangeOutput } from "@/ai/flows/analyze-change";
+import { CheckCircle, Activity, AlertTriangle, AlertOctagon, BrainCircuit } from "lucide-react";
+import { useLanguage } from "@/hooks/use-language";
 
 interface ChangeInsightCardProps {
   changeAnalysis: AnalyzeChangeOutput;
 }
 
 export function ChangeInsightCard({ changeAnalysis }: ChangeInsightCardProps) {
-  const { changeClassification, confidenceScore, explanation, recommendedAction } = changeAnalysis;
+  const { t } = useLanguage();
 
-  let dynamicBorderColor: string;
-  let dynamicHeaderBgColor: string;
-  let dynamicIconColor: string;
-  let IconComponent: React.ElementType;
+  const { classification, confidenceScore, explanation, recommendedAction } = changeAnalysis;
 
-  switch (changeClassification) {
-    case 'Normal':
-      dynamicBorderColor = 'border-green-500';
-      dynamicHeaderBgColor = 'bg-green-50';
-      dynamicIconColor = 'text-green-600';
-      IconComponent = CheckCircle;
+  // Determine styles and icon based on classification
+  let variantStyles = "";
+  let Icon = BrainCircuit;
+  let badgeVariant: "default" | "secondary" | "destructive" | "outline" = "default";
+
+  switch (classification) {
+    case "Normal":
+      variantStyles = "bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800";
+      Icon = CheckCircle;
+      badgeVariant = "secondary"; // Often greenish or neutral
       break;
-    case 'Transitional':
-      dynamicBorderColor = 'border-yellow-500';
-      dynamicHeaderBgColor = 'bg-yellow-50';
-      dynamicIconColor = 'text-yellow-600';
-      IconComponent = AlertTriangle;
+    case "Transitional":
+      variantStyles = "bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800";
+      Icon = Activity;
+      badgeVariant = "outline";
       break;
-    case 'Concerning':
-      dynamicBorderColor = 'border-orange-500';
-      dynamicHeaderBgColor = 'bg-orange-50';
-      dynamicIconColor = 'text-orange-600';
-      IconComponent = AlertCircle;
+    case "Concerning":
+      variantStyles = "bg-orange-50 border-orange-200 dark:bg-orange-900/20 dark:border-orange-800";
+      Icon = AlertTriangle;
+      badgeVariant = "destructive"; // Orange/Red usually
       break;
-    case 'Critical':
-      dynamicBorderColor = 'border-red-500';
-      dynamicHeaderBgColor = 'bg-red-50';
-      dynamicIconColor = 'text-red-600';
-      IconComponent = XCircle;
+    case "Critical":
+      variantStyles = "bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800";
+      Icon = AlertOctagon;
+      badgeVariant = "destructive";
       break;
-    default:
-      dynamicBorderColor = 'border-gray-300';
-      dynamicHeaderBgColor = 'bg-gray-50';
-      dynamicIconColor = 'text-gray-600';
-      IconComponent = Lightbulb; // Default icon
   }
 
+  // Convert confidence to percentage
+  const confidencePercent = Math.round(confidenceScore * 100);
+
   return (
-    <Card className={`border-[2px] transition-colors duration-300 ${dynamicBorderColor}`}>
-      <CardHeader className={`flex flex-row items-center justify-between space-y-0 pb-2 ${dynamicHeaderBgColor}`}>
-        <CardTitle className="text-sm font-medium flex items-center gap-2">
-          <IconComponent className={`h-4 w-4 ${dynamicIconColor}`} />
-          {changeClassification}
-        </CardTitle>
-        <div className="text-xs text-muted-foreground">
-          Confidence: {(confidenceScore * 100).toFixed(0)}%
+    <Card className={`mb-6 border-l-4 ${variantStyles}`}>
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Icon className="h-6 w-6" />
+            <CardTitle>{t('dashboard.insight.title')}</CardTitle>
+          </div>
+          <Badge variant={badgeVariant} className="text-base px-3 py-1">
+            {t(`dashboard.insight.classification.${classification}`)}
+          </Badge>
         </div>
       </CardHeader>
-      <CardContent className="pt-4">
-        <p className="text-sm text-muted-foreground mb-3">
-          {explanation}
-        </p>
-        <div className="flex items-center text-xs text-primary">
-          <Lightbulb className="h-4 w-4 mr-1" />
-          <span className="font-semibold">Recommended Action:</span> {recommendedAction}
+      <CardContent className="space-y-4">
+        <div>
+          <p className="text-lg leading-relaxed">{explanation}</p>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="p-4 rounded-lg bg-background/50 border">
+            <h4 className="font-semibold mb-1 text-sm text-muted-foreground uppercase tracking-wider">
+              {t('dashboard.insight.action')}
+            </h4>
+            <p className="font-medium text-primary">{recommendedAction}</p>
+          </div>
+
+          <div className="flex flex-col justify-center p-4 rounded-lg bg-background/50 border">
+            <div className="flex justify-between mb-2">
+              <span className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">
+                {t('dashboard.insight.confidence')}
+              </span>
+              <span className="font-bold">{confidencePercent}%</span>
+            </div>
+            <Progress value={confidencePercent} className="h-2" />
+          </div>
         </div>
       </CardContent>
     </Card>

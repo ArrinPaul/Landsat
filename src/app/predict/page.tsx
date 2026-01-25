@@ -27,6 +27,8 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ContactSheet } from "@/components/contact-sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const cropOptions = ["Corn", "Wheat", "Rice", "Soybeans", "Cotton", "Potatoes", "Tomatoes", "Barley", "Sorghum"];
 
@@ -49,6 +51,10 @@ export default function PredictPage() {
     const [scenarioResult, setScenarioResult] = useState<ScenarioAnalysis | null>(null);
     const [selectedCrop, setSelectedCrop] = useState("Corn");
     const [isContactOpen, setContactOpen] = useState(false);
+    
+    // Dialog state
+    const [resultDialogOpen, setResultDialogOpen] = useState(false);
+    const [currentResultType, setCurrentResultType] = useState<PredictionType | null>(null);
 
     type PredictionType = 'weather' | 'crops' | 'irrigation' | 'soil' | 'yield' | 'risk' | 'scenario';
 
@@ -75,35 +81,37 @@ export default function PredictPage() {
             return;
         }
         setIsLoading(type);
+        setCurrentResultType(type); // Set current type before fetch, though we open dialog on success
 
         const coords = { latitude: parseFloat(lat), longitude: parseFloat(lon) };
         
         let result;
+        let success = false;
         try {
             switch (type) {
                 case 'weather':
                     result = await getWeatherReportAction(coords);
-                    if (result.data) setWeather(result.data);
+                    if (result.data) { setWeather(result.data); success = true; }
                     break;
                 case 'crops':
                     result = await planCropsAction(coords);
-                    if (result.data) setCropPlan(result.data);
+                    if (result.data) { setCropPlan(result.data); success = true; }
                     break;
                 case 'irrigation':
                     result = await scheduleIrrigationAction(coords);
-                    if (result.data) setIrrigationSchedule(result.data);
+                    if (result.data) { setIrrigationSchedule(result.data); success = true; }
                     break;
                 case 'soil':
                     result = await predictSoilMoistureAction(coords);
-                    if (result.data) setSoilMoisture(result.data);
+                    if (result.data) { setSoilMoisture(result.data); success = true; }
                     break;
                 case 'yield':
                     result = await predictCropYieldAction({ ...coords, cropType: selectedCrop });
-                    if (result.data) setCropYield(result.data);
+                    if (result.data) { setCropYield(result.data); success = true; }
                     break;
                 case 'risk':
                     result = await analyzeDroughtAndFloodRiskAction(coords);
-                    if (result.data) setDroughtFloodRisk(result.data);
+                    if (result.data) { setDroughtFloodRisk(result.data); success = true; }
                     break;
                 case 'scenario':
                     if (!scenario) {
@@ -112,12 +120,14 @@ export default function PredictPage() {
                         break;
                     }
                     result = await runScenarioAnalysisAction({ ...coords, scenarioDescription: scenario });
-                    if (result.data) setScenarioResult(result.data);
+                    if (result.data) { setScenarioResult(result.data); success = true; }
                     break;
             }
 
             if (result?.error) {
                 toast({ title: t('predict.error.predictionError.title'), description: result.error, variant: "destructive" });
+            } else if (success) {
+                setResultDialogOpen(true);
             }
         } catch (error) {
             toast({ title: t('predict.error.unexpected.title'), description: t('predict.error.unexpected.description'), variant: "destructive" });
@@ -132,6 +142,168 @@ export default function PredictPage() {
             case 'Medium': return 'secondary';
             case 'High': return 'destructive';
             default: return 'outline';
+        }
+    }
+
+    const renderDialogContent = () => {
+        if (!currentResultType) return null;
+
+        switch (currentResultType) {
+            case 'scenario':
+                if (!scenarioResult) return null;
+                return (
+                    <div className="space-y-4">
+                         <DialogHeader>
+                            <DialogTitle>{t('predict.result.scenario.title')}</DialogTitle>
+                            <DialogDescription>{scenarioResult.scenario}</DialogDescription>
+                        </DialogHeader>
+                        <div>
+                            <h4 className="font-semibold">{t('predict.result.scenario.impact')}</h4>
+                            <p className="text-muted-foreground">{scenarioResult.likelyImpact}</p>
+                        </div>
+                        <div>
+                            <h4 className="font-semibold">{t('predict.result.yield.confidence')}</h4>
+                            <p className="text-muted-foreground">{(scenarioResult.confidence * 100).toFixed(0)}%</p>
+                        </div>
+                    </div>
+                );
+            case 'weather':
+                 if (!weather) return null;
+                 // WeatherReport is a Card, so we render it directly but simpler
+                 return (
+                     <div className="space-y-4">
+                         <WeatherReport weather={weather} showForecast={true} />
+                     </div>
+                 );
+            case 'risk':
+                if (!droughtFloodRisk) return null;
+                return (
+                    <div className="space-y-4">
+                        <DialogHeader>
+                            <DialogTitle>{t('predict.result.risk.title')}</DialogTitle>
+                        </DialogHeader>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-center">
+                            <div>
+                                <h4 className="font-semibold text-muted-foreground">{t('predict.result.risk.drought')}</h4>
+                                <Badge variant={getRiskBadgeVariant(droughtFloodRisk.droughtRisk)} className="text-2xl mt-2">
+                                    {droughtFloodRisk.droughtRisk}
+                                </Badge>
+                            </div>
+                            <div>
+                                <h4 className="font-semibold text-muted-foreground">{t('predict.result.risk.flood')}</h4>
+                                <Badge variant={getRiskBadgeVariant(droughtFloodRisk.floodRisk)} className="text-2xl mt-2">
+                                    {droughtFloodRisk.floodRisk}
+                                </Badge>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 className="font-semibold">{t('predict.result.risk.summary')}</h4>
+                            <p className="text-muted-foreground">{droughtFloodRisk.summary}</p>
+                        </div>
+                        <div>
+                            <h4 className="font-semibold">{t('predict.result.yield.confidence')}</h4>
+                            <p className="text-muted-foreground">{(droughtFloodRisk.confidence * 100).toFixed(0)}%</p>
+                        </div>
+                    </div>
+                );
+            case 'crops':
+                if (!cropPlan) return null;
+                return (
+                    <div className="space-y-4">
+                        <DialogHeader>
+                            <DialogTitle>{t('predict.result.cropPlan.title')}</DialogTitle>
+                        </DialogHeader>
+                        <div>
+                            <h4 className="font-semibold">{t('predict.result.cropPlan.plantingWindow')}</h4>
+                            <p className="text-muted-foreground">{cropPlan.plantingWindow.start} to {cropPlan.plantingWindow.end}</p>
+                        </div>
+                        <div>
+                            <h4 className="font-semibold">{t('predict.result.cropPlan.suitableCrops')}</h4>
+                            <ul className="list-disc pl-5 mt-2 space-y-2">
+                                {cropPlan.suitableCrops.map(crop => (
+                                    <li key={crop.name}>
+                                        <strong>{crop.name}:</strong> {crop.reason}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                            <div>
+                            <h4 className="font-semibold">{t('predict.result.cropPlan.cooperativeFarming')}</h4>
+                            <p className="text-muted-foreground">{cropPlan.cooperativeFarmingSuggestion}</p>
+                        </div>
+                    </div>
+                );
+            case 'irrigation':
+                if (!irrigationSchedule) return null;
+                return (
+                    <div className="space-y-4">
+                         <DialogHeader>
+                            <DialogTitle>{t('predict.result.irrigation.title')}</DialogTitle>
+                        </DialogHeader>
+                        <div>
+                            <h4 className="font-semibold">{t('predict.result.irrigation.recommendation')}</h4>
+                            <p className="text-2xl font-bold text-primary">{irrigationSchedule.recommendation}</p>
+
+                        </div>
+                        <div>
+                            <h4 className="font-semibold">{t('predict.result.irrigation.nextDate')}</h4>
+                            <p className="text-muted-foreground">{new Date(irrigationSchedule.nextIrrigationDate).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+
+                        </div>
+                            <div>
+                            <h4 className="font-semibold">{t('predict.result.irrigation.wateringDepth')}</h4>
+                            <p className="text-muted-foreground">{irrigationSchedule.wateringDepthInches} inches</p>
+                        </div>
+                        <div>
+                            <h4 className="font-semibold">{t('predict.result.irrigation.notes')}</h4>
+                            <p className="text-muted-foreground">{irrigationSchedule.notes}</p>
+                        </div>
+                    </div>
+                );
+            case 'soil':
+                if (!soilMoisture) return null;
+                return (
+                    <div className="space-y-4">
+                        <DialogHeader>
+                            <DialogTitle>{t('predict.result.soil.title')}</DialogTitle>
+                        </DialogHeader>
+                        <div>
+                            <h4 className="font-semibold">{t('predict.result.soil.vwc')}</h4>
+                            <p className="text-2xl font-bold text-primary">{soilMoisture.volumetricWaterContent.toFixed(1)}%</p>
+                        </div>
+                        <div>
+                            <h4 className="font-semibold">{t('predict.result.soil.summary')}</h4>
+                            <p className="text-muted-foreground">{soilMoisture.summary}</p>
+                        </div>
+                        <div>
+                            <h4 className="font-semibold">{t('predict.result.soil.confidence')}</h4>
+                            <p className="text-muted-foreground">{(soilMoisture.confidence * 100).toFixed(0)}%</p>
+                        </div>
+                    </div>
+                );
+            case 'yield':
+                if (!cropYield) return null;
+                return (
+                    <div className="space-y-4">
+                        <DialogHeader>
+                            <DialogTitle>{t('predict.result.yield.title')}: {cropYield.crop}</DialogTitle>
+                        </DialogHeader>
+                        <div>
+                            <h4 className="font-semibold">{t('predict.result.yield.predictedYield')}</h4>
+                            <p className="text-2xl font-bold text-primary">{cropYield.predictedYield.toFixed(2)} {t('predict.result.yield.unit')}</p>
+                        </div>
+                        <div>
+                            <h4 className="font-semibold">{t('predict.result.yield.notes')}</h4>
+                            <p className="text-muted-foreground">{cropYield.notes}</p>
+                        </div>
+                        <div>
+                            <h4 className="font-semibold">{t('predict.result.yield.confidence')}</h4>
+                            <p className="text-muted-foreground">{(cropYield.confidence * 100).toFixed(0)}%</p>
+                        </div>
+                    </div>
+                );
+            default:
+                return null;
         }
     }
 
@@ -296,164 +468,17 @@ export default function PredictPage() {
                         </Card>
                     )}
 
-                    {scenarioResult && (
-                        <Card>
-                             <CardHeader>
-                                <CardTitle>{t('predict.result.scenario.title')}</CardTitle>
-                                <CardDescription>{scenarioResult.scenario}</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                               <div>
-                                    <h4 className="font-semibold">{t('predict.result.scenario.impact')}</h4>
-                                    <p className="text-muted-foreground">{scenarioResult.likelyImpact}</p>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold">{t('predict.result.yield.confidence')}</h4>
-                                    <p className="text-muted-foreground">{(scenarioResult.confidence * 100).toFixed(0)}%</p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    {weather && (
-                        <WeatherReport weather={weather} showForecast={true} />
-                    )}
-                    
-                    {droughtFloodRisk && (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>{t('predict.result.risk.title')}</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-center">
-                                    <div>
-                                        <h4 className="font-semibold text-muted-foreground">{t('predict.result.risk.drought')}</h4>
-                                        <Badge variant={getRiskBadgeVariant(droughtFloodRisk.droughtRisk)} className="text-2xl mt-2">
-                                            {droughtFloodRisk.droughtRisk}
-                                        </Badge>
-                                    </div>
-                                    <div>
-                                        <h4 className="font-semibold text-muted-foreground">{t('predict.result.risk.flood')}</h4>
-                                        <Badge variant={getRiskBadgeVariant(droughtFloodRisk.floodRisk)} className="text-2xl mt-2">
-                                            {droughtFloodRisk.floodRisk}
-                                        </Badge>
-                                    </div>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold">{t('predict.result.risk.summary')}</h4>
-                                    <p className="text-muted-foreground">{droughtFloodRisk.summary}</p>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold">{t('predict.result.yield.confidence')}</h4>
-                                    <p className="text-muted-foreground">{(droughtFloodRisk.confidence * 100).toFixed(0)}%</p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    {cropPlan && (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>{t('predict.result.cropPlan.title')}</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div>
-                                    <h4 className="font-semibold">{t('predict.result.cropPlan.plantingWindow')}</h4>
-                                    <p className="text-muted-foreground">{cropPlan.plantingWindow.start} to {cropPlan.plantingWindow.end}</p>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold">{t('predict.result.cropPlan.suitableCrops')}</h4>
-                                    <ul className="list-disc pl-5 mt-2 space-y-2">
-                                        {cropPlan.suitableCrops.map(crop => (
-                                            <li key={crop.name}>
-                                                <strong>{crop.name}:</strong> {crop.reason}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                                 <div>
-                                    <h4 className="font-semibold">{t('predict.result.cropPlan.cooperativeFarming')}</h4>
-                                    <p className="text-muted-foreground">{cropPlan.cooperativeFarmingSuggestion}</p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    {irrigationSchedule && (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>{t('predict.result.irrigation.title')}</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div>
-                                    <h4 className="font-semibold">{t('predict.result.irrigation.recommendation')}</h4>
-                                    <p className="text-2xl font-bold text-primary">{irrigationSchedule.recommendation}</p>
-
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold">{t('predict.result.irrigation.nextDate')}</h4>
-                                    <p className="text-muted-foreground">{new Date(irrigationSchedule.nextIrrigationDate).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-
-                                </div>
-                                 <div>
-                                    <h4 className="font-semibold">{t('predict.result.irrigation.wateringDepth')}</h4>
-                                    <p className="text-muted-foreground">{irrigationSchedule.wateringDepthInches} inches</p>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold">{t('predict.result.irrigation.notes')}</h4>
-                                    <p className="text-muted-foreground">{irrigationSchedule.notes}</p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
-                    
-                    {soilMoisture && (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>{t('predict.result.soil.title')}</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div>
-                                    <h4 className="font-semibold">{t('predict.result.soil.vwc')}</h4>
-                                    <p className="text-2xl font-bold text-primary">{soilMoisture.volumetricWaterContent.toFixed(1)}%</p>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold">{t('predict.result.soil.summary')}</h4>
-                                    <p className="text-muted-foreground">{soilMoisture.summary}</p>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold">{t('predict.result.soil.confidence')}</h4>
-                                    <p className="text-muted-foreground">{(soilMoisture.confidence * 100).toFixed(0)}%</p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    {cropYield && (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>{t('predict.result.yield.title')}: {cropYield.crop}</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div>
-                                    <h4 className="font-semibold">{t('predict.result.yield.predictedYield')}</h4>
-                                    <p className="text-2xl font-bold text-primary">{cropYield.predictedYield.toFixed(2)} {t('predict.result.yield.unit')}</p>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold">{t('predict.result.yield.notes')}</h4>
-                                    <p className="text-muted-foreground">{cropYield.notes}</p>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold">{t('predict.result.yield.confidence')}</h4>
-                                    <p className="text-muted-foreground">{(cropYield.confidence * 100).toFixed(0)}%</p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
-
-
                 </div>
             </main>
+            
+            <Dialog open={resultDialogOpen} onOpenChange={setResultDialogOpen}>
+                <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden flex flex-col">
+                     <ScrollArea className="h-full w-full p-4">
+                         {renderDialogContent()}
+                     </ScrollArea>
+                </DialogContent>
+            </Dialog>
+
             <footer id="contact" className="py-6 w-full shrink-0 border-t">
                 <div className="container flex flex-col sm:flex-row items-center justify-between gap-4">
                     <nav className="flex gap-4 sm:gap-6">
@@ -470,3 +495,4 @@ export default function PredictPage() {
         </div>
     );
 }
+

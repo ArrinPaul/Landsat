@@ -1,103 +1,155 @@
-'use server';
+
+
+/**
+ * @fileOverview A flow for analyzing environmental changes based on computed metrics.
+ * - analyzeChange - A function that interprets changes in metrics.
+ * - AnalyzeChangeInput - The input type for the function.
+ * - AnalyzeChangeOutput - The return type for the function.
+ */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { executePromptWithFallback, safeParseAIJson } from '@/ai/ai-utils';
-import { AnalysisResult } from '@/lib/types'; // Assuming AnalysisResult exists and contains metrics
 
-// Placeholder schema for historical data. This will need refinement.
-const HistoricalDataSchema = z.object({
-  metricName: z.string(),
-  values: z.array(z.number()),
-  dates: z.array(z.string()),
+// Define the Change Classification categories as per ROADMAP.md
+export const ChangeClassificationSchema = z.enum([
+  'Normal',
+  'Transitional',
+  'Concerning',
+  'Critical'
+]).describe('The classification of the detected change.');
+
+export type ChangeClassification = z.infer<typeof ChangeClassificationSchema>;
+
+// Define the schema for a single metric's summary
+const MetricSummarySchema = z.object({
+  name: z.string(),
+  value: z.number().nullable(),
+  change: z.number().nullable(),
+  trend: z.enum(['increasing', 'decreasing', 'stable', 'unknown']),
 });
 
+// Input Schema: Takes current metrics and context
 const AnalyzeChangeInputSchema = z.object({
-  latitude: z.number().describe('The latitude of the analysis location.'),
-  longitude: z.number().describe('The longitude of the analysis location.'),
-  locationDescription: z.string().describe('A brief description of the analysis location.'),
-  currentMetrics: z.object({ // Simplified for now, will map to AnalysisResult metrics
-    NDVI: z.array(z.number()).describe('Normalized Difference Vegetation Index values over time.'),
-    NDWI: z.array(z.number()).describe('Normalized Difference Water Index values over time.'),
-    NDBI: z.array(z.number()).describe('Normalized Difference Built-up Index values over time.'),
-    NBR: z.array(z.number()).describe('Normalized Burn Ratio values over time.'),
-    MNDWI: z.array(z.number()).describe('Modified Normalized Difference Water Index values over time.'),
-  }).describe('The currently computed environmental metrics for the selected date range.'),
-  historicalMetrics: z.object({ // Placeholder, will contain historical values for comparison
-    NDVI: z.array(z.number()).describe('Historical NDVI values for comparison.'),
-    NDWI: z.array(z.number()).describe('Historical NDWI values for comparison.'),
-    NDBI: z.array(z.number()).describe('Historical NDBI values for comparison.'),
-    NBR: z.array(z.number()).describe('Historical NBR values for comparison.'),
-    MNDWI: z.array(z.number()).describe('Historical MNDWI values for comparison.'),
-  }).describe('Historical environmental metrics for the same location, used for contextualization.'),
+  location: z.object({
+    latitude: z.number(),
+    longitude: z.number(),
+    description: z.string().optional(),
+  }),
   dateRange: z.object({
-    from: z.string().describe('Start date of the current metrics in ISO format.'),
-    to: z.string().describe('End date of the current metrics in ISO format.'),
-  }).describe('The date range for which current metrics were computed.'),
-  language: z.string().optional().default('en').describe('The language for the output reasoning.'),
+    start: z.string(),
+    end: z.string(),
+  }),
+  metrics: z.array(MetricSummarySchema).describe('List of computed metrics (NDVI, NDWI, etc.) with their values and changes.'),
+  historicalContext: z.string().optional().describe('Optional historical context or baseline description.'),
 });
+
 export type AnalyzeChangeInput = z.infer<typeof AnalyzeChangeInputSchema>;
 
+// Output Schema: The structured insight
 const AnalyzeChangeOutputSchema = z.object({
-  changeClassification: z.enum(['Normal', 'Transitional', 'Concerning', 'Critical']).describe('The classification of the detected environmental change.'),
-  confidenceScore: z.number().min(0).max(1).describe('A confidence score (0-1) for the classification.'),
-  explanation: z.string().describe('A human-readable explanation of the detected change, its context, and potential implications, explicitly referencing the provided metric data.'),
-  recommendedAction: z.string().describe('A concise recommendation for action based on the change classification.'),
+  classification: ChangeClassificationSchema,
+  confidenceScore: z.number().min(0).max(1).describe('Confidence score between 0 and 1.'),
+  explanation: z.string().describe('A human-readable explanation of the change, providing context and potential causes.'),
+  recommendedAction: z.string().describe('A recommended course of action (e.g., Monitor, Flag, Summarize).'),
 });
+
 export type AnalyzeChangeOutput = z.infer<typeof AnalyzeChangeOutputSchema>;
+
+// Schema for the Prompt Input (flattened metrics to string)
+const PromptInputSchema = z.object({
+    location: z.object({
+      latitude: z.number(),
+      longitude: z.number(),
+      description: z.string().optional(),
+    }),
+    dateRange: z.object({
+      start: z.string(),
+      end: z.string(),
+    }),
+    metricsText: z.string(),
+    historicalContext: z.string().optional(),
+});
+
 
 const analyzeChangePrompt = ai.definePrompt({
   name: 'analyzeChangePrompt',
-  input: { schema: AnalyzeChangeInputSchema },
-  // No tools are used for this flow directly, as it analyzes provided data.
-  prompt: `You are an expert environmental change analyst AI. Your task is to analyze environmental metric data for a specific location, compare current observations against historical norms, classify the detected changes, provide a clear explanation, and recommend an action.
+  input: { schema: PromptInputSchema },
+  prompt: `You are an expert environmental analyst AI for the Earth Insights Dashboard. Your goal is to interpret environmental changes based on satellite-derived metrics.
 
-  Your response must be in the specified language: {{{language}}}.
+  **Objective:**
+  Analyze the provided environmental metrics for the given location and date range to detect, classify, and explain significant changes.
 
-  Location: Latitude {{{latitude}}}, Longitude {{{longitude}}} ({{{locationDescription}}})
-  Current Metrics (Date Range: {{{dateRange.from}}} to {{{dateRange.to}}}):
-  NDVI: {{{JSON.stringify currentMetrics.NDVI}}}
-  NDWI: {{{JSON.stringify currentMetrics.NDWI}}}
-  NDBI: {{{JSON.stringify currentMetrics.NDBI}}}
-  NBR: {{{JSON.stringify currentMetrics.NBR}}}
-  MNDWI: {{{JSON.stringify currentMetrics.MNDWI}}}
+  **Input Data:**
+  - Location: {{{location.latitude}}}, {{{location.longitude}}} ({{{location.description}}})
+  - Date Range: {{{dateRange.start}}} to {{{dateRange.end}}}
+  - Metrics:
+{{{metricsText}}}
+  - Historical Context: {{{historicalContext}}}
 
-  Historical Metrics (for context and comparison):
-  NDVI: {{{JSON.stringify historicalMetrics.NDVI}}}
-  NDWI: {{{JSON.stringify historicalMetrics.NDWI}}}
-  NDBI: {{{JSON.stringify historicalMetrics.NDBI}}}
-  NBR: {{{JSON.stringify historicalMetrics.NBR}}}
-  MNDWI: {{{JSON.stringify historicalMetrics.MNDWI}}}
+  **Analysis Logic (Follow Strictly):**
+  1.  **Measure**: Evaluate the magnitude and direction of change for each metric.
+  2.  **Contextualize**: Consider the historical context and expected seasonal variations.
+  3.  **Correlate**: Look for compound patterns (e.g., NDVI decline + NDBI increase).
+  4.  **Classify**: Assign one of the following categories:
+      - **Normal**: Seasonal cycles, harvest patterns, expected variations.
+      - **Transitional**: Early-stage stress, gradual changes, recovery.
+      - **Concerning**: Rapid declines outside norms, compound negative signals.
+      - **Critical**: Severe degradation, abrupt land-use conversion, disaster signatures.
+  5.  **Explain**: Generate a clear, neutral, and trustworthy explanation.
+  6.  **Act**: Recommend a specific action based on the classification.
 
-  Follow these steps from the "Earth Insights — Change Interpretation & Action Guide (AI-Oriented)" roadmap to analyze the change:
-  1.  **Measure**: Compute absolute and percentage change between current and historical metrics for the given date range.
-  2.  **Contextualize**: Compare the current changes against the provided historical norms and consider the general location context.
-  3.  **Correlate**: Cross-check related metrics to identify compound patterns (e.g., NDVI decrease coinciding with NDBI increase).
-  4.  **Classify**: Based on the analysis, classify the change into one of the following categories: 'Normal', 'Transitional', 'Concerning', or 'Critical'. Refer to the "Types of Change" and "Metric-Specific Change Interpretation Rules" in the roadmap.
-  5.  **Explain**: Provide a human-readable explanation of the detected change, its context, and potential implications. Explicitly reference the provided metric data (current and historical) in your explanation. Adhere to the "Output Language Guidelines" in the roadmap – calm, neutral, trustworthy, clear.
-  6.  **Act**: Recommend a concise action based on the "Action Mapping Summary" in the roadmap.
+  **Metric-Specific Rules:**
+  - **NDVI (Vegetation)**: Small seasonal drops are Normal. Sustained decline is Concerning. NDVI ↓ + NDBI ↑ is likely land-use conversion.
+  - **NDWI (Water)**: Seasonal fluctuations are Normal. Persistent reduction is Water Stress.
+  - **NDBI (Built-up)**: Gradual increase is Transitional. Rapid increase with NDVI loss is Concerning.
+  - **Compound Changes**: Prioritize compound signals (e.g., NDVI ↓ + NDBI ↑) as they increase confidence.
 
-  Your final output MUST be a valid JSON object ONLY that conforms to the AnalyzeChangeOutput schema.
-  - 'changeClassification': The determined classification.
-  - 'confidenceScore': A score between 0 and 1 indicating your confidence in the classification.
-  - 'explanation': The detailed explanation.
-  - 'recommendedAction': The recommended action.
+  **Output Requirements:**
+  You MUST return a valid JSON object.
+  The keys MUST be exactly as follows: "classification", "confidenceScore", "explanation", "recommendedAction".
+  Do NOT use keys like "changeClassification" or "action".
+  
+  Example Output:
+  {
+    "classification": "Concerning",
+    "confidenceScore": 0.85,
+    "explanation": "A significant decline in NDVI coupled with increasing NDBI suggests potential deforestation.",
+    "recommendedAction": "Flag for immediate review."
+  }
   `,
 });
 
 export async function analyzeChange(input: AnalyzeChangeInput): Promise<AnalyzeChangeOutput> {
-  const response = await executePromptWithFallback(analyzeChangePrompt, input, undefined, 'analyze-change');
+  // Format metrics into a clear string
+  const metricsText = input.metrics.map(m => 
+    `* Metric: ${m.name} | Value: ${m.value?.toFixed(2) ?? 'N/A'} | Change: ${m.change?.toFixed(2) ?? 'N/A'} | Trend: ${m.trend}`
+  ).join('\n');
+
+  const promptInput = {
+      location: input.location,
+      dateRange: input.dateRange,
+      historicalContext: input.historicalContext,
+      metricsText
+  };
+
+  const response = await executePromptWithFallback(analyzeChangePrompt, promptInput, undefined, 'analyze-change');
   const textResponse = response.text;
 
   if (!textResponse) {
-    throw new Error("The AI model did not return an output. Please try again.");
+    throw new Error("The AI model did not return a change analysis output.");
   }
 
   try {
-    const parsedJson = safeParseAIJson(textResponse, (data) => AnalyzeChangeOutputSchema.parse(data));
-    return parsedJson;
+    return safeParseAIJson(textResponse, (data: any) => {
+        // Handle common hallucination of "changeClassification"
+        if (data.changeClassification && !data.classification) {
+            data.classification = data.changeClassification;
+        }
+        return AnalyzeChangeOutputSchema.parse(data);
+    });
   } catch (e) {
     console.error("Failed to parse JSON response from AI:", textResponse);
-    throw new Error("AI returned invalid JSON format. Please try again.");
+    throw new Error("AI returned invalid JSON format.");
   }
 }

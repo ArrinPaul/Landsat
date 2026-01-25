@@ -1,5 +1,4 @@
 
-'use server';
 /**
  * @fileOverview A flow for computing environmental metrics using Google Earth Engine.
  * This has been refactored to support asynchronous job processing.
@@ -12,6 +11,8 @@ import { z } from 'genkit';
 import ee from '@google/earthengine';
 import { getHistoricalWeather } from '@/services/open-meteo';
 import type { HistoricalDataPoint } from '@/lib/types';
+import { analyzeChange, AnalyzeChangeOutput } from '@/ai/flows/analyze-change';
+import { getHistoricalBaseline } from '@/ai/tools/get-historical-baseline';
 
 
 // In-memory store for job results. In a production system, use a database like Firestore or Redis.
@@ -70,6 +71,14 @@ const HistoricalDataPointSchema = z.object({
   precipitation: z.number().nullable(),
 });
 
+// Define the schema for the change analysis output (simplified version of what's in analyze-change.ts)
+const ChangeAnalysisSchema = z.object({
+    classification: z.enum(['Normal', 'Transitional', 'Concerning', 'Critical']),
+    confidenceScore: z.number(),
+    explanation: z.string(),
+    recommendedAction: z.string(),
+});
+
 const ComputeMetricsOutputSchema = z.object({
     timeSeries: timeSeriesSchema,
     landCover: z.object({
@@ -81,6 +90,7 @@ const ComputeMetricsOutputSchema = z.object({
         afterMapUrl: z.string().url().describe('A data URI of the land cover map at the end date.'),
     }),
     historicalWeather: z.array(HistoricalDataPointSchema),
+    changeAnalysis: ChangeAnalysisSchema.optional(),
 });
 export type ComputeMetricsOutput = z.infer<typeof ComputeMetricsOutputSchema>;
 
@@ -266,9 +276,10 @@ const calculateLandCoverStats = (image: ee.Image, areaOfInterest: ee.Geometry) =
 
 const computeMetricsFlow = async (input: ComputeMetricsInput, jobId: string) => {
   try {
-    const [eeData, weatherData] = await Promise.all([
+    const [eeData, weatherData, historicalBaseline] = await Promise.all([
         runEeAnalysis(input),
-        getHistoricalWeather(input.latitude, input.longitude, input.startDate, input.endDate)
+        getHistoricalWeather(input.latitude, input.longitude, input.startDate, input.endDate),
+        getHistoricalBaseline(input.latitude, input.longitude)
     ]);
     
     const historicalWeatherResult: HistoricalDataPoint[] = weatherData.daily.time.map((date, index) => ({
@@ -314,10 +325,53 @@ const computeMetricsFlow = async (input: ComputeMetricsInput, jobId: string) => 
         afterMapUrl: eeData.afterMapUrl
     };
 
+    // Prepare data for AI Change Analysis
+    const metricsForAI = ['NDVI', 'NDWI', 'NDBI', 'NBR'].map(name => {
+        const values: any[] = timeSeriesResult[name];
+        if (values.length === 0) return { name, value: null, change: null, trend: 'unknown' as const };
+        
+        const firstVal = values[0].value;
+        const lastVal = values[values.length - 1].value;
+        const change = lastVal - firstVal;
+        
+        let trend: 'increasing' | 'decreasing' | 'stable' | 'unknown' = 'stable';
+        if (change > 0.05) trend = 'increasing';
+        else if (change < -0.05) trend = 'decreasing';
+
+        return {
+            name,
+            value: lastVal,
+            change,
+            trend
+        };
+    });
+
+    // Run AI Change Analysis
+    let changeAnalysisResult: AnalyzeChangeOutput | undefined;
+    try {
+        changeAnalysisResult = await analyzeChange({
+            location: {
+                latitude: input.latitude,
+                longitude: input.longitude,
+                description: historicalBaseline.description
+            },
+            dateRange: {
+                start: input.startDate,
+                end: input.endDate
+            },
+            metrics: metricsForAI,
+            historicalContext: `Baseline NDVI: ${historicalBaseline.averageNDVI}, Baseline NDWI: ${historicalBaseline.averageNDWI}.`
+        });
+    } catch (aiError) {
+        console.error("AI Change Analysis Failed:", aiError);
+        // We continue without the analysis result, rather than failing the whole job.
+    }
+
     const finalResult = { 
         timeSeries: timeSeriesResult,
         landCover: landCoverAnalysis,
         historicalWeather: historicalWeatherResult,
+        changeAnalysis: changeAnalysisResult,
     };
     
     jobResults.set(jobId, { status: 'completed', data: finalResult });
@@ -327,5 +381,3 @@ const computeMetricsFlow = async (input: ComputeMetricsInput, jobId: string) => 
     jobResults.set(jobId, { status: 'error', error: error.message || 'An unknown error occurred during computation.' });
   }
 };
-
-    

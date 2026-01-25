@@ -405,15 +405,16 @@ Now provide the JSON:`;
         case 'analyze-change':
           promptText = `You are an environmental change analyst. Analyze these environmental metrics for changes.
 
-Location: ${inputData.locationDescription || `${lat}, ${lon}`}
-Date Range: ${inputData.dateRange?.from || 'Unknown'} to ${inputData.dateRange?.to || 'Unknown'}
-Current Metrics: ${JSON.stringify(inputData.currentMetrics || {})}
-Historical Metrics: ${JSON.stringify(inputData.historicalMetrics || {})}
+Location: ${inputData.location?.description || `${inputData.location?.latitude}, ${inputData.location?.longitude}`}
+Date Range: ${inputData.dateRange?.start || 'Unknown'} to ${inputData.dateRange?.end || 'Unknown'}
+Metrics:
+${inputData.metricsText || JSON.stringify(inputData.metrics || [])}
+Historical Context: ${inputData.historicalContext || 'None provided'}
 
 IMPORTANT: You MUST respond with ONLY a valid JSON object. No other text.
 Your response must be exactly in this format:
 {
-  "changeClassification": "<Normal|Transitional|Concerning|Critical>",
+  "classification": "<Normal|Transitional|Concerning|Critical>",
   "confidenceScore": <0-1>,
   "explanation": "<detailed explanation of detected changes and their implications>",
   "recommendedAction": "<recommended action based on classification>"
