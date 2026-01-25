@@ -68,7 +68,7 @@ const suggestCropPrompt = ai.definePrompt({
 });
 
 export async function suggestCrop(input: SuggestCropInput): Promise<SuggestCropOutput> {
-    const response = await executePromptWithFallback(suggestCropPrompt, input);
+    const response = await executePromptWithFallback(suggestCropPrompt, input, undefined, 'suggest-crop');
     const textResponse = response.text;
     
     if (!textResponse) {

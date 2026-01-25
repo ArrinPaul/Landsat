@@ -160,11 +160,12 @@ export async function executePromptWithFallback<TInput, TOutput>(
       
       if (!detectedFlow) {
         // Auto-detect based on input fields
-        if ('locationDescription' in inputData) detectedFlow = 'coordinates';
+        if ('locationDescription' in inputData && !('latitude' in inputData)) detectedFlow = 'coordinates';
         else if ('metricName' in inputData && 'firstValue' in inputData) detectedFlow = 'insights';
-        else if ('cropType' in inputData && 'soilType' in inputData) detectedFlow = 'crop-advice';
-        else if ('season' in inputData && 'climate' in inputData) detectedFlow = 'suggest-crop';
-        else if ('cropName' in inputData && 'currentStage' in inputData) detectedFlow = 'irrigation';
+        else if ('crop' in inputData && 'climateDescription' in inputData) detectedFlow = 'crop-advice';
+        else if ('climateDescription' in inputData && 'latitude' in inputData) detectedFlow = 'suggest-crop';
+        else if ('cropType' in inputData && 'latitude' in inputData) detectedFlow = 'crop-yield';
+        else if ('scenarioDescription' in inputData) detectedFlow = 'scenario';
         else if ('latitude' in inputData && 'longitude' in inputData) detectedFlow = 'satellite';
         else detectedFlow = 'generic';
       }
@@ -245,41 +246,178 @@ Your response must include current weather and 4-hour forecast with this format:
 Now provide the JSON:`;
           break;
           
-        case 'suggest-crop':
-          promptText = `You are an agricultural expert. Suggest the best crops for these conditions.
+        case 'crop-yield':
+          promptText = `You are an agricultural scientist. Predict crop yield for this location and crop.
 
-Season: ${inputData.season || 'Unknown'}
-Climate: ${inputData.climate || 'Unknown'}
-Soil Type: ${inputData.soilType || 'Unknown'}
+Latitude: ${lat}
+Longitude: ${lon}
+Crop Type: ${inputData.cropType || 'Maize'}
+Current date: ${currentDate}
 
 IMPORTANT: You MUST respond with ONLY a valid JSON object. No other text.
 Your response must be exactly in this format:
-{"suggestedCrops": ["<crop1>", "<crop2>", "<crop3>"], "reasoning": "<brief explanation>"}
+{"predictedYield": <number in tons/hectare>, "crop": "<crop name>", "confidence": <0-1>, "notes": "<factors affecting yield>"}
+
+Example: {"predictedYield": 4.5, "crop": "Maize", "confidence": 0.78, "notes": "Good soil conditions expected based on regional climate patterns."}
 
 Now provide the JSON:`;
           break;
           
-        case 'crop-advice':
-          promptText = `You are an agricultural advisor. Provide advanced advice for this crop.
+        case 'drought-flood':
+          promptText = `You are a hydrologist. Assess drought and flood risk for this location.
 
-Crop: ${inputData.cropType || 'Unknown'}
-Soil: ${inputData.soilType || 'Unknown'}
+Latitude: ${lat}
+Longitude: ${lon}
+Current date: ${currentDate}
 
 IMPORTANT: You MUST respond with ONLY a valid JSON object. No other text.
-Your response must include advice on fertilizers, pest control, irrigation, and best practices.
-Format: {"advice": {"fertilizers": "<text>", "pestControl": "<text>", "irrigation": "<text>", "bestPractices": "<text>"}}
+Your response must be exactly in this format:
+{"droughtRisk": "<Low|Medium|High>", "floodRisk": "<Low|Medium|High>", "summary": "<explanation of risk factors>", "confidence": <0-1>}
+
+Example: {"droughtRisk": "Medium", "floodRisk": "Low", "summary": "Below average rainfall expected this season. No significant flood risk due to elevation.", "confidence": 0.75}
+
+Now provide the JSON:`;
+          break;
+          
+        case 'soil-moisture':
+          promptText = `You are a soil scientist. Predict soil moisture for this location.
+
+Latitude: ${lat}
+Longitude: ${lon}
+Current date: ${currentDate}
+
+IMPORTANT: You MUST respond with ONLY a valid JSON object. No other text.
+Your response must be exactly in this format:
+{"volumetricWaterContent": <percentage 0-100>, "summary": "<soil moisture condition>", "confidence": <0-1>}
+
+Example: {"volumetricWaterContent": 28.5, "summary": "Optimal moisture for most crops. No immediate irrigation needed.", "confidence": 0.82}
 
 Now provide the JSON:`;
           break;
           
         case 'irrigation':
-          promptText = `You are an irrigation specialist. Create an irrigation schedule for this crop.
+          promptText = `You are an irrigation specialist. Create an irrigation schedule for this location.
 
-Crop: ${inputData.cropName || 'Unknown'}
-Current Stage: ${inputData.currentStage || 'Unknown'}
+Latitude: ${lat}
+Longitude: ${lon}
+Current date: ${currentDate}
 
 IMPORTANT: You MUST respond with ONLY a valid JSON object. No other text.
-Format: {"schedule": [{"day": "<day>", "waterAmount": <liters>, "notes": "<text>"}], "recommendations": "<text>"}
+Your response must be exactly in this format:
+{"recommendation": "<action recommendation>", "nextIrrigationDate": "<YYYY-MM-DD>", "wateringDepthInches": <number>, "notes": "<reasoning>"}
+
+Example: {"recommendation": "Irrigate in 3 days", "nextIrrigationDate": "2026-01-26", "wateringDepthInches": 1.5, "notes": "Soil moisture declining, no rain expected this week."}
+
+Now provide the JSON:`;
+          break;
+          
+        case 'crop-plan':
+          promptText = `You are an agronomist. Create a crop plan for this location.
+
+Latitude: ${lat}
+Longitude: ${lon}
+Current date: ${currentDate}
+
+IMPORTANT: You MUST respond with ONLY a valid JSON object. No other text.
+Your response must be exactly in this format:
+{
+  "suitableCrops": [{"name": "<crop>", "reason": "<why suitable>"}],
+  "plantingWindow": {"start": "<month>", "end": "<month>"},
+  "cooperativeFarmingSuggestion": "<suggestion for farmers>"
+}
+
+Now provide the JSON:`;
+          break;
+          
+        case 'suggest-crop':
+          promptText = `You are an agricultural advisor. Suggest the best crop for this farm.
+
+Latitude: ${lat}
+Longitude: ${lon}
+Climate: ${inputData.climateDescription || 'Unknown'}
+Current Crop: ${inputData.currentCrop || 'None'}
+
+IMPORTANT: You MUST respond with ONLY a valid JSON object. No other text.
+Your response must be exactly in this format:
+{
+  "suggestedCrop": "<crop name>",
+  "suitabilityScore": <0-100>,
+  "reasoning": "<detailed explanation>",
+  "alternativeCrop": "<alternative>",
+  "fetchedSoilType": "<soil type>",
+  "fetchedMoistureLevel": "<Dry|Optimal|Wet>"
+}
+
+Now provide the JSON:`;
+          break;
+          
+        case 'crop-advice':
+          promptText = `You are an agricultural expert. Provide detailed advice for growing this crop.
+
+Crop: ${inputData.crop || 'Unknown'}
+Latitude: ${lat}
+Longitude: ${lon}
+Climate: ${inputData.climateDescription || 'Unknown'}
+
+IMPORTANT: You MUST respond with ONLY a valid JSON object. No other text.
+Your response must be exactly in this format:
+{
+  "crop": "<crop name>",
+  "plantingDensity": {"value": <number>, "unit": "seeds/hectare"},
+  "pestAndDiseaseRisks": [{"name": "<pest/disease>", "description": "<mitigation>"}],
+  "fertilizationStrategy": [{"timing": "<when>", "recommendation": "<what to apply>"}],
+  "notes": "<summary advice>"
+}
+
+Now provide the JSON:`;
+          break;
+          
+        case 'scenario':
+          promptText = `You are an environmental scientist. Analyze this what-if scenario.
+
+Scenario: ${inputData.scenarioDescription}
+Latitude: ${lat}
+Longitude: ${lon}
+
+IMPORTANT: You MUST respond with ONLY a valid JSON object. No other text.
+Your response must be exactly in this format:
+{"scenario": "<scenario confirmation>", "likelyImpact": "<detailed impact analysis>", "confidence": <0-1>}
+
+Example: {"scenario": "2°C temperature increase", "likelyImpact": "Would likely reduce wheat yields by 10-15%, increase water stress on crops, and shift optimal growing zones northward.", "confidence": 0.72}
+
+Now provide the JSON:`;
+          break;
+          
+        case 'report-summary':
+          promptText = `You are a data analyst. Generate a summary report for this environmental data.
+
+Location: ${inputData.location || inputData.locationDescription || `${lat}, ${lon}`}
+Date Range: ${inputData.dateRange || 'Not specified'}
+Metrics Data: ${inputData.metricsData || JSON.stringify(inputData.metrics || inputData)}
+
+IMPORTANT: You MUST respond with ONLY a valid JSON object. No other text.
+Your response must be exactly in this format:
+{"summaryReport": "<comprehensive markdown-formatted report with Executive Summary, Key Findings, and Recommendations>"}
+
+Now provide the JSON:`;
+          break;
+
+        case 'analyze-change':
+          promptText = `You are an environmental change analyst. Analyze these environmental metrics for changes.
+
+Location: ${inputData.locationDescription || `${lat}, ${lon}`}
+Date Range: ${inputData.dateRange?.from || 'Unknown'} to ${inputData.dateRange?.to || 'Unknown'}
+Current Metrics: ${JSON.stringify(inputData.currentMetrics || {})}
+Historical Metrics: ${JSON.stringify(inputData.historicalMetrics || {})}
+
+IMPORTANT: You MUST respond with ONLY a valid JSON object. No other text.
+Your response must be exactly in this format:
+{
+  "changeClassification": "<Normal|Transitional|Concerning|Critical>",
+  "confidenceScore": <0-1>,
+  "explanation": "<detailed explanation of detected changes and their implications>",
+  "recommendedAction": "<recommended action based on classification>"
+}
 
 Now provide the JSON:`;
           break;

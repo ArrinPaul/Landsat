@@ -35,11 +35,17 @@ const analyzeDroughtAndFloodRiskPrompt = ai.definePrompt({
   prompt: `You are an expert hydrologist and climate scientist AI. Your task is to assess the drought and flood risk for a specific geographic location using real-time data.
 
   **Process:**
-  1.  **Mandatory Data Fetching**: You MUST use the 'getDroughtAndFloodRiskData' tool to get real-world data for the given coordinates. This tool will provide you with the 30-year average annual precipitation and the current soil moisture level. Do not guess or use generalized knowledge.
-  2.  **Analysis**: Synthesize the fetched data with your knowledge of the location's topography, proximity to water bodies, and climate zone to make your assessment.
-      - A much lower-than-average precipitation and 'Dry' soil moisture suggests a high drought risk.
-      - A much higher-than-average precipitation and 'Wet' soil moisture, especially in a low-lying area, suggests a high flood risk.
-  3.  **Output Generation**: Based on your analysis, provide a structured JSON response.
+  1.  **Mandatory Data Fetching**: You MUST use the 'getDroughtAndFloodRiskData' tool to get real-world data for the given coordinates. This tool provides REAL 30-year precipitation averages and current soil moisture.
+  2.  **Analysis Rules - Use ONLY real data, DO NOT make up values**:
+      - Drought Risk: Compare current vs 30-year average
+        * <50% of average precipitation + 'Dry' soil → HIGH risk
+        * 50-80% of average + 'Dry'/'Optimal' soil → MEDIUM risk
+        * >80% of average → LOW risk
+      - Flood Risk: 
+        * >150% of average precipitation + 'Wet' soil → HIGH risk
+        * 120-150% of average + 'Wet' soil → MEDIUM risk
+        * <120% of average → LOW risk
+  3.  **Output Generation**: Based ONLY on the REAL data fetched, provide a structured JSON response.
 
   **Location:**
   - Latitude: {{{latitude}}}
@@ -61,7 +67,7 @@ const analyzeDroughtAndFloodRiskPrompt = ai.definePrompt({
 });
 
 export async function analyzeDroughtAndFloodRisk(input: DroughtFloodRiskInput): Promise<DroughtFloodRiskOutput> {
-    const response = await executePromptWithFallback(analyzeDroughtAndFloodRiskPrompt, input);
+    const response = await executePromptWithFallback(analyzeDroughtAndFloodRiskPrompt, input, undefined, 'drought-flood');
     const textResponse = response.text;
     
     if (!textResponse) {

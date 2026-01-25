@@ -86,7 +86,7 @@ const analyzeChangePrompt = ai.definePrompt({
 });
 
 export async function analyzeChange(input: AnalyzeChangeInput): Promise<AnalyzeChangeOutput> {
-  const response = await executePromptWithFallback(analyzeChangePrompt, input);
+  const response = await executePromptWithFallback(analyzeChangePrompt, input, undefined, 'analyze-change');
   const textResponse = response.text;
 
   if (!textResponse) {

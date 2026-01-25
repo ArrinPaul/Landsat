@@ -5,7 +5,9 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { getSoilAndWeatherData, getMoistureLevel } from '@/services/open-meteo';
 import { getCache, setCache } from '@/ai/cache';
-import { verbose } from 'genkit';
+
+// Simple logging function (verbose is not exported from genkit)
+const verbose = (msg: string) => process.env.NODE_ENV === 'development' && console.log(msg);
 
 export const getSoilMoisture = ai.defineTool(
   {

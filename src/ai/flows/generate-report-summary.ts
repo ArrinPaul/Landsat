@@ -51,7 +51,7 @@ The tone should be objective, scientific, and clear.
 
 export async function generateReportSummary(input: ReportSummaryInput): Promise<ReportSummaryOutput> {
     try {
-      const response = await executePromptWithFallback(generateReportSummaryPrompt, input);
+      const response = await executePromptWithFallback(generateReportSummaryPrompt, input, undefined, 'report-summary');
       const textResponse = response.text;
       if (!textResponse) {
           throw new Error("The AI model did not return a summary report. Please try again.");
