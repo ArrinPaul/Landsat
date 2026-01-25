@@ -1,4 +1,5 @@
-
+import { runStartupChecks } from '@/ai/startup-checks';
+runStartupChecks();
 
 import '@/ai/flows/generate-report-summary.ts';
 import '@/ai/flows/generate-insights.ts';

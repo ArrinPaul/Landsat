@@ -28,8 +28,8 @@ const DEFAULT_RETRY_CONFIG: RetryConfig = {
 const DEFAULT_MODELS = [
   MODELS.fast,      // gemini-2.0-flash (fastest, cheapest)
   MODELS.primary,   // gemini-2.0-flash
-  MODELS.fallback,  // gemini-1.5-flash
-  MODELS.pro,       // gemini-1.5-pro (most capable)
+  MODELS.fallback,  // gemini-2.0-flash-exp
+  MODELS.pro,       // gemini-2.0-flash-exp (most capable)
 ];
 
 /**
@@ -102,18 +102,20 @@ function calculateDelay(baseDelay: number, attempt: number, useExponentialBackof
  * @param promptFn - The prompt function to execute (from ai.definePrompt)
  * @param input - The input to pass to the prompt
  * @param config - Optional configuration for fallback and retry behavior
+ * @param flowHint - Optional hint about the expected output schema
  * @returns The prompt response
  */
 export async function executePromptWithFallback<TInput, TOutput>(
   promptFn: (input: TInput) => Promise<{ text: string }>,
   input: TInput,
-  config?: FallbackConfig
+  config?: FallbackConfig,
+  flowHint?: string
 ): Promise<{ text: string }> {
   const retryConfig = { ...DEFAULT_RETRY_CONFIG, ...config?.retryConfig };
   
   // FIRST: Try Google Gemini (but with AGGRESSIVE rate limit protection)
   let lastError: Error | null = null;
-  console.log('[AI] Attempting Gemini (gemini-1.5-flash - with rate limit protection)...');
+  console.log('[AI] Attempting Gemini (gemini-2.0-flash - with rate limit protection)...');
   
   // ONLY 1 ATTEMPT for Gemini to prevent hitting daily limits!
   const MAX_GEMINI_ATTEMPTS = 1; // Prevents overuse and billing charges
@@ -140,14 +142,162 @@ export async function executePromptWithFallback<TInput, TOutput>(
     }
   }
 
-  // SECOND: Try free providers as backup (Groq → HuggingFace ONLY)
+  // SECOND: Try free providers as backup (Groq → Mistral → HuggingFace)
   try {
-    console.log('[AI] Attempting 100% FREE providers (Groq → HuggingFace)...');
+    console.log('[AI] Attempting FREE providers (Groq → Mistral → HuggingFace)...');
     
-    // Generate a simple prompt text from the input
-    const promptText = typeof input === 'string' 
-      ? input 
-      : JSON.stringify(input);
+    // Construct a proper prompt for the free providers based on flowHint or input structure
+    let promptText: string;
+    
+    if (typeof input === 'string') {
+      promptText = input;
+    } else {
+      const inputData = input as Record<string, any>;
+      const currentDate = new Date().toISOString();
+      
+      // Detect flow type from flowHint or input structure
+      let detectedFlow = flowHint;
+      
+      if (!detectedFlow) {
+        // Auto-detect based on input fields
+        if ('locationDescription' in inputData) detectedFlow = 'coordinates';
+        else if ('metricName' in inputData && 'firstValue' in inputData) detectedFlow = 'insights';
+        else if ('cropType' in inputData && 'soilType' in inputData) detectedFlow = 'crop-advice';
+        else if ('season' in inputData && 'climate' in inputData) detectedFlow = 'suggest-crop';
+        else if ('cropName' in inputData && 'currentStage' in inputData) detectedFlow = 'irrigation';
+        else if ('latitude' in inputData && 'longitude' in inputData) detectedFlow = 'satellite';
+        else detectedFlow = 'generic';
+      }
+      
+      const lat = inputData.latitude;
+      const lon = inputData.longitude;
+      
+      switch (detectedFlow) {
+        case 'coordinates':
+          promptText = `You are a geography expert. Given a location description, suggest relevant latitude and longitude coordinates.
+
+Location Description: ${inputData.locationDescription}
+
+IMPORTANT: You MUST respond with ONLY a valid JSON object. No other text, no explanations, no markdown.
+Your response must be exactly in this format:
+{"latitude": <number>, "longitude": <number>, "confidence": <number between 0 and 1>}
+
+Example: {"latitude": 48.8566, "longitude": 2.3522, "confidence": 0.95}
+
+Now provide the JSON:`;
+          break;
+          
+        case 'insights':
+          promptText = `You are an environmental data analyst. Given metric data, provide a concise one-sentence insight.
+
+Metric: ${inputData.metricName}
+First Value: ${inputData.firstValue}
+Last Value: ${inputData.lastValue}
+Percentage Change: ${inputData.percentageChange}%
+Data Points: ${inputData.numberOfValidPoints}
+
+IMPORTANT: You MUST respond with ONLY a valid JSON object. No other text, no explanations, no markdown.
+Your response must be exactly in this format:
+{"insight": "<one clear sentence about the trend or what it means>"}
+
+Example: {"insight": "The 42% increase in NDVI indicates significant vegetation growth in the region."}
+
+Now provide the JSON:`;
+          break;
+          
+        case 'satellite':
+          const futureTime = new Date(Date.now() + (2 + Math.random() * 10) * 60 * 60 * 1000).toISOString();
+          promptText = `You are a satellite tracking expert. Predict the next satellite pass for these coordinates.
+
+Current date: ${currentDate}
+Latitude: ${lat}
+Longitude: ${lon}
+
+IMPORTANT: You MUST respond with ONLY a valid JSON object. No other text, no explanations, no markdown.
+Your response must be exactly in this format:
+{"passTime": "<ISO 8601 UTC timestamp>", "satelliteName": "<satellite name>", "status": "Active", "speed": <7.5-7.8>}
+
+Example: {"passTime": "${futureTime}", "satelliteName": "Landsat 9", "status": "Active", "speed": 7.59}
+
+Now provide the JSON:`;
+          break;
+          
+        case 'weather':
+          promptText = `You are a weather service. Provide a detailed weather report for these coordinates.
+
+Current date: ${currentDate}
+Latitude: ${lat}
+Longitude: ${lon}
+
+IMPORTANT: You MUST respond with ONLY a valid JSON object. No other text, no explanations, no markdown.
+Your response must include current weather and 4-hour forecast with this format:
+{
+  "current": {"temperature": <number>, "conditions": "<text>", "humidity": <0-100>, "windSpeed": <number>, "iconName": "Sun"},
+  "forecast": [
+    {"time": "10:00 AM", "temperature": <number>, "conditions": "<text>", "iconName": "Sun"},
+    {"time": "1:00 PM", "temperature": <number>, "conditions": "<text>", "iconName": "Cloud"},
+    {"time": "4:00 PM", "temperature": <number>, "conditions": "<text>", "iconName": "CloudRain"},
+    {"time": "7:00 PM", "temperature": <number>, "conditions": "<text>", "iconName": "Moon"}
+  ],
+  "summary": "<one sentence>"
+}
+
+Now provide the JSON:`;
+          break;
+          
+        case 'suggest-crop':
+          promptText = `You are an agricultural expert. Suggest the best crops for these conditions.
+
+Season: ${inputData.season || 'Unknown'}
+Climate: ${inputData.climate || 'Unknown'}
+Soil Type: ${inputData.soilType || 'Unknown'}
+
+IMPORTANT: You MUST respond with ONLY a valid JSON object. No other text.
+Your response must be exactly in this format:
+{"suggestedCrops": ["<crop1>", "<crop2>", "<crop3>"], "reasoning": "<brief explanation>"}
+
+Now provide the JSON:`;
+          break;
+          
+        case 'crop-advice':
+          promptText = `You are an agricultural advisor. Provide advanced advice for this crop.
+
+Crop: ${inputData.cropType || 'Unknown'}
+Soil: ${inputData.soilType || 'Unknown'}
+
+IMPORTANT: You MUST respond with ONLY a valid JSON object. No other text.
+Your response must include advice on fertilizers, pest control, irrigation, and best practices.
+Format: {"advice": {"fertilizers": "<text>", "pestControl": "<text>", "irrigation": "<text>", "bestPractices": "<text>"}}
+
+Now provide the JSON:`;
+          break;
+          
+        case 'irrigation':
+          promptText = `You are an irrigation specialist. Create an irrigation schedule for this crop.
+
+Crop: ${inputData.cropName || 'Unknown'}
+Current Stage: ${inputData.currentStage || 'Unknown'}
+
+IMPORTANT: You MUST respond with ONLY a valid JSON object. No other text.
+Format: {"schedule": [{"day": "<day>", "waterAmount": <liters>, "notes": "<text>"}], "recommendations": "<text>"}
+
+Now provide the JSON:`;
+          break;
+          
+        default:
+          const inputDescription = Object.entries(inputData)
+            .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
+            .join('\n');
+          promptText = `Analyze this data and provide relevant output in JSON format.
+
+Input:
+${inputDescription}
+
+IMPORTANT: You MUST respond with ONLY a valid JSON object. No other text, no explanations.
+
+Now provide the JSON:`;
+      }
+    }
     
     // Try multi-provider fallback
     const multiProviderResponse = await generateWithMultiProvider({ prompt: promptText });

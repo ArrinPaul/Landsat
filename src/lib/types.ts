@@ -1,6 +1,7 @@
 
 import type { DateRange } from "react-day-picker";
 import { z } from "zod";
+import { AnalyzeChangeOutput } from "@/ai/flows/analyze-change";
 
 export const ChatMessageSchema = z.object({
   role: z.enum(['user', 'model']),
@@ -168,6 +169,7 @@ export interface AnalysisResult {
     timeSeries: TimeSeriesData;
     landCover: LandCoverAnalysis;
     historicalWeather: HistoricalDataPoint[];
+    changeAnalysis?: AnalyzeChangeOutput; // Add this line
 }
 
 // New type for Drought & Flood Risk Analysis

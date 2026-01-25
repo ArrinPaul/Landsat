@@ -22,7 +22,7 @@ export interface GenerationResponse {
 // GROQ Provider (Recommended - Fastest, Most Generous Free Tier)
 // Free Tier: 14,400 requests/day (~600/hour)
 // Speed: 100+ tokens/second
-// Models: mixtral-8x7b, llama2-70b, gemma-7b
+// Models: llama-3.1-70b-versatile, llama-3.2-3b, gemma2-9b
 // ============================================================================
 
 export async function generateWithGroq(
@@ -36,7 +36,7 @@ export async function generateWithGroq(
 
   const client = new Groq({ apiKey });
   
-  const model = config?.model || 'mixtral-8x7b-32768'; // Groq's best free model
+  const model = config?.model || 'llama-3.3-70b-versatile';
   
   const response = await client.chat.completions.create({
     messages: [{ role: 'user', content: prompt }],
@@ -58,7 +58,7 @@ export async function generateWithGroq(
 // HuggingFace Provider (Free, Good Limits)
 // Free Tier: Varies by model, ~30k requests/month (generous)
 // Speed: Variable
-// Models: mistral-7b, neural-chat, zephyr, etc.
+// Using the HuggingFace Serverless Inference API
 // ============================================================================
 
 export async function generateWithHuggingFace(
@@ -70,17 +70,23 @@ export async function generateWithHuggingFace(
     throw new Error('HUGGINGFACE_API_KEY not found in environment');
   }
 
-  const model = config?.model || 'mistralai/Mistral-7B-Instruct-v0.1';
+  // Use a model that supports text-generation on HF Inference API
+  const model = config?.model || 'mistralai/Mistral-7B-Instruct-v0.3';
   
+  // Use the serverless inference endpoint with text-generation-inference
   const response = await fetch(
     `https://api-inference.huggingface.co/models/${model}`,
     {
-      headers: { Authorization: `Bearer ${apiKey}` },
+      headers: { 
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
       method: 'POST',
       body: JSON.stringify({
-        inputs: prompt,
+        inputs: `<s>[INST] ${prompt} [/INST]`,
         parameters: {
           max_new_tokens: config?.maxTokens || 1024,
+          return_full_text: false,
         },
       }),
     }
@@ -92,7 +98,7 @@ export async function generateWithHuggingFace(
   }
 
   const result: any = await response.json();
-  const text = result[0]?.generated_text || '';
+  const text = Array.isArray(result) ? result[0]?.generated_text : result?.generated_text || '';
 
   if (!text) {
     throw new Error('No response from HuggingFace');
@@ -159,8 +165,8 @@ export enum AIProvider {
 
 export const PROVIDER_ORDER: AIProvider[] = [
   AIProvider.GROQ, // PRIMARY FREE: Fastest, most generous, 100% free forever (14.4k/day)
-  AIProvider.HUGGINGFACE, // SECONDARY: Reliable backup, 100% free forever (~30k/month)
-  // AIProvider.MISTRAL, // DISABLED - User concerned about potential billing
+  AIProvider.MISTRAL, // SECONDARY: Good quality, reliable API
+  AIProvider.HUGGINGFACE, // TERTIARY: Backup (API may be unstable)
 ];
 
 const providerMap: Record<AIProvider, typeof generateWithGroq> = {

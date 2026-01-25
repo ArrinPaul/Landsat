@@ -54,8 +54,37 @@ const getWeatherReportPrompt = ai.definePrompt({
 `,
 });
 
+import { getCache, setCache, CacheResult } from '@/ai/cache';
+
+// Simple logging function
+const verbose = (msg: string) => process.env.NODE_ENV === 'development' && console.log(msg);
+
+// ... (imports and schema definitions remain the same)
+
 export async function getWeatherReport(input: GetWeatherReportInput): Promise<GetWeatherReportOutput> {
-    const response = await executePromptWithFallback(getWeatherReportPrompt, input);
+    const cacheKey = `weather-report-${input.latitude}-${input.longitude}`;
+    const cacheResult = getCache<GetWeatherReportOutput>(cacheKey);
+
+    if (cacheResult.state === 'hit') {
+      return cacheResult.data;
+    }
+
+    if (cacheResult.state === 'stale') {
+      verbose(`[STALE DATA] Using stale weather report for ${input.latitude}, ${input.longitude}`);
+      // Non-blocking call to refresh the cache in the background
+      executePromptWithFallback(getWeatherReportPrompt, input, undefined, 'weather')
+        .then(response => {
+            const textResponse = response.text;
+            if (textResponse) {
+                const parsedJson = safeParseAIJson(textResponse, (data) => GetWeatherReportOutputSchema.parse(data));
+                setCache(cacheKey, parsedJson);
+            }
+        })
+        .catch(err => console.error("Failed to refresh stale cache:", err));
+      return cacheResult.data;
+    }
+
+    const response = await executePromptWithFallback(getWeatherReportPrompt, input, undefined, 'weather');
     const textResponse = response.text;
 
     if (!textResponse) {
@@ -64,6 +93,7 @@ export async function getWeatherReport(input: GetWeatherReportInput): Promise<Ge
 
     try {
       const parsedJson = safeParseAIJson(textResponse, (data) => GetWeatherReportOutputSchema.parse(data));
+      setCache(cacheKey, parsedJson);
       return parsedJson;
     } catch (e) {
       console.error("Failed to parse JSON response from AI:", textResponse);

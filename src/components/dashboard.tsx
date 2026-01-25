@@ -19,6 +19,8 @@ import { Map, AlertTriangle, Loader2 } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
 import { Chatbot } from "./chatbot";
 import { MonitoringCard } from "./monitoring-card";
+import { ChangeInsightCard } from "./change-insight-card"; // New import
+import { Progress } from "@/components/ui/progress"; // New import
 
 type ComputationStatus = 'idle' | 'computing' | 'polling' | 'completed' | 'error';
 
@@ -36,6 +38,7 @@ export function Dashboard() {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [errorState, setErrorState] = useState<string | null>(null);
   const [computationStatus, setComputationStatus] = useState<ComputationStatus>('idle');
+  const [progress, setProgress] = useState(0);
   const [selectedMetric, setSelectedMetric] = useState<string>("NDVI");
   const [nextPass, setNextPass] = useState<SatellitePassData | null>(null);
   const [isFetchingPass, setIsFetchingPass] = useState(false);
@@ -45,6 +48,7 @@ export function Dashboard() {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if ("Notification" in window) {
@@ -56,33 +60,56 @@ export function Dashboard() {
   
   useEffect(() => {
     return () => {
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
-      }
+      if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+      if (pollingTimeoutRef.current) clearTimeout(pollingTimeoutRef.current);
     };
   }, []);
 
-  const pollForResults = useCallback((jobId: string) => {
-    if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
-    }
+  const pollForResults = useCallback(async (jobId: string, currentLat: string, currentLon: string, currentLocationDesc: string, currentDateRangeFrom: Date, currentDateRangeTo: Date) => {
+    if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+    if (pollingTimeoutRef.current) clearTimeout(pollingTimeoutRef.current);
+
+    const pollStartTime = Date.now();
+    const POLLING_TIMEOUT = 120000; // 2 minutes
+
+    pollingTimeoutRef.current = setTimeout(() => {
+        if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+        setErrorState("Analysis is taking longer than expected. Please try again later.");
+        setComputationStatus('error');
+        toast({ title: "Polling Timeout", description: "Did not get a result within 2 minutes.", variant: "destructive" });
+    }, POLLING_TIMEOUT);
 
     pollingIntervalRef.current = setInterval(async () => {
-      const response = await getMetricsResultAction(jobId);
+      const elapsedTime = Date.now() - pollStartTime;
+      setProgress(Math.min(95, (elapsedTime / POLLING_TIMEOUT) * 100)); // Cap progress at 95% until completion
+
+      const response = await getMetricsResultAction(
+        jobId,
+        parseFloat(currentLat),
+        parseFloat(currentLon),
+        currentLocationDesc,
+        formatISO(currentDateRangeFrom, { representation: 'date' }),
+        formatISO(currentDateRangeTo, { representation: 'date' })
+      );
+
       if (response.data) {
         if (response.data.status === 'completed') {
           if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+          if (pollingTimeoutRef.current) clearTimeout(pollingTimeoutRef.current);
+          setProgress(100);
           setAnalysisResult(response.data.result || null);
           setComputationStatus('completed');
           toast({ title: t('dashboard.compute.success.title'), description: t('dashboard.compute.success.description') });
         } else if (response.data.status === 'error') {
           if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+          if (pollingTimeoutRef.current) clearTimeout(pollingTimeoutRef.current);
           setErrorState(response.data.error || 'An unknown error occurred.');
           setComputationStatus('error');
           toast({ title: t('dashboard.error.compute.title'), description: response.data.error, variant: "destructive" });
         }
       } else if (response.error) {
          if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+         if (pollingTimeoutRef.current) clearTimeout(pollingTimeoutRef.current);
          setErrorState(response.error);
          setComputationStatus('error');
       }
@@ -101,6 +128,7 @@ export function Dashboard() {
     }
 
     setComputationStatus('computing');
+    setProgress(5);
     setAnalysisResult(null);
     setErrorState(null);
     setNextPass(null);
@@ -112,6 +140,8 @@ export function Dashboard() {
     // Don't await ancillary data, let it fetch in the background
     predictSatellitePassAction({ latitude: parseFloat(lat), longitude: parseFloat(lon) }).then(res => setNextPass(res.data));
     getWeatherReportAction({ latitude: parseFloat(lat), longitude: parseFloat(lon) }).then(res => setWeather(res.data));
+    
+    setProgress(15);
 
     const result = await startMetricsComputationAction({
         latitude: parseFloat(lat),
@@ -126,7 +156,8 @@ export function Dashboard() {
         toast({ title: "Failed to Start Computation", description: result.error || t('dashboard.error.compute.description'), variant: "destructive" });
     } else {
         setComputationStatus('polling');
-        pollForResults(result.data.jobId);
+        setProgress(25);
+        pollForResults(result.data.jobId, lat, lon, locationDesc, dateRange.from, dateRange.to);
     }
 
   }, [lat, lon, locationDesc, dateRange, toast, t, pollForResults]);
@@ -147,14 +178,19 @@ export function Dashboard() {
 
   const renderContent = () => {
       if (isProcessing) {
+          const messages = {
+              computing: "Connecting to satellite data stream...",
+              polling: "Analyzing environmental metrics...",
+          };
           return (
             <Card>
                 <CardContent className="pt-6">
                     <div className="flex flex-col items-center justify-center h-48 gap-4">
                         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                        <p className="text-muted-foreground">{computationStatus === 'computing' ? 'Sending request...' : 'Analysis in progress, fetching results...'}</p>
+                        <p className="text-muted-foreground">{messages[computationStatus]}</p>
+                        <Progress value={progress} className="w-3/4" />
                     </div>
-                </CardContent>
+                </CardContent>.
             </Card>
           );
       }
@@ -192,6 +228,9 @@ export function Dashboard() {
       if (computationStatus === 'completed' && analysisResult) {
           return (
             <>
+              {analysisResult.changeAnalysis && (
+                <ChangeInsightCard changeAnalysis={analysisResult.changeAnalysis} />
+              )}
               <div className="grid gap-6 lg:grid-cols-1 xl:grid-cols-4">
                 <div className="xl:col-span-3 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   <SummaryCards 
@@ -255,5 +294,6 @@ export function Dashboard() {
     </div>
   );
 }
+
 
     

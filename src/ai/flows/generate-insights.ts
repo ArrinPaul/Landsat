@@ -46,7 +46,7 @@ const generateDataInsightsPrompt = ai.definePrompt({
 });
 
 export async function generateDataInsights(input: GenerateDataInsightsInput): Promise<GenerateDataInsightsOutput> {
-    const response = await executePromptWithFallback(generateDataInsightsPrompt, input);
+    const response = await executePromptWithFallback(generateDataInsightsPrompt, input, undefined, 'insights');
     const textResponse = response.text;
     
     if (!textResponse) {

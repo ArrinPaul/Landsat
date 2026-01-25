@@ -54,7 +54,7 @@ The confidence score should be between 0 and 1, indicating the accuracy of the s
 });
 
 export async function suggestCoordinates(input: SuggestCoordinatesInput): Promise<SuggestCoordinatesOutput> {
-    const response = await executePromptWithFallback(suggestCoordinatesPrompt, input);
+    const response = await executePromptWithFallback(suggestCoordinatesPrompt, input, undefined, 'coordinates');
     const textResponse = response.text;
 
     if (!textResponse) {

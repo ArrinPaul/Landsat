@@ -42,8 +42,37 @@ const predictSatellitePassPrompt = ai.definePrompt({
 `,
 });
 
+import { getCache, setCache, CacheResult } from '@/ai/cache';
+
+// Simple logging function
+const verbose = (msg: string) => process.env.NODE_ENV === 'development' && console.log(msg);
+
+// ... (imports and schema definitions remain the same)
+
 export async function predictSatellitePass(input: PredictSatellitePassInput): Promise<PredictSatellitePassOutput> {
-    const response = await executePromptWithFallback(predictSatellitePassPrompt, input);
+    const cacheKey = `satellite-pass-${input.latitude}-${input.longitude}`;
+    const cacheResult = getCache<PredictSatellitePassOutput>(cacheKey);
+
+    if (cacheResult.state === 'hit') {
+      return cacheResult.data;
+    }
+    
+    if (cacheResult.state === 'stale') {
+        verbose(`[STALE DATA] Using stale satellite pass data for ${input.latitude}, ${input.longitude}`);
+        // Non-blocking call to refresh the cache in the background
+        executePromptWithFallback(predictSatellitePassPrompt, input, undefined, 'satellite')
+            .then(response => {
+                const textResponse = response.text;
+                if (textResponse) {
+                    const parsedJson = safeParseAIJson(textResponse, (data) => PredictSatellitePassOutputSchema.parse(data));
+                    setCache(cacheKey, parsedJson);
+                }
+            })
+            .catch(err => console.error("Failed to refresh stale cache:", err));
+        return cacheResult.data;
+    }
+
+    const response = await executePromptWithFallback(predictSatellitePassPrompt, input, undefined, 'satellite');
     const textResponse = response.text;
 
     if (!textResponse) {
@@ -52,6 +81,7 @@ export async function predictSatellitePass(input: PredictSatellitePassInput): Pr
 
     try {
       const parsedJson = safeParseAIJson(textResponse, (data) => PredictSatellitePassOutputSchema.parse(data));
+      setCache(cacheKey, parsedJson);
       return parsedJson;
     } catch (e) {
       console.error("Failed to parse JSON response from AI:", textResponse);

@@ -1,12 +1,11 @@
 
 'use server';
 
-/**
- * @fileOverview An AI tool to get the soil moisture level for a given location using a real-time API.
- */
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { getSoilAndWeatherData, getMoistureLevel } from '@/services/open-meteo';
+import { getCache, setCache } from '@/ai/cache';
+import { verbose } from 'genkit';
 
 export const getSoilMoisture = ai.defineTool(
   {
@@ -21,6 +20,23 @@ export const getSoilMoisture = ai.defineTool(
     }),
   },
   async ({ latitude, longitude }) => {
+    const cacheKey = `soil-moisture-${latitude}-${longitude}`;
+    const cacheResult = getCache<{ moistureLevel: 'Dry' | 'Optimal' | 'Wet' }>(cacheKey);
+
+    if (cacheResult.state === 'hit') {
+      return cacheResult.data;
+    }
+    
+    if (cacheResult.state === 'stale') {
+      verbose(`[STALE DATA] Using stale soil moisture data for ${latitude}, ${longitude}`);
+      // Non-blocking call to refresh the cache in the background
+      getSoilAndWeatherData(latitude, longitude).then(data => {
+        const moisture = getMoistureLevel(data.current.soil_moisture_0_to_1cm);
+        setCache(cacheKey, { moistureLevel: moisture });
+      }).catch(err => console.error("Failed to refresh stale cache:", err));
+      return cacheResult.data;
+    }
+
     try {
       // Fetch real data from the Open-Meteo service
       const data = await getSoilAndWeatherData(latitude, longitude);
@@ -28,7 +44,10 @@ export const getSoilMoisture = ai.defineTool(
       // Use the helper function to determine the moisture level
       const moisture = getMoistureLevel(data.current.soil_moisture_0_to_1cm);
       
-      return { moistureLevel: moisture };
+      const result = { moistureLevel: moisture };
+      setCache(cacheKey, result);
+
+      return result;
 
     } catch (error) {
         console.error("Error in getSoilMoisture tool:", error);
