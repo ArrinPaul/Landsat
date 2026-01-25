@@ -1,4 +1,4 @@
-
+'use server';
 
 /**
  * @fileOverview A flow for analyzing environmental changes based on computed metrics.
@@ -12,7 +12,7 @@ import { z } from 'genkit';
 import { executePromptWithFallback, safeParseAIJson } from '@/ai/ai-utils';
 
 // Define the Change Classification categories as per ROADMAP.md
-export const ChangeClassificationSchema = z.enum([
+const ChangeClassificationSchema = z.enum([
   'Normal',
   'Transitional',
   'Concerning',
