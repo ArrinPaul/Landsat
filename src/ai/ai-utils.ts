@@ -402,6 +402,20 @@ Your response must be exactly in this format:
 Now provide the JSON:`;
           break;
 
+        case 'chatbot':
+          const messages = inputData.messages as any[];
+          const historyText = messages.map(m => `${m.role}: ${m.content}`).join('\n');
+          promptText = `You are Stark, the friendly AI guide for the Earth Insights Dashboard. 
+Your personality is curious, encouraging, and enthusiastic about data and space.
+
+Conversation History:
+${historyText}
+
+${lat ? `Location context: Latitude ${lat}, Longitude ${lon}.` : ''}
+
+Respond to the user's last message in a helpful and concise way. Do NOT return JSON. Return ONLY the plain text of your response.`;
+          break;
+
         case 'analyze-change':
           promptText = `You are an environmental change analyst. Analyze these environmental metrics for changes.
 
@@ -443,7 +457,9 @@ Now provide the JSON:`;
     console.log(`[AI] ✓ Success with ${multiProviderResponse.provider}: ${multiProviderResponse.model}`);
     return { text: multiProviderResponse.text };
   } catch (multiProviderError: any) {
-    console.warn(`[AI] All free providers failed: ${multiProviderError?.message}`);
+    const errorMsg = multiProviderError?.message || 'Unknown fallback error';
+    console.warn(`[AI] All free providers failed: ${errorMsg}`);
+    throw new Error(`AI Service Unavailable: Both Gemini and fallback providers (Groq/Mistral/HF) failed. Please check your API keys. Last error: ${errorMsg}`);
   }
   
   throw lastError || new Error('All AI providers exhausted (Gemini failed, free providers unavailable)');

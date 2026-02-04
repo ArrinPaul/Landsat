@@ -59,7 +59,7 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
   
   const [tableData, setTableData] = useState<TableRowData[]>(() => {
     const timeSeriesMetrics: TableRowData[] = Object.entries(analysisResult.timeSeries).map(([name, ts]) => {
-      const validPoints = ts.filter(d => d.value !== null && !isNaN(d.value));
+      const validPoints = ts.filter((d: any) => d.value !== null && !isNaN(d.value));
       const firstValue = validPoints.length > 0 ? validPoints[0].value : null;
       const lastValue = validPoints.length > 0 ? validPoints[validPoints.length - 1].value : null;
       let percentageChange: number | null = null;
@@ -83,6 +83,16 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
       { name: 'Other', key: 'other' },
     ].map(item => {
         const data = analysisResult.landCover[item.key as keyof typeof analysisResult.landCover];
+        if (typeof data === 'string') {
+            return {
+                name: item.name,
+                type: 'landcover',
+                firstValue: null,
+                lastValue: null,
+                percentageChange: null,
+                n: null,
+            };
+        }
         return {
             name: item.name,
             type: 'landcover',
@@ -148,8 +158,8 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
 
       if (result.error) {
         toast({ title: t('predict.error.aiError.title'), description: result.error, variant: "destructive" });
-      } else if (result.data) {
-        setTableData(prevData => prevData.map(m => m.name === metricName ? { ...m, insight: result.data.insight } : m));
+      } else if (result.data && result.data.insight) {
+        setTableData(prevData => prevData.map(m => m.name === metricName ? { ...m, insight: result.data!.insight } : m));
       }
     }
     setInsightLoading(null);

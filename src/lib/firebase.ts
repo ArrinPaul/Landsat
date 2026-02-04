@@ -1,9 +1,8 @@
-
-import * as admin from 'firebase-admin';
+import admin from 'firebase-admin';
 
 let db: admin.firestore.Firestore;
 
-if (admin.apps.length === 0) {
+if (!admin.apps || admin.apps.length === 0) {
     const creds = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
     if (!creds) {
         throw new Error("GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable not set. Please provide service account credentials in your .env file.");

@@ -63,7 +63,7 @@ export async function chatbot(input: ChatbotInput): Promise<ChatbotOutput> {
       // Use the fallback mechanism for better resilience
       const response = await executePromptWithFallback(chatbotPrompt, input, {
         retryConfig: { maxRetries: 3, retryDelayMs: 1000 }
-      });
+      }, 'chatbot');
       
       const textResponse = response.text;
       

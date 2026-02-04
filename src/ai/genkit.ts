@@ -2,14 +2,20 @@ import {genkit, z} from 'genkit';
 import {googleAI} from '@genkit-ai/google-genai';
 import { generateWithFallback as generateWithMultiProvider, getProviderStatus, getProviderLimits, AIProvider } from './providers';
 
+// Ensure Genkit can find the API key by mapping GEMINI_API_KEY to GOOGLE_GENAI_API_KEY if needed
+if (process.env.GEMINI_API_KEY && !process.env.GOOGLE_GENAI_API_KEY) {
+  process.env.GOOGLE_GENAI_API_KEY = process.env.GEMINI_API_KEY;
+}
+
 // Log available providers on startup
 const providerStatus = getProviderStatus();
 const availableProviders = Object.entries(providerStatus)
   .filter(([_, available]) => available)
   .map(([provider]) => provider);
 
-console.log('[AI] Available providers:', availableProviders.length > 0 ? availableProviders : 'NONE - Check .env file');
-console.log('[AI] Provider limits:', getProviderLimits());
+console.log('[AI] Primary Model Status:', (process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY) ? 'READY (Gemini)' : 'MISSING (Gemini)');
+console.log('[AI] Fallback Providers:', availableProviders.length > 0 ? availableProviders.join(', ') : 'NONE - Check .env file');
+console.log('[AI] Provider Limits:', JSON.stringify(getProviderLimits(), null, 2));
 
 // Primary model configuration - using stable Gemini models
 // gemini-2.0-flash is the current recommended model (best for cost/performance balance)

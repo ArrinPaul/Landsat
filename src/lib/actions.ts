@@ -51,9 +51,17 @@ async function handleAction<T, U>(action: (input: T) => Promise<U>, input: T): P
         return { data: null, error: errorMessage };
     }
 
-    // Explicitly check for credentials and provide a clear error message.
-    if (!process.env.GEMINI_API_KEY && !process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
-        const errorMessage = "AI features are disabled. No GEMINI_API_KEY or GOOGLE_APPLICATION_CREDENTIALS_JSON found in environment variables. Please add your credentials to the .env file.";
+    // Explicitly check for any available credentials to enable AI features.
+    const hasAnyAIKey = !!(
+        process.env.GEMINI_API_KEY || 
+        process.env.GOOGLE_GENAI_API_KEY || 
+        process.env.GROQ_API_KEY || 
+        process.env.MISTRAL_API_KEY || 
+        process.env.HUGGINGFACE_API_KEY
+    );
+
+    if (!hasAnyAIKey && !process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
+        const errorMessage = "All AI and Satellite services are disabled. No valid API keys (Gemini, Groq, Mistral, HF) or Earth Engine credentials found in environment. Please check your configuration.";
         console.error(errorMessage);
         return { data: null, error: errorMessage };
     }
@@ -140,7 +148,7 @@ export async function predictSoilMoistureAction(input: { latitude: number; longi
 }
 
 export async function predictCropYieldAction(input: { latitude: number; longitude: number; cropType?: string; }) {
-    return handleAction(predictCropYield, input);
+    return handleAction(predictCropYield, input as any);
 }
 
 export async function suggestCropAction(input: SuggestCropInput): Promise<{ data: SuggestCropOutput | null; error: string | null; }> {

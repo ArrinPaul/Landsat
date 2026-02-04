@@ -14,10 +14,43 @@ import { Avatar, AvatarFallback } from './ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/hooks/use-language';
 
-type AudioState = 'idle' | 'playing' | 'paused';
+type AudioState = 'idle' | 'generating' | 'playing' | 'paused';
 interface MessageWithAudio extends ChatMessage {
     audioDataUri?: string;
     audioState?: AudioState;
+}
+
+// Add types for Web Speech API
+interface SpeechRecognitionEvent extends Event {
+  results: {
+    [index: number]: {
+      [index: number]: {
+        transcript: string;
+      };
+    };
+  };
+}
+
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  onresult: (event: SpeechRecognitionEvent) => void;
+  onerror: (event: any) => void;
+  onend: () => void;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition: {
+      new (): SpeechRecognition;
+    };
+    webkitSpeechRecognition: {
+      new (): SpeechRecognition;
+    };
+  }
 }
 
 export function Chatbot({ lat, lon }: { lat?: string, lon?: string }) {
@@ -36,14 +69,14 @@ export function Chatbot({ lat, lon }: { lat?: string, lon?: string }) {
   
   // Initialize Speech Recognition
   useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (SpeechRecognition) {
-        const recognition = new SpeechRecognition();
+    const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognitionClass) {
+        const recognition = new SpeechRecognitionClass();
         recognition.continuous = false;
         recognition.interimResults = false;
         recognition.lang = 'en-US';
 
-        recognition.onresult = (event: any) => {
+        recognition.onresult = (event: SpeechRecognitionEvent) => {
           const transcript = event.results[0][0].transcript;
           setInput(transcript);
           handleSend(transcript); 
@@ -104,18 +137,18 @@ export function Chatbot({ lat, lon }: { lat?: string, lon?: string }) {
     if (audioRef.current.src === message.audioDataUri && message.audioState === 'playing') {
       // Pause current audio
       audioRef.current.pause();
-      setMessages(prev => prev.map((m, i) => i === index ? { ...m, audioState: 'paused' } : m));
+      setMessages(prev => prev.map((m, i) => i === index ? { ...m, audioState: 'paused' as AudioState } : m));
     } else {
       // Stop any other audio that might be playing
       if (!audioRef.current.paused) {
           audioRef.current.pause();
       }
       // Reset all other message audio states to idle
-      const newMessages = messages.map((m, i) => {
+      const newMessages: MessageWithAudio[] = messages.map((m, i) => {
           if (i === index) {
-              return {...m, audioState: 'playing'};
+              return {...m, audioState: 'playing' as AudioState};
           }
-          return {...m, audioState: 'idle'};
+          return {...m, audioState: 'idle' as AudioState};
       });
       setMessages(newMessages);
       

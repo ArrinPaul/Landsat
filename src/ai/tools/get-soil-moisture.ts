@@ -44,7 +44,7 @@ export const getSoilMoisture = ai.defineTool(
       const data = await getSoilAndWeatherData(latitude, longitude);
       
       // Use the helper function to determine the moisture level
-      const moisture = getMoistureLevel(data.current.soil_moisture_0_to_1cm);
+      const moisture = getMoistureLevel(data.current.soil_moisture_0_to_1cm) as 'Dry' | 'Optimal' | 'Wet';
       
       const result = { moistureLevel: moisture };
       setCache(cacheKey, result);
@@ -54,7 +54,7 @@ export const getSoilMoisture = ai.defineTool(
     } catch (error) {
         console.error("Error in getSoilMoisture tool:", error);
         // Provide a fallback value in case of API failure to ensure the flow can continue.
-        return { moistureLevel: 'Optimal' };
+        return { moistureLevel: 'Optimal' as const };
     }
   }
 );

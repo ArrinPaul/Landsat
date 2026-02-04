@@ -23,8 +23,8 @@ function isValidIcon(name: string): name is keyof typeof LucideIcons {
 }
 
 const Icon = ({ name, ...props }: {name: string, [key: string]: any}) => {
-    const IconComponent = isValidIcon(name) ? LucideIcons[name] as React.ComponentType<any> : LucideIcons.CloudQuestion;
-    if (!IconComponent) return <LucideIcons.CloudQuestion {...props} />;
+    const IconComponent = isValidIcon(name) ? LucideIcons[name] as React.ComponentType<any> : LucideIcons.HelpCircle;
+    if (!IconComponent) return <LucideIcons.HelpCircle {...props} />;
     return <IconComponent {...props} />;
 }
 

@@ -34,7 +34,7 @@ export const getDroughtAndFloodRiskData = ai.defineTool(
 
       return { 
         averagePrecipitationMm: avgPrecipitation,
-        currentMoistureLevel: moisture 
+        currentMoistureLevel: moisture as 'Dry' | 'Optimal' | 'Wet'
       };
 
     } catch (error) {
@@ -42,7 +42,7 @@ export const getDroughtAndFloodRiskData = ai.defineTool(
         // Provide reasonable fallback values in case of API failure.
         return { 
             averagePrecipitationMm: 500, // A global average-ish fallback
-            currentMoistureLevel: 'Optimal' 
+            currentMoistureLevel: 'Optimal' as const
         };
     }
   }

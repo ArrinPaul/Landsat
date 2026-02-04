@@ -5,7 +5,6 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { getSoilAndWeatherData, getSoilTypeName } from '@/services/open-meteo';
 import { getCache, setCache } from '@/ai/cache';
-import { verbose } from 'genkit';
 
 export const getSoilType = ai.defineTool(
   {
@@ -28,7 +27,7 @@ export const getSoilType = ai.defineTool(
     }
     
     if (cacheResult.state === 'stale') {
-        verbose(`[STALE DATA] Using stale soil type data for ${latitude}, ${longitude}`);
+        console.log(`[STALE DATA] Using stale soil type data for ${latitude}, ${longitude}`);
         // Non-blocking call to refresh the cache in the background
         getSoilAndWeatherData(latitude, longitude).then(data => {
             const soilTypeIndex = data.hourly.soil_type_0_to_10cm[0];

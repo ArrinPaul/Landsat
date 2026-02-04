@@ -15,8 +15,14 @@ import { analyzeChange, AnalyzeChangeOutput } from '@/ai/flows/analyze-change';
 import { getHistoricalBaseline } from '@/ai/tools/get-historical-baseline';
 
 
-// In-memory store for job results. In a production system, use a database like Firestore or Redis.
-const jobResults = new Map<string, { status: 'pending' | 'completed' | 'error', data?: any, error?: string }>();
+// import { db } from '@/lib/firebase';
+
+// Firebase/Firestore disabled for now - uncomment when API is enabled
+// Use Firestore for job results to support serverless deployments.
+// const JOBS_COLLECTION = 'analysis_jobs';
+
+// Temporary in-memory storage for jobs (replace with Firestore later)
+const jobsStorage = new Map<string, any>();
 
 // Helper function to calculate percentage change
 function getPercentageChange(start: number, end: number): number {
@@ -111,7 +117,13 @@ export type JobResultOutput = z.infer<typeof JobResultOutputSchema>;
 // This function starts the computation and immediately returns a job ID.
 export async function startMetricsComputation(input: ComputeMetricsInput): Promise<StartComputationOutput> {
   const jobId = `job-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-  jobResults.set(jobId, { status: 'pending' });
+  
+  // Initialize job in memory (Firebase disabled)
+  jobsStorage.set(jobId, {
+    status: 'pending',
+    createdAt: new Date().toISOString(),
+    input: input
+  });
 
   // Do not await this. Let it run in the background.
   computeMetricsFlow(input, jobId);
@@ -121,21 +133,26 @@ export async function startMetricsComputation(input: ComputeMetricsInput): Promi
 
 // This function retrieves the result of a computation.
 export async function getMetricsResult(jobId: string): Promise<JobResultOutput> {
-    const job = jobResults.get(jobId);
+    try {
+        const job = jobsStorage.get(jobId);
 
-    if (!job) {
-        return { status: 'error', error: 'Job not found.' };
-    }
+        if (!job) {
+            return { status: 'error', error: 'Job not found.' };
+        }
 
-    if (job.status === 'completed') {
-        return { status: 'completed', result: job.data };
-    }
+        if (job.status === 'completed') {
+            return { status: 'completed', result: job.data };
+        }
 
-    if (job.status === 'error') {
-        return { status: 'error', error: job.error };
+        if (job.status === 'error') {
+            return { status: 'error', error: job.error };
+        }
+        
+        return { status: 'pending' };
+    } catch (error: any) {
+        console.error(`Error fetching job result for ${jobId}:`, error);
+        return { status: 'error', error: `Failed to fetch job status: ${error.message}` };
     }
-    
-    return { status: 'pending' };
 }
 
 
@@ -168,7 +185,7 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
                 .filterDate(input.startDate, input.endDate)
                 .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 75));
             
-            collection.size().evaluate((size, error) => {
+            collection.size().evaluate((size: any, error: any) => {
                 if (error) {
                     return reject(new Error(`Earth Engine Error during size evaluation: ${error}`));
                 }
@@ -178,7 +195,7 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
                 
                 const allBands = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B9', 'B11', 'B12'];
 
-                const withMetrics = collection.map(image => {
+                const withMetrics = collection.map((image: any) => {
                     const ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI');
                     const ndwi = image.normalizedDifference(['B3', 'B8']).rename('NDWI');
                     const ndbi = image.normalizedDifference(['B11', 'B8']).rename('NDBI');
@@ -186,7 +203,7 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
                     return image.addBands([ndvi, ndwi, ndbi, nbr]);
                 });
 
-                const chartData = withMetrics.select(['NDVI', 'NDWI', 'NDBI', 'NBR', ...allBands]).map(image => {
+                const chartData = withMetrics.select(['NDVI', 'NDWI', 'NDBI', 'NBR', ...allBands]).map((image: any) => {
                     const mean = image.reduceRegion({
                         reducer: ee.Reducer.mean(),
                         geometry: point,
@@ -216,14 +233,14 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
                     regionGeoJSON: areaOfInterest,
                 });
 
-                evaluateAll.evaluate((result: any, error) => {
+                evaluateAll.evaluate((result: any, error: any) => {
                     if (error) return reject(new Error(`Earth Engine Error during final evaluation: ${error}`));
                     if (!result || !result.timeSeries || !Array.isArray(result.timeSeries)) return reject(new Error("No time-series data returned from Earth Engine."));
                     if (!result.landCoverStart || !result.landCoverEnd) return reject(new Error("Could not compute land cover analysis. The area might be too small or lack valid imagery at the start/end dates."));
                     if (!result.regionGeoJSON) return reject(new Error("Could not evaluate the region geometry for map generation."));
 
                     const landCoverPalette = ['666666', '00FF00', 'FF0000', '0000FF'];
-                    const createClassifiedImage = (image: ee.Image) => {
+                    const createClassifiedImage = (image: any) => {
                         return ee.Image(0).where(image.select('NDWI').gt(0.0), 3).where(image.select('NDVI').gt(0.2).and(image.select('NDWI').lte(0.0)), 1).where(image.select('NDBI').gt(0.0).and(image.select('NDVI').lte(0.2)).and(image.select('NDWI').lte(0.0)), 2).rename('landcover').visualize({min: 0, max: 3, palette: landCoverPalette});
                     };
 
@@ -246,7 +263,7 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
     });
 }
 
-const calculateLandCoverStats = (image: ee.Image, areaOfInterest: ee.Geometry) => {
+const calculateLandCoverStats = (image: any, areaOfInterest: any) => {
     const ndvi = image.select('NDVI');
     const ndwi = image.select('NDWI');
     const ndbi = image.select('NDBI');
@@ -258,7 +275,7 @@ const calculateLandCoverStats = (image: ee.Image, areaOfInterest: ee.Geometry) =
 
     const areaImage = ee.Image.pixelArea().divide(1e6); // to sq km
 
-    const calculateArea = (cover: ee.Image) => cover.multiply(areaImage).reduceRegion({
+    const calculateArea = (cover: any) => cover.multiply(areaImage).reduceRegion({
         reducer: ee.Reducer.sum(),
         geometry: areaOfInterest,
         scale: 30,
@@ -374,10 +391,28 @@ const computeMetricsFlow = async (input: ComputeMetricsInput, jobId: string) => 
         changeAnalysis: changeAnalysisResult,
     };
     
-    jobResults.set(jobId, { status: 'completed', data: finalResult });
+    // Update job in memory (Firebase disabled)
+    const job = jobsStorage.get(jobId);
+    if (job) {
+        jobsStorage.set(jobId, {
+            ...job,
+            status: 'completed',
+            data: finalResult,
+            completedAt: new Date().toISOString()
+        });
+    }
 
   } catch (error: any) {
     console.error(`Error in computeMetricsFlow for job ${jobId}:`, error);
-    jobResults.set(jobId, { status: 'error', error: error.message || 'An unknown error occurred during computation.' });
+    // Update job in memory (Firebase disabled)
+    const job = jobsStorage.get(jobId);
+    if (job) {
+        jobsStorage.set(jobId, {
+            ...job,
+            status: 'error',
+            error: error.message || 'An unknown error occurred during computation.',
+            failedAt: new Date().toISOString()
+        });
+    }
   }
 };
