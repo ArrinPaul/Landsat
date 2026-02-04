@@ -82,6 +82,12 @@ async function handleAction<T, U>(action: (input: T) => Promise<U>, input: T): P
             if (errorMessage.includes('400')) {
                 return { data: null, error: `Bad Request (400): The AI model rejected the request, likely due to an invalid input format. Details: ${errorMessage}` };
             }
+            if (errorMessage.includes('5 NOT_FOUND') || errorMessage.includes('NOT_FOUND')) {
+                return { data: null, error: `Firestore Database Not Found: Please enable Firestore API at https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=landsat-470215 and ensure GOOGLE_APPLICATION_CREDENTIALS_JSON is set in Vercel environment variables. Wait 2-3 minutes after enabling, then redeploy.` };
+            }
+            if (errorMessage.includes('PERMISSION_DENIED')) {
+                return { data: null, error: `Firestore Permission Denied: Enable Firestore API at https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=landsat-470215 and verify service account has Firestore permissions.` };
+            }
             
             attempt++;
             if (attempt >= maxRetries) {

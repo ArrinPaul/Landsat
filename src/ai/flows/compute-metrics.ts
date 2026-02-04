@@ -15,14 +15,10 @@ import { analyzeChange, AnalyzeChangeOutput } from '@/ai/flows/analyze-change';
 import { getHistoricalBaseline } from '@/ai/tools/get-historical-baseline';
 
 
-// import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
 
-// Firebase/Firestore disabled for now - uncomment when API is enabled
 // Use Firestore for job results to support serverless deployments.
-// const JOBS_COLLECTION = 'analysis_jobs';
-
-// Temporary in-memory storage for jobs (replace with Firestore later)
-const jobsStorage = new Map<string, any>();
+const JOBS_COLLECTION = 'analysis_jobs';
 
 // Helper function to calculate percentage change
 function getPercentageChange(start: number, end: number): number {
@@ -118,8 +114,8 @@ export type JobResultOutput = z.infer<typeof JobResultOutputSchema>;
 export async function startMetricsComputation(input: ComputeMetricsInput): Promise<StartComputationOutput> {
   const jobId = `job-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
   
-  // Initialize job in memory (Firebase disabled)
-  jobsStorage.set(jobId, {
+  // Initialize job in Firestore
+  await db.collection(JOBS_COLLECTION).doc(jobId).set({
     status: 'pending',
     createdAt: new Date().toISOString(),
     input: input
@@ -134,11 +130,13 @@ export async function startMetricsComputation(input: ComputeMetricsInput): Promi
 // This function retrieves the result of a computation.
 export async function getMetricsResult(jobId: string): Promise<JobResultOutput> {
     try {
-        const job = jobsStorage.get(jobId);
+        const doc = await db.collection(JOBS_COLLECTION).doc(jobId).get();
 
-        if (!job) {
+        if (!doc.exists) {
             return { status: 'error', error: 'Job not found.' };
         }
+
+        const job = doc.data() as any;
 
         if (job.status === 'completed') {
             return { status: 'completed', result: job.data };
@@ -391,28 +389,18 @@ const computeMetricsFlow = async (input: ComputeMetricsInput, jobId: string) => 
         changeAnalysis: changeAnalysisResult,
     };
     
-    // Update job in memory (Firebase disabled)
-    const job = jobsStorage.get(jobId);
-    if (job) {
-        jobsStorage.set(jobId, {
-            ...job,
-            status: 'completed',
-            data: finalResult,
-            completedAt: new Date().toISOString()
-        });
-    }
+    await db.collection(JOBS_COLLECTION).doc(jobId).update({
+        status: 'completed',
+        data: finalResult,
+        completedAt: new Date().toISOString()
+    });
 
   } catch (error: any) {
     console.error(`Error in computeMetricsFlow for job ${jobId}:`, error);
-    // Update job in memory (Firebase disabled)
-    const job = jobsStorage.get(jobId);
-    if (job) {
-        jobsStorage.set(jobId, {
-            ...job,
-            status: 'error',
-            error: error.message || 'An unknown error occurred during computation.',
-            failedAt: new Date().toISOString()
-        });
-    }
+    await db.collection(JOBS_COLLECTION).doc(jobId).update({
+        status: 'error',
+        error: error.message || 'An unknown error occurred during computation.',
+        failedAt: new Date().toISOString()
+    });
   }
 };
