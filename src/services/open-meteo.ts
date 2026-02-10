@@ -90,11 +90,7 @@ export async function getSoilAndWeatherData(latitude: number, longitude: number)
     let lastError: any;
     for (const url of urls) {
         try {
-            // Bypass SSL verification for development (handles corporate proxies)
-            const https = await import('https');
-            const agent = new https.Agent({ rejectUnauthorized: false });
-            
-            const response = await fetch(url, { cache: 'no-store', agent } as any);
+            const response = await fetch(url, { cache: 'no-store' });
             if (!response.ok) {
                 throw new Error(`Open-Meteo Soil API returned an error: ${response.status} ${response.statusText}`);
             }
@@ -161,11 +157,7 @@ export async function getHistoricalWeather(latitude: number, longitude: number, 
     const url = `${ARCHIVE_API_URL}?${params.toString()}`;
     
     try {
-        // Bypass SSL verification for development (handles corporate proxies)
-        const https = await import('https');
-        const agent = new https.Agent({ rejectUnauthorized: false });
-        
-        const response = await fetch(url, { cache: 'no-store', agent } as any);
+        const response = await fetch(url, { cache: 'no-store' });
          if (!response.ok) {
             throw new Error(`Open-Meteo Archive API returned an error: ${response.status} ${response.statusText}`);
         }
@@ -233,11 +225,7 @@ export async function getHistoricalPrecipitation(latitude: number, longitude: nu
     const url = `${ARCHIVE_API_URL}?${params.toString()}`;
 
     try {
-        // Bypass SSL verification for development (handles corporate proxies)
-        const https = await import('https');
-        const agent = new https.Agent({ rejectUnauthorized: false });
-        
-        const response = await fetch(url, { cache: 'no-store', agent } as any);
+        const response = await fetch(url, { cache: 'no-store' });
         if (!response.ok) {
             throw new Error(`Open-Meteo Archive API returned an error: ${response.status} ${response.statusText}`);
         }

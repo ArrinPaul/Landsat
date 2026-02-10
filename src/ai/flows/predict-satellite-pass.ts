@@ -37,13 +37,9 @@ const EARTH_OBSERVATION_SATELLITES = [
 // Fetch satellite TLE data from CelesTrak
 async function fetchSatelliteTLE(noradId: number): Promise<string[] | null> {
   try {
-    // Bypass SSL verification for development (handles corporate proxies)
-    const https = await import('https');
-    const agent = new https.Agent({ rejectUnauthorized: false });
-    
     const response = await fetch(
       `https://celestrak.org/NORAD/elements/gp.php?CATNR=${noradId}&FORMAT=TLE`,
-      { cache: 'no-store', agent } as any
+      { cache: 'no-store' }
     );
     if (!response.ok) return null;
     const text = await response.text();

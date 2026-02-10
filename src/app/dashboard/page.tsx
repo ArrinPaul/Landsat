@@ -31,7 +31,6 @@ export default function DashboardPage() {
         </div>
       </footer>
       <ContactSheet open={isContactOpen} onOpenChange={setContactOpen} />
-      <Chatbot />
     </div>
   );
 }

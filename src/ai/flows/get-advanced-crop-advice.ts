@@ -19,12 +19,9 @@ import { getHistoricalWeather, getSoilAndWeatherData } from '@/services/open-met
 
 // Fetch real-time climate data to validate and enrich the climate description
 async function fetchRealClimateData(lat: number, lon: number) {
-  const https = await import('https');
-  const agent = new https.Agent({ rejectUnauthorized: false });
-  
   // Get current weather conditions
   const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,precipitation,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto&forecast_days=7`;
-  const weatherResponse = await fetch(weatherUrl, { cache: 'no-store', agent } as any);
+  const weatherResponse = await fetch(weatherUrl, { cache: 'no-store' });
   const weatherData = await weatherResponse.json();
   
   // Get 3-month historical data

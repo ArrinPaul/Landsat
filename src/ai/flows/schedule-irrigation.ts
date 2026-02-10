@@ -18,11 +18,7 @@ import { getSoilAndWeatherData, getMoistureLevel, getSoilTypeName } from '@/serv
 async function fetchWeatherForecast(lat: number, lon: number) {
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=precipitation_sum,temperature_2m_max,evapotranspiration&timezone=auto&forecast_days=7`;
   
-  // Bypass SSL verification for development (handles corporate proxies)
-  const https = await import('https');
-  const agent = new https.Agent({ rejectUnauthorized: false });
-  
-  const response = await fetch(url, { cache: 'no-store', agent } as any);
+  const response = await fetch(url, { cache: 'no-store' });
   if (!response.ok) throw new Error('Failed to fetch weather forecast');
   return await response.json();
 }
