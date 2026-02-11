@@ -82,27 +82,31 @@ export async function generateTimelapseVideo({ metricName, locationDescription, 
       throw new Error('Failed to find the generated video in the operation output.');
     }
 
-    // The URL from Veo is temporary and needs the API key for access.
+    // The URL from Veo is temporary and needs authentication for access.
     // We will fetch it server-side and convert to a data URI to send to the client.
     const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY;
     if (!apiKey) {
       throw new Error("Gemini API key (GEMINI_API_KEY or GOOGLE_GENAI_API_KEY) environment variable is not set.");
     }
-    const videoDownloadUrl = `${video.media.url}&key=${apiKey}`;
+    const videoDownloadUrl = video.media.url;
     
     let videoResponse;
     try {
         const fetch = (await import('node-fetch')).default;
-        videoResponse = await fetch(videoDownloadUrl);
+        // Use header instead of URL param to prevent key leak in logs
+        videoResponse = await fetch(videoDownloadUrl, {
+          headers: { 'x-goog-api-key': apiKey }
+        });
     } catch (error: any) {
         throw new Error(`Network error while downloading video file: ${error.message}`);
     }
 
     if (!videoResponse.ok || !videoResponse.body) {
-        throw new Error(`Failed to download video file. Status: ${videoResponse.status} ${videoResponse.statusText}`);
+        throw new Error(`Failed to download video file. Status: ${videoResponse.status}`);
     }
 
-    const videoBuffer = await videoResponse.buffer();
+    const arrayBuffer = await videoResponse.arrayBuffer();
+    const videoBuffer = Buffer.from(arrayBuffer);
     const videoBase64 = videoBuffer.toString('base64');
     const videoDataUri = `data:video/mp4;base64,${videoBase64}`;
 

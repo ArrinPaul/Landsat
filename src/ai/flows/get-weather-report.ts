@@ -13,11 +13,7 @@ import { getCache, setCache } from '@/ai/cache';
 async function fetchRealWeatherData(latitude: number, longitude: number) {
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&hourly=temperature_2m,weather_code&timezone=auto&forecast_days=1`;
   
-  // Bypass SSL verification for development (handles corporate proxies)
-  const https = await import('https');
-  const agent = new https.Agent({ rejectUnauthorized: false });
-  
-  const response = await fetch(url, { cache: 'no-store', agent } as any);
+  const response = await fetch(url, { cache: 'no-store' });
   if (!response.ok) {
     throw new Error(`Open-Meteo API error: ${response.status}`);
   }

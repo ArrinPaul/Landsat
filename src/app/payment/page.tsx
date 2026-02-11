@@ -57,23 +57,48 @@ export default function PaymentPage() {
                                                 <div className="space-y-2">
                                                     <Label htmlFor="cardNumber">{t('payment.cardNumber')}</Label>
                                                     <div className="relative">
-                                                        <Input id="cardNumber" placeholder="0000 0000 0000 0000" required />
+                                                        <Input 
+                                                            id="cardNumber" 
+                                                            placeholder="0000 0000 0000 0000" 
+                                                            required 
+                                                            inputMode="numeric"
+                                                            autoComplete="cc-number"
+                                                        />
                                                         <CreditCard className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                                     </div>
                                                 </div>
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <div className="space-y-2">
                                                         <Label htmlFor="expiryDate">{t('payment.expiryDate')}</Label>
-                                                        <Input id="expiryDate" placeholder="MM / YY" required />
+                                                        <Input 
+                                                            id="expiryDate" 
+                                                            placeholder="MM / YY" 
+                                                            required 
+                                                            inputMode="numeric"
+                                                            autoComplete="cc-exp"
+                                                        />
                                                     </div>
                                                     <div className="space-y-2">
                                                         <Label htmlFor="cvc">{t('payment.cvc')}</Label>
-                                                        <Input id="cvc" placeholder="CVC" required />
+                                                        <Input 
+                                                            id="cvc" 
+                                                            type="password" 
+                                                            placeholder="CVC" 
+                                                            required 
+                                                            inputMode="numeric"
+                                                            autoComplete="cc-csc"
+                                                            maxLength={4}
+                                                        />
                                                     </div>
                                                 </div>
                                                 <div className="space-y-2">
                                                     <Label htmlFor="nameOnCard">{t('payment.nameOnCard')}</Label>
-                                                    <Input id="nameOnCard" placeholder={t('payment.nameOnCardPlaceholder')} required />
+                                                    <Input 
+                                                        id="nameOnCard" 
+                                                        placeholder={t('payment.nameOnCardPlaceholder')} 
+                                                        required 
+                                                        autoComplete="cc-name"
+                                                    />
                                                 </div>
                                             </div>
                                         </TabsContent>

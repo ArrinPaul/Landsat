@@ -86,6 +86,24 @@ function calculateDelay(baseDelay: number, attempt: number, useExponentialBackof
 }
 
 /**
+ * Sanitize user input to prevent prompt injection.
+ * Removes common injection patterns and escapes sensitive characters.
+ */
+function sanitizeInput(input: any): string {
+  if (input === null || input === undefined) return '';
+  const str = String(input);
+  // Basic sanitization: remove potential instruction-ending patterns and common injection keywords
+  return str
+    .replace(/<\|.*?\|>/g, '') // Remove special tokens
+    .replace(/\[INST\]/gi, '') // Remove Mistral instruction tags
+    .replace(/\[\/INST\]/gi, '')
+    .replace(/<system>|<user>|<assistant>/gi, '') // Remove common role tags
+    .replace(/ignore previous instructions/gi, '[INJECTION ATTEMPT]')
+    .replace(/you are now/gi, '[INJECTION ATTEMPT]')
+    .trim();
+}
+
+/**
  * Execute a prompt with automatic model fallback and retry logic.
  * Use this for any AI prompt execution that needs resilience.
  * 
@@ -177,7 +195,7 @@ export async function executePromptWithFallback<TInput, TOutput>(
         case 'coordinates':
           promptText = `You are a geography expert. Given a location description, suggest relevant latitude and longitude coordinates.
 
-Location Description: ${inputData.locationDescription}
+Location Description: ${sanitizeInput(inputData.locationDescription)}
 
 IMPORTANT: You MUST respond with ONLY a valid JSON object. No other text, no explanations, no markdown.
 Your response must be exactly in this format:
@@ -191,7 +209,7 @@ Now provide the JSON:`;
         case 'insights':
           promptText = `You are an environmental data analyst. Given metric data, provide a concise one-sentence insight.
 
-Metric: ${inputData.metricName}
+Metric: ${sanitizeInput(inputData.metricName)}
 First Value: ${inputData.firstValue}
 Last Value: ${inputData.lastValue}
 Percentage Change: ${inputData.percentageChange}%
@@ -251,7 +269,7 @@ Now provide the JSON:`;
 
 Latitude: ${lat}
 Longitude: ${lon}
-Crop Type: ${inputData.cropType || 'Maize'}
+Crop Type: ${sanitizeInput(inputData.cropType || 'Maize')}
 Current date: ${currentDate}
 
 IMPORTANT: You MUST respond with ONLY a valid JSON object. No other text.
@@ -334,8 +352,8 @@ Now provide the JSON:`;
 
 Latitude: ${lat}
 Longitude: ${lon}
-Climate: ${inputData.climateDescription || 'Unknown'}
-Current Crop: ${inputData.currentCrop || 'None'}
+Climate: ${sanitizeInput(inputData.climateDescription || 'Unknown')}
+Current Crop: ${sanitizeInput(inputData.currentCrop || 'None')}
 
 IMPORTANT: You MUST respond with ONLY a valid JSON object. No other text.
 Your response must be exactly in this format:
@@ -354,10 +372,10 @@ Now provide the JSON:`;
         case 'crop-advice':
           promptText = `You are an agricultural expert. Provide detailed advice for growing this crop.
 
-Crop: ${inputData.crop || 'Unknown'}
+Crop: ${sanitizeInput(inputData.crop || 'Unknown')}
 Latitude: ${lat}
 Longitude: ${lon}
-Climate: ${inputData.climateDescription || 'Unknown'}
+Climate: ${sanitizeInput(inputData.climateDescription || 'Unknown')}
 
 IMPORTANT: You MUST respond with ONLY a valid JSON object. No other text.
 Your response must be exactly in this format:
@@ -375,7 +393,7 @@ Now provide the JSON:`;
         case 'scenario':
           promptText = `You are an environmental scientist. Analyze this what-if scenario.
 
-Scenario: ${inputData.scenarioDescription}
+Scenario: ${sanitizeInput(inputData.scenarioDescription)}
 Latitude: ${lat}
 Longitude: ${lon}
 
@@ -391,9 +409,9 @@ Now provide the JSON:`;
         case 'report-summary':
           promptText = `You are a data analyst. Generate a summary report for this environmental data.
 
-Location: ${inputData.location || inputData.locationDescription || `${lat}, ${lon}`}
-Date Range: ${inputData.dateRange || 'Not specified'}
-Metrics Data: ${inputData.metricsData || JSON.stringify(inputData.metrics || inputData)}
+Location: ${sanitizeInput(inputData.location || inputData.locationDescription || `${lat}, ${lon}`)}
+Date Range: ${sanitizeInput(inputData.dateRange || 'Not specified')}
+Metrics Data: ${sanitizeInput(inputData.metricsData || JSON.stringify(inputData.metrics || inputData))}
 
 IMPORTANT: You MUST respond with ONLY a valid JSON object. No other text.
 Your response must be exactly in this format:
@@ -404,7 +422,7 @@ Now provide the JSON:`;
 
         case 'chatbot':
           const messages = inputData.messages as any[];
-          const historyText = messages.map(m => `${m.role}: ${m.content}`).join('\n');
+          const historyText = messages.map(m => `${sanitizeInput(m.role)}: ${sanitizeInput(m.content)}`).join('\n');
           promptText = `You are Stark, the friendly AI guide for the Earth Insights Dashboard. 
 Your personality is curious, encouraging, and enthusiastic about data and space.
 
@@ -419,11 +437,11 @@ Respond to the user's last message in a helpful and concise way. Do NOT return J
         case 'analyze-change':
           promptText = `You are an environmental change analyst. Analyze these environmental metrics for changes.
 
-Location: ${inputData.location?.description || `${inputData.location?.latitude}, ${inputData.location?.longitude}`}
-Date Range: ${inputData.dateRange?.start || 'Unknown'} to ${inputData.dateRange?.end || 'Unknown'}
+Location: ${sanitizeInput(inputData.location?.description || `${inputData.location?.latitude}, ${inputData.location?.longitude}`)}
+Date Range: ${sanitizeInput(inputData.dateRange?.start || 'Unknown')} to ${sanitizeInput(inputData.dateRange?.end || 'Unknown')}
 Metrics:
-${inputData.metricsText || JSON.stringify(inputData.metrics || [])}
-Historical Context: ${inputData.historicalContext || 'None provided'}
+${sanitizeInput(inputData.metricsText || JSON.stringify(inputData.metrics || []))}
+Historical Context: ${sanitizeInput(inputData.historicalContext || 'None provided')}
 
 IMPORTANT: You MUST respond with ONLY a valid JSON object. No other text.
 Your response must be exactly in this format:
@@ -439,7 +457,7 @@ Now provide the JSON:`;
           
         default:
           const inputDescription = Object.entries(inputData)
-            .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
+            .map(([key, value]) => `${key}: ${sanitizeInput(JSON.stringify(value))}`)
             .join('\n');
           promptText = `Analyze this data and provide relevant output in JSON format.
 

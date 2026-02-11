@@ -24,6 +24,26 @@ export function parseCsv(csvText: string, t: (key: string) => string): GroundTru
   }
 }
 
+/**
+ * Escapes a value for CSV to prevent CSV injection (DDE) and handle special characters.
+ */
+function escapeCsvValue(value: any): string {
+  if (value === null || value === undefined) return '';
+  let str = String(value);
+  
+  // Prevent CSV Injection (DDE): escape leading dangerous characters
+  if (/^[=+\-@]/.test(str)) {
+    str = `'${str}`;
+  }
+  
+  // Handle commas, quotes, and newlines
+  if (/[",\n\r]/.test(str)) {
+    str = `"${str.replace(/"/g, '""')}"`;
+  }
+  
+  return str;
+}
+
 export function generateCsv(data: MetricData[], t: (key: string) => string): string {
   if (!data.length) return "";
 
@@ -33,15 +53,15 @@ export function generateCsv(data: MetricData[], t: (key: string) => string): str
     t('dashboard.metrics.table.end'),
     t('dashboard.metrics.table.change'),
     t('dashboard.metrics.table.points')
-  ].join(',');
+  ].map(h => escapeCsvValue(h)).join(',');
 
   const rows = data.map(metric => 
     [
-      metric.name,
-      metric.firstValue?.toFixed(4) ?? 'N/A',
-      metric.lastValue?.toFixed(4) ?? 'N/A',
-      metric.percentageChange?.toFixed(2) ?? 'N/A',
-      metric.n
+      escapeCsvValue(metric.name),
+      escapeCsvValue(metric.firstValue?.toFixed(4) ?? 'N/A'),
+      escapeCsvValue(metric.lastValue?.toFixed(4) ?? 'N/A'),
+      escapeCsvValue(metric.percentageChange?.toFixed(2) ?? 'N/A'),
+      escapeCsvValue(metric.n)
     ].join(',')
   );
 

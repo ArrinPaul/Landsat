@@ -138,8 +138,17 @@ export function Dashboard() {
     setHistory(prev => [newHistoryEntry, ...prev.slice(0, 9)]);
 
     // Don't await ancillary data, let it fetch in the background
-    predictSatellitePassAction({ latitude: parseFloat(lat), longitude: parseFloat(lon) }).then(res => setNextPass(res.data));
-    getWeatherReportAction({ latitude: parseFloat(lat), longitude: parseFloat(lon) }).then(res => setWeather(res.data));
+    setIsFetchingPass(true);
+    predictSatellitePassAction({ latitude: parseFloat(lat), longitude: parseFloat(lon) })
+      .then(res => setNextPass(res.data))
+      .catch(err => console.error("Failed to fetch satellite pass:", err))
+      .finally(() => setIsFetchingPass(false));
+
+    setIsFetchingWeather(true);
+    getWeatherReportAction({ latitude: parseFloat(lat), longitude: parseFloat(lon) })
+      .then(res => setWeather(res.data))
+      .catch(err => console.error("Failed to fetch weather report:", err))
+      .finally(() => setIsFetchingWeather(false));
     
     setProgress(15);
 
@@ -190,7 +199,7 @@ export function Dashboard() {
                         <p className="text-muted-foreground">{messages[computationStatus]}</p>
                         <Progress value={progress} className="w-3/4" />
                     </div>
-                </CardContent>.
+                </CardContent>
             </Card>
           );
       }

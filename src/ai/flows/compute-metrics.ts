@@ -1,4 +1,6 @@
 
+'use server';
+
 /**
  * @fileOverview A flow for computing environmental metrics using Google Earth Engine.
  * This has been refactored to support asynchronous job processing.
@@ -15,7 +17,7 @@ import { analyzeChange, AnalyzeChangeOutput } from '@/ai/flows/analyze-change';
 import { getHistoricalBaseline } from '@/ai/tools/get-historical-baseline';
 
 
-import { db } from '@/lib/firebase';
+import { getFirestore } from '@/lib/firebase';
 
 // Use Firestore for job results to support serverless deployments.
 const JOBS_COLLECTION = 'analysis_jobs';
@@ -25,7 +27,9 @@ function getPercentageChange(start: number, end: number): number {
     if (start === 0) {
         return end > 0 ? 100.0 : 0.0;
     }
-    return ((end - start) / Math.abs(start)) * 100;
+    // Clamp results to prevent astronomical values from tiny denominators
+    const result = ((end - start) / Math.abs(start)) * 100;
+    return Math.min(Math.max(result, -1000000), 1000000);
 }
 
 const DataPointSchema = z.object({
@@ -113,6 +117,7 @@ export type JobResultOutput = z.infer<typeof JobResultOutputSchema>;
 // This function starts the computation and immediately returns a job ID.
 export async function startMetricsComputation(input: ComputeMetricsInput): Promise<StartComputationOutput> {
   const jobId = `job-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  const db = getFirestore();
   
   // Initialize job in Firestore
   await db.collection(JOBS_COLLECTION).doc(jobId).set({
@@ -122,7 +127,9 @@ export async function startMetricsComputation(input: ComputeMetricsInput): Promi
   });
 
   // Do not await this. Let it run in the background.
-  computeMetricsFlow(input, jobId);
+  computeMetricsFlow(input, jobId).catch(e => {
+    console.error(`Background flow for ${jobId} failed:`, e);
+  });
 
   return { jobId };
 }
@@ -130,6 +137,7 @@ export async function startMetricsComputation(input: ComputeMetricsInput): Promi
 // This function retrieves the result of a computation.
 export async function getMetricsResult(jobId: string): Promise<JobResultOutput> {
     try {
+        const db = getFirestore();
         const doc = await db.collection(JOBS_COLLECTION).doc(jobId).get();
 
         if (!doc.exists) {
@@ -389,6 +397,7 @@ const computeMetricsFlow = async (input: ComputeMetricsInput, jobId: string) => 
         changeAnalysis: changeAnalysisResult,
     };
     
+    const db = getFirestore();
     await db.collection(JOBS_COLLECTION).doc(jobId).update({
         status: 'completed',
         data: finalResult,
@@ -397,10 +406,15 @@ const computeMetricsFlow = async (input: ComputeMetricsInput, jobId: string) => 
 
   } catch (error: any) {
     console.error(`Error in computeMetricsFlow for job ${jobId}:`, error);
-    await db.collection(JOBS_COLLECTION).doc(jobId).update({
-        status: 'error',
-        error: error.message || 'An unknown error occurred during computation.',
-        failedAt: new Date().toISOString()
-    });
+    try {
+        const db = getFirestore();
+        await db.collection(JOBS_COLLECTION).doc(jobId).update({
+            status: 'error',
+            error: error.message || 'An unknown error occurred during computation.',
+            failedAt: new Date().toISOString()
+        });
+    } catch (dbError) {
+        console.error("Critical: Failed to update error status in Firestore:", dbError);
+    }
   }
 };

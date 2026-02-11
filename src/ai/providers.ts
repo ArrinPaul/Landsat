@@ -93,8 +93,8 @@ export async function generateWithHuggingFace(
   );
 
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`HuggingFace error: ${response.status} - ${error}`);
+    const errorBody = await response.text();
+    throw new Error(`HuggingFace error: ${response.status} - ${sanitizeError(errorBody)}`);
   }
 
   const result: any = await response.json();
@@ -105,6 +105,22 @@ export async function generateWithHuggingFace(
   }
 
   return { text, provider: 'huggingface', model };
+}
+
+/**
+ * Sanitizes error messages to prevent API key or auth header leaks.
+ */
+function sanitizeError(error: string): string {
+  if (!error) return 'Unknown error';
+  // Remove potential Bearer tokens or API keys (hex/base64-like strings > 20 chars)
+  return error
+    .replace(/Bearer\s+[a-zA-Z0-9._\-\/]{20,}/gi, 'Bearer [REDACTED]')
+    .replace(/key=[a-zA-Z0-9._\-\/]{20,}/gi, 'key=[REDACTED]')
+    .replace(/[a-zA-Z0-9._\-\/]{40,}/g, (match) => {
+      // If it looks like a long hash/token, redact it
+      return '[REDACTED]';
+    })
+    .substring(0, 500); // Limit length
 }
 
 // ============================================================================
@@ -139,8 +155,8 @@ export async function generateWithMistral(
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Mistral error: ${response.status} - ${error}`);
+    const errorBody = await response.text();
+    throw new Error(`Mistral error: ${response.status} - ${sanitizeError(errorBody)}`);
   }
 
   const result: any = await response.json();
