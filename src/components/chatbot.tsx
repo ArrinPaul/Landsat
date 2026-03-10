@@ -284,6 +284,7 @@ export function Chatbot({ lat, lon }: { lat?: string, lon?: string }) {
                 <CardTitle className="text-lg">{t('chatbot.title')}</CardTitle>
             </div>
             <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
+              <span className="sr-only">Close chatbot</span>
               <X className="h-4 w-4" />
             </Button>
           </CardHeader>
@@ -337,10 +338,10 @@ export function Chatbot({ lat, lon }: { lat?: string, lon?: string }) {
                 onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
                 disabled={isLoading || isRecording}
               />
-               <Button onClick={handleVoiceInput} disabled={isLoading} variant={isRecording ? "destructive" : "outline"} size="icon">
+               <Button aria-label="Start voice input" onClick={handleVoiceInput} disabled={isLoading} variant={isRecording ? "destructive" : "outline"} size="icon">
                 <Mic className="h-4 w-4" />
               </Button>
-              <Button onClick={() => handleSend()} disabled={isLoading || isRecording}>
+              <Button aria-label="Send message" onClick={() => handleSend()} disabled={isLoading || isRecording}>
                 <Send className="h-4 w-4" />
               </Button>
             </div>
@@ -354,6 +355,7 @@ export function Chatbot({ lat, lon }: { lat?: string, lon?: string }) {
           }}
           className="fixed bottom-4 right-4 rounded-full w-16 h-16 shadow-lg"
           size="icon"
+          aria-label="Open chatbot"
         >
           <MessageSquare className="h-6 w-6" />
         </Button>

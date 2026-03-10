@@ -5,6 +5,9 @@
   "engines": {
     "node": ">=24.11.1 <25"
   },
+  "overrides": {
+    "@tootallnate/once": "^3.0.1"
+  },
   "scripts": {
     "dev": "next dev --turbopack -p 9003",
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
@@ -14,7 +17,10 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:contracts": "vitest run src/test/action-contracts.test.ts",
+    "test:e2e": "playwright test",
     "test:watch": "vitest",
+    "security:audit": "npm audit --audit-level=high",
     "pipeline:run": "tsx scripts/run-data-pipeline.ts",
     "pipeline:benchmark": "vitest run src/test/data-pipeline.test.ts",
     "ml:phase2": "tsx scripts/run-ml-phase2.ts",
@@ -70,7 +76,7 @@
     "genkit": "1.21.0",
     "groq-sdk": "^0.37.0",
     "lucide-react": "^0.475.0",
-    "next": "15.3.8",
+    "next": "15.5.12",
     "next-themes": "^0.3.0",
     "patch-package": "^8.0.0",
     "react": "^18.3.1",
@@ -87,12 +93,13 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
+    "@playwright/test": "^1.55.0",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/wav": "^1.0.3",
     "eslint": "^8.57.1",
-    "eslint-config-next": "^15.3.8",
+    "eslint-config-next": "^15.5.12",
     "genkit-cli": "1.21.0",
     "husky": "^9.1.7",
     "jsdom": "^28.1.0",

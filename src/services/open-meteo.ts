@@ -4,6 +4,7 @@
  */
 import { logger } from '@/lib/logger';
 import { redactSensitive } from '@/lib/security';
+import { getTraceContext } from '@/lib/trace';
 
 const ARCHIVE_API_URL = "https://archive-api.open-meteo.com/v1/archive";
 
@@ -82,6 +83,7 @@ export interface HistoricalPrecipitationData {
  * @returns A promise that resolves to the soil and weather data.
  */
 export async function getSoilAndWeatherData(latitude: number, longitude: number): Promise<SoilAndWeatherData> {
+    const traceId = getTraceContext()?.requestId;
     // Try primary URL first, then fallback
     const urls = [
         `https://soil-api.open-meteo.com/v1/soil?latitude=${latitude}&longitude=${longitude}&current=soil_moisture_0_to_1cm&hourly=soil_type_0_to_10cm`,
@@ -90,7 +92,10 @@ export async function getSoilAndWeatherData(latitude: number, longitude: number)
 
     for (const url of urls) {
         try {
-            const response = await fetch(url, { cache: 'no-store' });
+            const response = await fetch(url, {
+                cache: 'no-store',
+                headers: traceId ? { 'x-request-id': traceId } : undefined,
+            });
             if (!response.ok) {
                 throw new Error(`Open-Meteo Soil API returned an error: ${response.status} ${response.statusText}`);
             }
@@ -149,6 +154,7 @@ export async function getSoilAndWeatherData(latitude: number, longitude: number)
  * @returns A promise that resolves to the historical weather data.
  */
 export async function getHistoricalWeather(latitude: number, longitude: number, startDate: string, endDate: string): Promise<HistoricalWeatherData> {
+    const traceId = getTraceContext()?.requestId;
     const params = new URLSearchParams({
         latitude: latitude.toString(),
         longitude: longitude.toString(),
@@ -161,7 +167,10 @@ export async function getHistoricalWeather(latitude: number, longitude: number, 
     const url = `${ARCHIVE_API_URL}?${params.toString()}`;
     
     try {
-        const response = await fetch(url, { cache: 'no-store' });
+        const response = await fetch(url, {
+            cache: 'no-store',
+            headers: traceId ? { 'x-request-id': traceId } : undefined,
+        });
          if (!response.ok) {
             throw new Error(`Open-Meteo Archive API returned an error: ${response.status} ${response.statusText}`);
         }
@@ -219,6 +228,7 @@ export async function getHistoricalWeather(latitude: number, longitude: number, 
  * @returns A promise that resolves to the historical precipitation data.
  */
 export async function getHistoricalPrecipitation(latitude: number, longitude: number): Promise<HistoricalPrecipitationData> {
+    const traceId = getTraceContext()?.requestId;
     // Fetches data for the climate normal period (1991-2020) to get a 30-year average.
     const params = new URLSearchParams({
         latitude: latitude.toString(),
@@ -232,7 +242,10 @@ export async function getHistoricalPrecipitation(latitude: number, longitude: nu
     const url = `${ARCHIVE_API_URL}?${params.toString()}`;
 
     try {
-        const response = await fetch(url, { cache: 'no-store' });
+        const response = await fetch(url, {
+            cache: 'no-store',
+            headers: traceId ? { 'x-request-id': traceId } : undefined,
+        });
         if (!response.ok) {
             throw new Error(`Open-Meteo Archive API returned an error: ${response.status} ${response.statusText}`);
         }

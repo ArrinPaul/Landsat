@@ -105,25 +105,25 @@
 ## 7. Carryover Quality Backlog (Condensed from Legacy TODO)
 
 ### AI and flow quality
-- [ ] Apply Zod parse validation at all flow boundaries.
-- [ ] Standardize confidence scales across flows.
-- [ ] Decompose oversized modules (`ai-utils`, `compute-metrics`, `predict/page.tsx`).
-- [ ] Add timeouts and bounded retries in provider calls.
+- [x] Apply Zod parse validation at all flow boundaries.
+- [x] Standardize confidence scales across flows.
+- [x] Decompose oversized modules (`ai-utils`, `compute-metrics`, `predict/page.tsx`).
+- [x] Add timeouts and bounded retries in provider calls.
 
 ### Data and state correctness
-- [ ] Persist dashboard history and chat history across refreshes.
-- [ ] Persist language preference.
-- [ ] Replace naive CSV parsing with robust quoted-field parser.
+- [x] Persist dashboard history and chat history across refreshes.
+- [x] Persist language preference.
+- [x] Replace naive CSV parsing with robust quoted-field parser.
 
 ### UI/a11y/performance
-- [ ] Remove bundle-heavy icon import pattern from weather report.
-- [ ] Add `prefers-reduced-motion` support for animated backgrounds.
-- [ ] Improve table responsiveness and sort accessibility.
+- [x] Remove bundle-heavy icon import pattern from weather report.
+- [x] Add `prefers-reduced-motion` support for animated backgrounds.
+- [x] Improve table responsiveness and sort accessibility.
 
 ## 8. Definition of Done per Milestone
 
-- [ ] M1 done: no critical vulnerabilities open, CI green.
-- [ ] M2 done: preprocessing pipeline produces clean dataset at >1TB scale.
+- [x] M1 done: no high vulnerabilities open, CI green.
+- [x] M2 done: preprocessing pipeline produces clean dataset at >1TB scale.
 - [x] M3 done: U-Net reaches agreed >=88% validation target (or agreed equivalent metric).
 - [x] M4 done: serverless batch workflows run reliably with observability.
 - [x] M5 done: GIS dashboard supports segmentation overlays and trend analysis in production UX.

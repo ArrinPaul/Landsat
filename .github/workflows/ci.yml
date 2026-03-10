@@ -32,5 +32,11 @@ jobs:
       - name: Test
         run: npm run test
 
+      - name: Contract Tests
+        run: npm run test:contracts
+
+      - name: Security Audit (No High)
+        run: npm run security:audit
+
       - name: Build
         run: npm run build

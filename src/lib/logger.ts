@@ -1,3 +1,5 @@
+import { getTraceMeta } from '@/lib/trace';
+
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 const order: Record<LogLevel, number> = {
@@ -27,6 +29,7 @@ function emit(level: LogLevel, message: string, meta?: LogMeta): void {
     ts: new Date().toISOString(),
     level,
     message,
+    ...getTraceMeta(),
     ...(meta ?? {}),
   };
 

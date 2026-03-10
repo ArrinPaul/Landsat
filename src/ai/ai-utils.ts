@@ -9,6 +9,7 @@ import { ai, MODELS } from '@/ai/genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 import { generateWithFallback as generateWithMultiProvider } from '@/ai/providers';
 import { sanitizePromptPayload } from '@/lib/security';
+import { monitorPromptQuality, resolvePromptVersion } from '@/ai/prompt-governance';
 import {
   calculateDelay,
   isRetryableError,
@@ -72,6 +73,7 @@ export async function executePromptWithFallback<TInput, TOutput>(
 ): Promise<{ text: string }> {
   const sanitizedInput = sanitizePromptPayload(input);
   const retryConfig = { ...DEFAULT_RETRY_CONFIG, ...config?.retryConfig };
+  const promptVersion = resolvePromptVersion(flowHint || 'generic');
   
   // FIRST: Try Google Gemini (but with AGGRESSIVE rate limit protection)
   let lastError: Error | null = null;
@@ -84,6 +86,7 @@ export async function executePromptWithFallback<TInput, TOutput>(
     try {
     const response = await promptFn(sanitizedInput);
       console.log(`[AI] ✓ Success with Gemini`);
+    monitorPromptQuality(promptVersion.flow, 0.9, 1);
       return response;
     } catch (error: any) {
       lastError = error;
@@ -415,6 +418,7 @@ Now provide the JSON:`;
     // Try multi-provider fallback
     const multiProviderResponse = await generateWithMultiProvider({ prompt: promptText });
     console.log(`[AI] ✓ Success with ${multiProviderResponse.provider}: ${multiProviderResponse.model}`);
+    monitorPromptQuality(promptVersion.flow, 0.85, 1);
     return { text: multiProviderResponse.text };
   } catch (multiProviderError: any) {
     const errorMsg = multiProviderError?.message || 'Unknown fallback error';

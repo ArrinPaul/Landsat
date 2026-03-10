@@ -20,6 +20,7 @@ import { packageModelArtifact, runSegmentationInference, trainUNetModel } from '
 import { logger } from '@/lib/logger';
 import { redactSensitive } from '@/lib/security';
 import { buildSyntheticSplitFromLandCover, getPercentageChange, latestMetricValue } from '@/ai/flows/compute-metrics-helpers';
+import { enqueueJob, queueDepth } from '@/lib/job-queue';
 
 
 import { getFirestore } from '@/lib/firebase';
@@ -140,13 +141,14 @@ export async function startMetricsComputation(input: ComputeMetricsInput): Promi
   });
 
   // Do not await this. Let it run in the background.
-    computeMetricsFlow(input, jobId).catch((e: unknown) => {
+    enqueueJob(() => computeMetricsFlow(input, jobId)).catch((e: unknown) => {
         logger.error('metrics_background_flow_failed', {
             scope: 'ai.flows.compute-metrics',
             jobId,
+            queueDepth: queueDepth(),
             error: redactSensitive(e instanceof Error ? e.message : String(e)),
         });
-  });
+    });
 
   return { jobId };
 }
