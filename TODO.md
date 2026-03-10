@@ -25,20 +25,20 @@
 - [ ] Ensure server-only modules are marked and not client-bundled.
 
 ### App correctness
-- [ ] Fix remaining chatbot hook dependency warnings.
+- [x] Fix remaining chatbot hook dependency warnings.
 - [ ] Replace raw `<img>` in payment page with optimized image handling.
 - [ ] Remove stale/dead comments and remaining dead code paths in actions/flows.
 - [ ] Add robust error handling for all fire-and-forget async calls.
 
 ## 2. Foundation and DevOps (Roadmap Phase 0)
 
-- [ ] Add `.env.example` documenting all required variables.
-- [ ] Add `.nvmrc` and `engines` in `package.json`.
-- [ ] Add CI pipeline (lint, typecheck, test, build).
-- [ ] Add test framework baseline (Vitest + Testing Library, or equivalent).
-- [ ] Add formatter config and pre-commit checks.
-- [ ] Split architecture folders for `data-pipeline`, `ml`, and `app` concerns.
-- [ ] Define log strategy (structured logs, levels, correlation IDs).
+- [x] Add `.env.example` documenting all required variables.
+- [x] Add `.nvmrc` and `engines` in `package.json`.
+- [x] Add CI pipeline (lint, typecheck, test, build).
+- [x] Add test framework baseline (Vitest + Testing Library, or equivalent).
+- [x] Add formatter config and pre-commit checks.
+- [x] Split architecture folders for `data-pipeline`, `ml`, and `app` concerns.
+- [x] Define log strategy (structured logs, levels, correlation IDs).
 
 ## 3. Data Pipeline for Clean Dataset Generation (Roadmap Phase 1)
 

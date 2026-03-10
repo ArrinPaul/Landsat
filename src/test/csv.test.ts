@@ -1,0 +1,41 @@
+import { describe, expect, it } from 'vitest';
+import { generateCsv, parseCsv } from '@/lib/csv';
+
+describe('csv helpers', () => {
+  const t = (key: string) => key;
+
+  it('parses valid date/value csv rows', () => {
+    const parsed = parseCsv('date,value\n2026-01-01,0.55\n2026-01-02,0.61', t);
+
+    if ('error' in parsed) {
+      throw new Error(parsed.error);
+    }
+
+    expect(parsed).toHaveLength(2);
+    expect(parsed[0]).toEqual({ date: '2026-01-01', value: 0.55 });
+  });
+
+  it('returns error when required columns are missing', () => {
+    const parsed = parseCsv('timestamp,val\n2026-01-01,0.55', t);
+
+    expect(parsed).toEqual({ error: 'dashboard.csv.error.columns' });
+  });
+
+  it('escapes formula-like values during csv generation', () => {
+    const csv = generateCsv(
+      [
+        {
+          name: '=HYPERLINK("http://example.com")',
+          firstValue: 1,
+          lastValue: 2,
+          percentageChange: 100,
+          n: 5,
+          timeSeries: [],
+        },
+      ],
+      t
+    );
+
+    expect(csv).toContain("'=HYPERLINK");
+  });
+});

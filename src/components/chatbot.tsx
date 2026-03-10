@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from './ui/card';
 import { Input } from './ui/input';
@@ -63,10 +63,73 @@ export function Chatbot({ lat, lon }: { lat?: string, lon?: string }) {
   
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const messagesRef = useRef<MessageWithAudio[]>([]);
   const recognitionRef = useRef<any>(null);
   const hasInteracted = useRef(false);
   const { toast } = useToast();
+
+  const handleSend = useCallback(async (textToSend?: string) => {
+    const resolvedInput = (textToSend ?? input).trim();
+    if (resolvedInput === '') return;
+
+    const userMessage: MessageWithAudio = { role: 'user', content: resolvedInput };
+    const nextMessages = [...messagesRef.current, userMessage];
+    messagesRef.current = nextMessages;
+    setMessages(nextMessages);
+    setInput('');
+    setIsLoading(true);
+
+    const result = await chatbotAction({
+      messages: nextMessages,
+      latitude: lat ? parseFloat(lat) : undefined,
+      longitude: lon ? parseFloat(lon) : undefined,
+    });
+
+    setIsLoading(false);
+
+    if (result.error || !result.data) {
+      const errorMessage: MessageWithAudio = { role: 'model', content: t('chatbot.error.connection'), audioState: 'idle' };
+      setMessages(prev => {
+        const updated = [...prev, errorMessage];
+        messagesRef.current = updated;
+        return updated;
+      });
+      return;
+    }
+
+    const modelMessage: MessageWithAudio = {
+      role: 'model',
+      content: result.data.response,
+      audioDataUri: result.data.audioDataUri,
+      audioState: 'idle'
+    };
+
+    const modelIndex = nextMessages.length;
+
+    setMessages(prev => {
+      const updated = [...prev, modelMessage];
+      messagesRef.current = updated;
+      return updated;
+    });
+
+    if (result.data.audioDataUri && audioRef.current && hasInteracted.current) {
+      audioRef.current.src = result.data.audioDataUri;
+      audioRef.current.play().then(() => {
+        setMessages(prev => prev.map((m, i) => i === modelIndex ? { ...m, audioState: 'playing' } : m));
+      }).catch(() => {
+        // Autoplay was blocked, user will have to click to play.
+      });
+      audioRef.current.onended = () => {
+        setMessages(prev => prev.map((m, i) => i === modelIndex ? { ...m, audioState: 'idle' } : m));
+      };
+    }
+  }, [input, lat, lon, t]);
   
+  // Keep a stable reference for async handlers.
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
   // Initialize Speech Recognition
   useEffect(() => {
     const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -90,7 +153,7 @@ export function Chatbot({ lat, lon }: { lat?: string, lon?: string }) {
         };
         recognitionRef.current = recognition;
     }
-  }, [t, toast]);
+  }, [handleSend, t, toast]);
 
 
   useEffect(() => {
@@ -99,7 +162,7 @@ export function Chatbot({ lat, lon }: { lat?: string, lon?: string }) {
         { role: 'model', content: t('chatbot.greeting'), audioState: 'idle' }
       ]);
     }
-  }, [isOpen, t]);
+  }, [isOpen, messages.length, t]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -167,50 +230,6 @@ export function Chatbot({ lat, lon }: { lat?: string, lon?: string }) {
   };
   
 
-  const handleSend = async (textToSend?: string) => {
-    const currentInput = textToSend || input;
-    if (currentInput.trim() === '') return;
-
-    const userMessage: MessageWithAudio = { role: 'user', content: currentInput };
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
-    setIsLoading(true);
-
-    const result = await chatbotAction({ 
-        messages: [...messages, userMessage],
-        latitude: lat ? parseFloat(lat) : undefined,
-        longitude: lon ? parseFloat(lon) : undefined,
-    });
-
-    setIsLoading(false);
-
-    if (result.error || !result.data) {
-      const errorMessage: MessageWithAudio = { role: 'model', content: t('chatbot.error.connection'), audioState: 'idle' };
-      setMessages(prev => [...prev, errorMessage]);
-    } else {
-      const newIndex = messages.length + 1;
-      const modelMessage: MessageWithAudio = { 
-        role: 'model', 
-        content: result.data.response,
-        audioDataUri: result.data.audioDataUri,
-        audioState: 'idle'
-      };
-      setMessages(prev => [...prev, modelMessage]);
-      
-      if (result.data.audioDataUri && audioRef.current && hasInteracted.current) {
-         audioRef.current.src = result.data.audioDataUri;
-         audioRef.current.play().then(() => {
-             setMessages(prev => prev.map((m, i) => i === newIndex ? {...m, audioState: 'playing'} : m));
-         }).catch(() => {
-             // Autoplay was blocked, user will have to click to play.
-         });
-         audioRef.current.onended = () => {
-             setMessages(prev => prev.map((m, i) => i === newIndex ? {...m, audioState: 'idle'} : m));
-         };
-      }
-    }
-  };
-  
   const renderAudioIcon = (index: number) => {
       const state = messages[index]?.audioState || 'idle';
 
