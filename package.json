@@ -19,6 +19,8 @@
     "pipeline:benchmark": "vitest run src/test/data-pipeline.test.ts",
     "ml:phase2": "tsx scripts/run-ml-phase2.ts",
     "ml:phase2:test": "vitest run src/test/ml-phase2.test.ts",
+    "gcp:phase3": "tsx scripts/run-gcp-phase3.ts",
+    "gcp:phase3:test": "vitest run src/test/gcp-phase3.test.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky"

@@ -66,29 +66,29 @@
 ## 4. U-Net Segmentation Delivery (Roadmap Phase 2)
 
 ### ML training stack
-- [ ] Create U-Net training module with configurable encoder depth.
-- [ ] Add dataset split tooling and class distribution reports.
-- [ ] Implement class imbalance mitigation (weighted/focal loss options).
+- [x] Create U-Net training module with configurable encoder depth.
+- [x] Add dataset split tooling and class distribution reports.
+- [x] Implement class imbalance mitigation (weighted/focal loss options).
 
 ### Evaluation and iteration
-- [ ] Track mIoU and per-class IoU per run.
-- [ ] Add experiment tracking and reproducible run configs.
-- [ ] Run hyperparameter sweeps to approach >=88% target.
+- [x] Track mIoU and per-class IoU per run.
+- [x] Add experiment tracking and reproducible run configs.
+- [x] Run hyperparameter sweeps to approach >=88% target.
 
 ### Inference integration
-- [ ] Package model artifact and define inference schema.
-- [ ] Add post-processing for segmentation masks.
-- [ ] Wire inference outputs into existing land cover analysis flow.
+- [x] Package model artifact and define inference schema.
+- [x] Add post-processing for segmentation masks.
+- [x] Wire inference outputs into existing land cover analysis flow.
 
 ## 5. Serverless Batch on Google Cloud (Roadmap Phase 3)
 
-- [ ] Define GCP architecture for batch orchestration.
-- [ ] Implement Cloud Run Jobs for heavy preprocessing/training/inference batches.
-- [ ] Implement Pub/Sub event-driven stage chaining.
-- [ ] Implement Google Workflows for orchestration and retries.
-- [ ] Add DLQ and idempotent job keys.
-- [ ] Add observability: Cloud Logging, Monitoring dashboards, alerts.
-- [ ] Add cost guardrails (budgets, quotas, lifecycle retention).
+- [x] Define GCP architecture for batch orchestration.
+- [x] Implement Cloud Run Jobs for heavy preprocessing/training/inference batches.
+- [x] Implement Pub/Sub event-driven stage chaining.
+- [x] Implement Google Workflows for orchestration and retries.
+- [x] Add DLQ and idempotent job keys.
+- [x] Add observability: Cloud Logging, Monitoring dashboards, alerts.
+- [x] Add cost guardrails (budgets, quotas, lifecycle retention).
 
 ## 6. GIS Dashboard Maturity (Roadmap Phase 4)
 
@@ -124,8 +124,8 @@
 
 - [ ] M1 done: no critical vulnerabilities open, CI green.
 - [ ] M2 done: preprocessing pipeline produces clean dataset at >1TB scale.
-- [ ] M3 done: U-Net reaches agreed >=88% validation target (or agreed equivalent metric).
-- [ ] M4 done: serverless batch workflows run reliably with observability.
+- [x] M3 done: U-Net reaches agreed >=88% validation target (or agreed equivalent metric).
+- [x] M4 done: serverless batch workflows run reliably with observability.
 - [ ] M5 done: GIS dashboard supports segmentation overlays and trend analysis in production UX.
 
 ## 9. Deferred / Nice-to-Have
