@@ -43,25 +43,25 @@
 ## 3. Data Pipeline for Clean Dataset Generation (Roadmap Phase 1)
 
 ### Cloud masking
-- [ ] Implement Sentinel-2 cloud masking policy (SCL/QA-based).
-- [ ] Add cloud coverage scoring per tile.
-- [ ] Add reject/keep threshold config.
+- [x] Implement Sentinel-2 cloud masking policy (SCL/QA-based).
+- [x] Add cloud coverage scoring per tile.
+- [x] Add reject/keep threshold config.
 
 ### Normalization and harmonization
-- [ ] Implement band normalization pipeline with persisted stats.
-- [ ] Add reprojection/resampling policy and metadata stamps.
-- [ ] Validate normalization consistency across historical windows.
+- [x] Implement band normalization pipeline with persisted stats.
+- [x] Add reprojection/resampling policy and metadata stamps.
+- [x] Validate normalization consistency across historical windows.
 
 ### Augmentation
-- [ ] Implement augmentation pipeline (flip/rotate/crop/spectral perturbation).
-- [ ] Add deterministic seed support for reproducibility.
-- [ ] Add augmentation policy versioning in manifest.
+- [x] Implement augmentation pipeline (flip/rotate/crop/spectral perturbation).
+- [x] Add deterministic seed support for reproducibility.
+- [x] Add augmentation policy versioning in manifest.
 
 ### Automation and scale (>1TB)
-- [ ] Build resumable chunked preprocessing jobs.
-- [ ] Add retry-safe checkpoints and resume-from-last-success.
-- [ ] Store manifests (input hash, transform version, output URI).
-- [ ] Benchmark and validate >1TB run completion.
+- [x] Build resumable chunked preprocessing jobs.
+- [x] Add retry-safe checkpoints and resume-from-last-success.
+- [x] Store manifests (input hash, transform version, output URI).
+- [x] Benchmark and validate >1TB run completion.
 
 ## 4. U-Net Segmentation Delivery (Roadmap Phase 2)
 

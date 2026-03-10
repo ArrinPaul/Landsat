@@ -170,6 +170,22 @@ export interface AnalysisResult {
     landCover: LandCoverAnalysis;
     historicalWeather: HistoricalDataPoint[];
     changeAnalysis?: AnalyzeChangeOutput; // Add this line
+  segmentationInference?: {
+    mask: number[];
+    width: number;
+    height: number;
+    meanConfidence: number;
+    classConfidence: Record<string, number>;
+    postProcessing: {
+      smoothingKernel: number;
+      isolatedPixelFixes: number;
+    };
+    model: {
+      modelId: string;
+      version: string;
+      configHash: string;
+    };
+  };
 }
 
 // New type for Drought & Flood Risk Analysis

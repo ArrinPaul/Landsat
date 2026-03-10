@@ -15,6 +15,7 @@ import { getHistoricalWeather } from '@/services/open-meteo';
 import type { HistoricalDataPoint } from '@/lib/types';
 import { analyzeChange, AnalyzeChangeOutput } from '@/ai/flows/analyze-change';
 import { getHistoricalBaseline } from '@/ai/tools/get-historical-baseline';
+import { packageModelArtifact, runSegmentationInference, trainUNetModel, type DatasetSplit } from '@/ml';
 
 
 import { getFirestore } from '@/lib/firebase';
@@ -97,6 +98,24 @@ const ComputeMetricsOutputSchema = z.object({
     }),
     historicalWeather: z.array(HistoricalDataPointSchema),
     changeAnalysis: ChangeAnalysisSchema.optional(),
+        segmentationInference: z
+            .object({
+                mask: z.array(z.number().int()),
+                width: z.number().int(),
+                height: z.number().int(),
+                meanConfidence: z.number(),
+                classConfidence: z.record(z.string(), z.number()),
+                postProcessing: z.object({
+                    smoothingKernel: z.number().int(),
+                    isolatedPixelFixes: z.number().int(),
+                }),
+                model: z.object({
+                    modelId: z.string(),
+                    version: z.string(),
+                    configHash: z.string(),
+                }),
+            })
+            .optional(),
 });
 export type ComputeMetricsOutput = z.infer<typeof ComputeMetricsOutputSchema>;
 
@@ -390,11 +409,65 @@ const computeMetricsFlow = async (input: ComputeMetricsInput, jobId: string) => 
         // We continue without the analysis result, rather than failing the whole job.
     }
 
+    const ndviLatest = latestMetricValue(timeSeriesResult.NDVI);
+    const ndwiLatest = latestMetricValue(timeSeriesResult.NDWI);
+    const ndbiLatest = latestMetricValue(timeSeriesResult.NDBI);
+    const nbrLatest = latestMetricValue(timeSeriesResult.NBR);
+
+    const syntheticSplit = buildSyntheticSplitFromLandCover(
+        landCoverAnalysis,
+        ndviLatest,
+        ndwiLatest,
+        ndbiLatest,
+        nbrLatest
+    );
+
+    const trained = trainUNetModel(
+        syntheticSplit,
+        {
+            modelId: 'unet-landcover-v1',
+            encoderDepth: 4,
+            inputChannels: 8,
+            numClasses: 4,
+            baseFilters: 32,
+            dropoutRate: 0.1,
+        },
+        {
+            datasetVersion: 'inline-landcover-v1',
+            seed: 20260310,
+            epochs: 8,
+            batchSize: 8,
+            learningRate: 0.001,
+            lossStrategy: 'focal',
+            augmentationPolicyVersion: 'phase1-aug-v1',
+        }
+    );
+
+    const artifact = packageModelArtifact(trained.run, 'v1');
+    const segmentationInference = runSegmentationInference(
+        {
+            width: 64,
+            height: 64,
+            features: {
+                vegetationRatio: landCoverAnalysis.vegetation.endArea,
+                waterRatio: landCoverAnalysis.water.endArea,
+                builtUpRatio: landCoverAnalysis.builtUp.endArea,
+                otherRatio: landCoverAnalysis.other.endArea,
+                ndvi: ndviLatest,
+                ndwi: ndwiLatest,
+                ndbi: ndbiLatest,
+                nbr: nbrLatest,
+            },
+        },
+        artifact
+    );
+
     const finalResult = { 
         timeSeries: timeSeriesResult,
         landCover: landCoverAnalysis,
         historicalWeather: historicalWeatherResult,
         changeAnalysis: changeAnalysisResult,
+        segmentationInference,
     };
     
     const db = getFirestore();
@@ -418,3 +491,46 @@ const computeMetricsFlow = async (input: ComputeMetricsInput, jobId: string) => 
     }
   }
 };
+
+function latestMetricValue(series: Array<{ value: number | null }>): number {
+    const latest = series[series.length - 1]?.value;
+    return typeof latest === 'number' && Number.isFinite(latest) ? latest : 0;
+}
+
+function buildSyntheticSplitFromLandCover(
+    landCover: {
+        vegetation: { endArea: number };
+        water: { endArea: number };
+        builtUp: { endArea: number };
+        other: { endArea: number };
+    },
+    ndvi: number,
+    ndwi: number,
+    ndbi: number,
+    nbr: number
+): DatasetSplit {
+    const samples = new Array(24).fill(null).map((_, idx) => {
+        const dominantClass = idx % 4;
+        return {
+            id: `synthetic-${idx}`,
+            dominantClass,
+            features: [
+                landCover.vegetation.endArea,
+                landCover.water.endArea,
+                landCover.builtUp.endArea,
+                landCover.other.endArea,
+                ndvi,
+                ndwi,
+                ndbi,
+                nbr,
+            ],
+            labelMask: new Array(256).fill(dominantClass),
+        };
+    });
+
+    return {
+        train: samples.slice(0, 16),
+        validation: samples.slice(16, 20),
+        test: samples.slice(20),
+    };
+}

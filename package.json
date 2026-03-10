@@ -15,6 +15,10 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "pipeline:run": "tsx scripts/run-data-pipeline.ts",
+    "pipeline:benchmark": "vitest run src/test/data-pipeline.test.ts",
+    "ml:phase2": "tsx scripts/run-ml-phase2.ts",
+    "ml:phase2:test": "vitest run src/test/ml-phase2.test.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky"
@@ -94,6 +98,7 @@
     "postcss": "^8",
     "prettier": "^3.8.1",
     "tailwindcss": "^3.4.1",
+    "tsx": "^4.20.6",
     "typescript": "^5",
     "vitest": "^4.0.18"
   }
