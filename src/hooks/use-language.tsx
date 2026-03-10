@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { getUserPreferencesAction, saveUserPreferencesAction } from '@/lib/actions';
 
 // Define the shape of the context
 interface LanguageContextType {
@@ -23,10 +24,18 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   const [translations, setTranslations] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    const storedLanguage = window.localStorage.getItem('earth-insights.language');
-    if (storedLanguage) {
-      setLanguage(storedLanguage);
-    }
+    void (async () => {
+      const remote = await getUserPreferencesAction();
+      if (remote.data?.language) {
+        setLanguage(remote.data.language);
+        return;
+      }
+
+      const storedLanguage = window.localStorage.getItem('earth-insights.language');
+      if (storedLanguage) {
+        setLanguage(storedLanguage);
+      }
+    })();
   }, []);
 
   const fetchTranslations = useCallback(async (lang: string) => {
@@ -58,6 +67,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   const handleSetLanguage = (lang: string) => {
     setLanguage(lang);
     window.localStorage.setItem('earth-insights.language', lang);
+    void saveUserPreferencesAction({ language: lang });
   };
 
   return (

@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from './ui/card'
 import { Input } from './ui/input';
 import { ScrollArea } from './ui/scroll-area';
 import { MessageSquare, Send, X, Loader2, Bot, Mic, Volume2, Play, Pause } from 'lucide-react';
-import { chatbotAction } from '@/lib/actions';
+import { appendUserHistoryAction, chatbotAction, listUserHistoryAction } from '@/lib/actions';
 import type { ChatMessage } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from './ui/avatar';
@@ -71,26 +71,41 @@ export function Chatbot({ lat, lon }: { lat?: string, lon?: string }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    const raw = window.localStorage.getItem(CHAT_STORAGE_KEY);
-    if (!raw) {
-      return;
-    }
-    try {
-      const parsed = JSON.parse(raw) as MessageWithAudio[];
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        setMessages(parsed.slice(-40));
-        messagesRef.current = parsed.slice(-40);
+    void (async () => {
+      const remote = await listUserHistoryAction(30);
+      const latestChat = remote.data?.find((item) => item.kind === 'chat');
+      if (latestChat) {
+        const payload = latestChat.payload as { messages?: MessageWithAudio[] };
+        if (payload.messages && Array.isArray(payload.messages) && payload.messages.length > 0) {
+          setMessages(payload.messages.slice(-40));
+          messagesRef.current = payload.messages.slice(-40);
+          return;
+        }
       }
-    } catch {
-      window.localStorage.removeItem(CHAT_STORAGE_KEY);
-    }
+
+      const raw = window.localStorage.getItem(CHAT_STORAGE_KEY);
+      if (!raw) {
+        return;
+      }
+      try {
+        const parsed = JSON.parse(raw) as MessageWithAudio[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setMessages(parsed.slice(-40));
+          messagesRef.current = parsed.slice(-40);
+        }
+      } catch {
+        window.localStorage.removeItem(CHAT_STORAGE_KEY);
+      }
+    })();
   }, []);
 
   useEffect(() => {
     if (messages.length === 0) {
       return;
     }
-    window.localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages.slice(-40)));
+    const compact = messages.slice(-40);
+    window.localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(compact));
+    void appendUserHistoryAction('chat', { messages: compact });
   }, [messages]);
 
   const handleSend = useCallback(async (textToSend?: string) => {
@@ -283,7 +298,7 @@ export function Chatbot({ lat, lon }: { lat?: string, lon?: string }) {
                 <Bot className="h-6 w-6 text-primary" />
                 <CardTitle className="text-lg">{t('chatbot.title')}</CardTitle>
             </div>
-            <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
+            <Button aria-label="Close chatbot" variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
               <span className="sr-only">Close chatbot</span>
               <X className="h-4 w-4" />
             </Button>

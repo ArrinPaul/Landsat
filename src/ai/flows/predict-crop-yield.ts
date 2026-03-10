@@ -13,6 +13,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { executePromptWithFallback, safeParseAIJson } from '@/ai/ai-utils';
 import { getHistoricalWeather, getSoilAndWeatherData, getSoilTypeName, getMoistureLevel } from '@/services/open-meteo';
+import { predictYieldClassical } from '@/ml';
 
 const PredictCropYieldInputSchema = z.object({
   latitude: z.number().describe('The latitude of the location.'),
@@ -30,6 +31,10 @@ const PredictCropYieldOutputSchema = z.object({
     notes: z.string().describe("Additional context or factors influencing the yield prediction."),
 });
 export type PredictCropYieldOutput = z.infer<typeof PredictCropYieldOutputSchema>;
+
+const YieldReasoningOutputSchema = z.object({
+  notes: z.string(),
+});
 
 // Fetch real climate data for crop yield prediction
 async function fetchRealClimateData(lat: number, lon: number) {
@@ -74,7 +79,7 @@ async function fetchRealClimateData(lat: number, lon: number) {
 const predictCropYieldPrompt = ai.definePrompt({
   name: 'predictCropYieldPrompt',
   input: { schema: PredictCropYieldInputSchema },
-  prompt: `You are an agricultural scientist specializing in crop yield prediction. You MUST use ONLY the REAL data provided below - DO NOT make up any values.
+  prompt: `You are an agricultural scientist. Numeric forecasting is done by a deterministic model. Your only task is to provide concise explanation notes.
 
   The current date is ${new Date().toISOString()}.
 
@@ -85,13 +90,11 @@ const predictCropYieldPrompt = ai.definePrompt({
   {{{realSoilData}}}
 
   CRITICAL RULES:
-  1. Use ONLY the actual temperature and precipitation values provided
-  2. DO NOT invent or assume any data
-  3. Base your yield prediction on these real measurements
-  4. Typical yields: Wheat 3-5 tons/ha, Maize 8-12 tons/ha, Rice 4-6 tons/ha
-  5. Adjust based on the REAL data: low temp/precip = lower yield, optimal = higher yield
+  1. DO NOT provide or change numeric yield/confidence values.
+  2. Explain likely factors using provided climate and soil data.
+  3. Keep notes practical and concise.
 
-  Your response MUST be a valid JSON object ONLY that conforms to the PredictCropYieldOutput schema. Do not add any other text or formatting.
+  Your response MUST be a valid JSON object ONLY matching: {"notes":"..."}
 
   **Location & Crop:**
   - Latitude: {{{latitude}}}
@@ -104,9 +107,21 @@ export async function predictCropYield(input: PredictCropYieldInput): Promise<Pr
     // Fetch REAL climate data
     const realData = await fetchRealClimateData(input.latitude, input.longitude);
     
+    const avgTemperature = Number(realData.avgTemperature);
+    const totalPrecipitationMm = Number(realData.totalPrecipitationMm);
+    const soilMoisture = Number(realData.soilMoisture);
+
+    const modelPrediction = predictYieldClassical({
+      cropType: input.cropType,
+      avgTemperatureC: Number.isFinite(avgTemperature) ? avgTemperature : 20,
+      totalPrecipitationMm: Number.isFinite(totalPrecipitationMm) ? totalPrecipitationMm : 350,
+      soilMoisture: Number.isFinite(soilMoisture) ? soilMoisture : 0.25,
+      soilType: realData.soilType,
+    });
+
     const promptInput = {
       ...input,
-      realClimateData: `Average Temperature: ${realData.avgTemperature}°C, Total Precipitation (6 months): ${realData.totalPrecipitationMm}mm`,
+      realClimateData: `Average Temperature: ${realData.avgTemperature}°C, Total Precipitation (6 months): ${realData.totalPrecipitationMm}mm, Model signals: ${modelPrediction.signals.join(', ')}`,
       realSoilData: `Soil Moisture: ${realData.soilMoisture}% VWC (${realData.moistureLevel}), Soil Type: ${realData.soilType}`
     };
     
@@ -118,10 +133,19 @@ export async function predictCropYield(input: PredictCropYieldInput): Promise<Pr
     }
     
     try {
-        const parsedJson = safeParseAIJson(textResponse, (data) => PredictCropYieldOutputSchema.parse(data));
-        return parsedJson;
+        const parsedReasoning = safeParseAIJson(textResponse, (data) => YieldReasoningOutputSchema.parse(data));
+        return PredictCropYieldOutputSchema.parse({
+          predictedYield: modelPrediction.predictedYield,
+          crop: input.cropType,
+          confidence: modelPrediction.confidence,
+          notes: parsedReasoning.notes,
+        });
     } catch(e) {
-        console.error("Failed to parse JSON response from AI:", textResponse);
-        throw new Error("AI returned invalid JSON format. Please try again.");
+        return PredictCropYieldOutputSchema.parse({
+          predictedYield: modelPrediction.predictedYield,
+          crop: input.cropType,
+          confidence: modelPrediction.confidence,
+          notes: `Deterministic model estimate generated from temperature (${realData.avgTemperature}C), precipitation (${realData.totalPrecipitationMm}mm), and soil conditions (${realData.soilType}/${realData.moistureLevel}).`,
+        });
     }
 }

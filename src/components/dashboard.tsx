@@ -12,7 +12,7 @@ import { WeatherReport } from "@/components/weather-report";
 import { LandCoverAnalysis } from "@/components/land-cover-analysis";
 import { useToast } from "@/hooks/use-toast";
 import type { GroundTruthDataPoint, SatellitePassData, WeatherData, HistoryEntry, AnalysisResult } from "@/lib/types";
-import { predictSatellitePassAction, getWeatherReportAction, startMetricsComputationAction, getMetricsResultAction } from "@/lib/actions";
+import { appendUserHistoryAction, listUserHistoryAction, predictSatellitePassAction, getWeatherReportAction, startMetricsComputationAction, getMetricsResultAction } from "@/lib/actions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
 import { Map, AlertTriangle, Loader2 } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
@@ -58,31 +58,53 @@ export function Dashboard() {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
 
   useEffect(() => {
-    const raw = window.localStorage.getItem(HISTORY_STORAGE_KEY);
-    if (!raw) {
-      return;
-    }
-    try {
-      const parsed = JSON.parse(raw) as StoredHistoryEntry[];
-      const restored: HistoryEntry[] = parsed.map((entry) => ({
-        id: entry.id,
-        lat: entry.lat,
-        lon: entry.lon,
-        locationDesc: entry.locationDesc,
-        timestamp: new Date(entry.timestamp),
-        dateRange: {
-          from: entry.dateFrom ? new Date(entry.dateFrom) : undefined,
-          to: entry.dateTo ? new Date(entry.dateTo) : undefined,
-        },
-      }));
-      setHistory(
-        restored.filter(
-          (entry) => !!entry.dateRange?.from && !!entry.dateRange?.to
-        )
-      );
-    } catch {
-      window.localStorage.removeItem(HISTORY_STORAGE_KEY);
-    }
+    void (async () => {
+      const remoteHistory = await listUserHistoryAction(20);
+      if (remoteHistory.data && remoteHistory.data.length > 0) {
+        const restoredRemote = remoteHistory.data
+          .filter((item) => item.kind === 'dashboard')
+          .map((item) => {
+            const payload = item.payload as Record<string, string | undefined>;
+            return {
+              id: item.id,
+              lat: payload.lat || '0',
+              lon: payload.lon || '0',
+              locationDesc: payload.locationDesc || 'Unknown',
+              timestamp: new Date(item.createdAt),
+              dateRange: {
+                from: payload.dateFrom ? new Date(payload.dateFrom) : undefined,
+                to: payload.dateTo ? new Date(payload.dateTo) : undefined,
+              },
+            } as HistoryEntry;
+          })
+          .filter((entry) => !!entry.dateRange?.from && !!entry.dateRange?.to);
+
+        setHistory(restoredRemote);
+        return;
+      }
+
+      const raw = window.localStorage.getItem(HISTORY_STORAGE_KEY);
+      if (!raw) {
+        return;
+      }
+      try {
+        const parsed = JSON.parse(raw) as StoredHistoryEntry[];
+        const restored: HistoryEntry[] = parsed.map((entry) => ({
+          id: entry.id,
+          lat: entry.lat,
+          lon: entry.lon,
+          locationDesc: entry.locationDesc,
+          timestamp: new Date(entry.timestamp),
+          dateRange: {
+            from: entry.dateFrom ? new Date(entry.dateFrom) : undefined,
+            to: entry.dateTo ? new Date(entry.dateTo) : undefined,
+          },
+        }));
+        setHistory(restored.filter((entry) => !!entry.dateRange?.from && !!entry.dateRange?.to));
+      } catch {
+        window.localStorage.removeItem(HISTORY_STORAGE_KEY);
+      }
+    })();
   }, []);
 
   useEffect(() => {
@@ -179,6 +201,13 @@ export function Dashboard() {
     
     const newHistoryEntry: HistoryEntry = { id: new Date().toISOString(), lat, lon, locationDesc, dateRange, timestamp: new Date() };
     setHistory(prev => [newHistoryEntry, ...prev.slice(0, 9)]);
+    void appendUserHistoryAction('dashboard', {
+      lat,
+      lon,
+      locationDesc,
+      dateFrom: dateRange.from?.toISOString(),
+      dateTo: dateRange.to?.toISOString(),
+    });
 
     // Don't await ancillary data, let it fetch in the background
     setIsFetchingPass(true);

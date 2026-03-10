@@ -12,6 +12,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { getDroughtAndFloodRiskData } from '@/ai/tools/get-drought-flood-risk-data';
 import { executePromptWithFallback, safeParseAIJson } from '@/ai/ai-utils';
+import { predictDroughtFloodClassical } from '@/ml';
 
 const DroughtFloodRiskInputSchema = z.object({
   latitude: z.number().describe('The latitude of the location.'),
@@ -27,12 +28,17 @@ const DroughtFloodRiskOutputSchema = z.object({
 });
 export type DroughtFloodRiskOutput = z.infer<typeof DroughtFloodRiskOutputSchema>;
 
+const DroughtFloodSummarySchema = z.object({
+  summary: z.string(),
+});
+
 
 const analyzeDroughtAndFloodRiskPrompt = ai.definePrompt({
   name: 'droughtFloodRiskPrompt',
   input: { schema: DroughtFloodRiskInputSchema },
   tools: [getDroughtAndFloodRiskData],
   prompt: `You are an expert hydrologist and climate scientist AI. Your task is to assess the drought and flood risk for a specific geographic location using real-time data.
+  IMPORTANT: Numeric risk categories and confidence are already computed by deterministic logic. Provide only a short explanation summary.
 
   **Process:**
   1.  **Mandatory Data Fetching**: You MUST use the 'getDroughtAndFloodRiskData' tool to get real-world data for the given coordinates. This tool provides REAL 30-year precipitation averages and current soil moisture.
@@ -52,33 +58,43 @@ const analyzeDroughtAndFloodRiskPrompt = ai.definePrompt({
   - Longitude: {{{longitude}}}
   
   **Output Requirements:**
-  Your response MUST be a valid JSON object ONLY. Do not include any other text or formatting. Your response must conform to the following JSON schema:
-  {
-    "type": "object",
-    "properties": {
-        "droughtRisk": { "type": "string", "enum": ["Low", "Medium", "High"] },
-        "floodRisk": { "type": "string", "enum": ["Low", "Medium", "High"] },
-        "summary": { "type": "string" },
-        "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
-    },
-    "required": ["droughtRisk", "floodRisk", "summary", "confidence"]
-  }
+  Your response MUST be valid JSON only in format: {"summary":"..."}
   `,
 });
 
 export async function analyzeDroughtAndFloodRisk(input: DroughtFloodRiskInput): Promise<DroughtFloodRiskOutput> {
+    const toolData = await getDroughtAndFloodRiskData(input);
+    const modelRisk = predictDroughtFloodClassical({
+        averagePrecipitationMm: toolData.averagePrecipitationMm,
+        currentMoistureLevel: toolData.currentMoistureLevel,
+    });
+
     const response = await executePromptWithFallback(analyzeDroughtAndFloodRiskPrompt, input, undefined, 'drought-flood');
     const textResponse = response.text;
     
     if (!textResponse) {
-      throw new Error("The AI model did not return a risk analysis output. Please try again.");
+      return DroughtFloodRiskOutputSchema.parse({
+        droughtRisk: modelRisk.droughtRisk,
+        floodRisk: modelRisk.floodRisk,
+        confidence: modelRisk.confidence,
+        summary: `Deterministic assessment based on average precipitation (${toolData.averagePrecipitationMm.toFixed(0)}mm) and soil moisture (${toolData.currentMoistureLevel}).`,
+      });
     }
     
     try {
-        const parsedJson = safeParseAIJson(textResponse, (data) => DroughtFloodRiskOutputSchema.parse(data));
-        return parsedJson;
+        const parsedSummary = safeParseAIJson(textResponse, (data) => DroughtFloodSummarySchema.parse(data));
+        return DroughtFloodRiskOutputSchema.parse({
+          droughtRisk: modelRisk.droughtRisk,
+          floodRisk: modelRisk.floodRisk,
+          confidence: modelRisk.confidence,
+          summary: parsedSummary.summary,
+        });
     } catch (e) {
-        console.error("Failed to parse JSON response from AI:", textResponse);
-        throw new Error("AI returned invalid JSON format. Please try again.");
+        return DroughtFloodRiskOutputSchema.parse({
+          droughtRisk: modelRisk.droughtRisk,
+          floodRisk: modelRisk.floodRisk,
+          confidence: modelRisk.confidence,
+          summary: `Deterministic assessment based on average precipitation (${toolData.averagePrecipitationMm.toFixed(0)}mm) and soil moisture (${toolData.currentMoistureLevel}).`,
+        });
     }
 }

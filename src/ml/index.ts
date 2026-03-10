@@ -9,3 +9,4 @@ export * from './sweep';
 export * from './artifact';
 export * from './inference';
 export * from './pipeline';
+export * from './classical-models';
