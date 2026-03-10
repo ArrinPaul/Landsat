@@ -1,5 +1,6 @@
 
 "use server";
+import 'server-only';
 
 import { generateDataInsights } from "@/ai/flows/generate-insights";
 import { generateReportSummary } from "@/ai/flows/generate-report-summary";
@@ -18,6 +19,8 @@ import { analyzeDroughtAndFloodRisk } from "@/ai/flows/analyze-drought-flood-ris
 import { getAdvancedCropAdvice, type AdvancedCropAdviceInput } from "@/ai/flows/get-advanced-crop-advice";
 import { generateTimelapseVideo } from "@/ai/flows/generate-timelapse-video";
 import { runScenarioAnalysis } from "@/ai/tools/run-scenario-analysis";
+import { logger } from '@/lib/logger';
+import { redactSensitive, sanitizePromptPayload } from '@/lib/security';
 
 
 import type { AdvancedCropAdvice, DroughtFloodRisk, GenerateTimelapseVideoInput, GenerateTimelapseVideoOutput, ScenarioAnalysis } from "@/lib/types";
@@ -30,21 +33,20 @@ const getErrorMessage = (error: unknown): string => {
         if (error.cause) {
             return getErrorMessage(error.cause);
     }
-        return error.message || 'An unknown error occurred.';
+                return redactSensitive(error.message || 'An unknown error occurred.');
   }
-  return String(error);
+    return redactSensitive(String(error));
 };
 
 import { isRateLimited } from '@/ai/rate-limiter';
 
-// ... (imports and other functions remain the same)
-
 // Generic action creator
 async function handleAction<T, U>(action: (input: T) => Promise<U>, input: T): Promise<{ data: U | null; error: string | null; }> {
+    const safeInput = sanitizePromptPayload(input);
     const userId = "default-user"; // Replace with actual user ID when auth is implemented
     if (isRateLimited(userId)) {
         const errorMessage = "Too Many Requests: You have exceeded the rate limit. Please try again in a moment.";
-        console.warn(errorMessage);
+        logger.warn('rate_limited', { scope: 'lib.actions', message: errorMessage });
         return { data: null, error: errorMessage };
     }
 
@@ -59,7 +61,7 @@ async function handleAction<T, U>(action: (input: T) => Promise<U>, input: T): P
 
     if (!hasAnyAIKey && !process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
         const errorMessage = "All AI and Satellite services are disabled. No valid API keys (Gemini, Groq, Mistral, HF) or Earth Engine credentials found in environment. Please check your configuration.";
-        console.error(errorMessage);
+        logger.error('missing_credentials', { scope: 'lib.actions', message: errorMessage });
         return { data: null, error: errorMessage };
     }
 
@@ -67,10 +69,15 @@ async function handleAction<T, U>(action: (input: T) => Promise<U>, input: T): P
     let attempt = 0;
     while (attempt < maxRetries) {
         try {
-            const result = await action(input);
+            const result = await action(safeInput);
             return { data: result, error: null };
         } catch (error) {
-            console.error(`Action '${action.name}' failed on attempt ${attempt + 1}:`, error);
+            logger.error('action_failed_attempt', {
+                scope: 'lib.actions',
+                action: action.name,
+                attempt: attempt + 1,
+                error: getErrorMessage(error),
+            });
             const errorMessage = getErrorMessage(error);
 
             if (errorMessage.includes('403')) {
@@ -93,7 +100,7 @@ async function handleAction<T, U>(action: (input: T) => Promise<U>, input: T): P
 
             // Exponential backoff: 1s, 2s, 4s
             const delay = Math.pow(2, attempt - 1) * 1000;
-            console.log(`Retrying in ${delay / 1000}s...`);
+            logger.info('action_retry_backoff', { scope: 'lib.actions', delaySeconds: delay / 1000, action: action.name });
             await new Promise(res => setTimeout(res, delay));
         }
     }

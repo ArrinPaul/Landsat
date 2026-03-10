@@ -20,6 +20,7 @@ import { Chatbot } from "./chatbot";
 import { MonitoringCard } from "./monitoring-card";
 import { ChangeInsightCard } from "./change-insight-card"; // New import
 import { Progress } from "@/components/ui/progress"; // New import
+import { GISDashboard } from "@/components/gis-dashboard";
 
 type ComputationStatus = 'idle' | 'computing' | 'polling' | 'completed' | 'error';
 
@@ -247,6 +248,8 @@ export function Dashboard() {
               </div>
     
               <LandCoverAnalysis landCover={analysisResult.landCover} />
+
+              <GISDashboard analysisResult={analysisResult} locationLabel={locationDesc} />
     
               <MetricsTable 
                 analysisResult={analysisResult} 

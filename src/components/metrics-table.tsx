@@ -201,6 +201,35 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
     }
   };
 
+  const handleExportGeospatial = () => {
+    const geojson = {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          geometry: {
+            type: 'Polygon',
+            coordinates: [[
+              [-74.2, 40.6],
+              [-73.8, 40.6],
+              [-73.8, 40.9],
+              [-74.2, 40.9],
+              [-74.2, 40.6],
+            ]],
+          },
+          properties: {
+            location,
+            dateRange,
+            generatedAt: new Date().toISOString(),
+          },
+        },
+      ],
+    };
+
+    downloadFile(JSON.stringify(geojson, null, 2), 'earth-insights-artifact.geojson', 'application/geo+json');
+    toast({ title: 'GeoJSON export complete', description: 'Geospatial artifact downloaded successfully.' });
+  };
+
   const renderSortIcon = (key: SortKey) => {
     if (sortKey !== key) return null;
     return sortDirection === 'asc' ? '▲' : '▼';
@@ -220,27 +249,29 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
               {reportLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               {reportLoading ? t('dashboard.metrics.export.generating') : t('dashboard.metrics.export.report')}
             </Button>
+            <Button variant="outline" onClick={handleExportGeospatial}>GeoJSON</Button>
           </div>
         </div>
       </CardHeader>
       <CardContent>
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead onClick={() => handleSort('name')} className="cursor-pointer">
-                <div className="flex items-center">{t('dashboard.metrics.table.metric')} <span className="ml-2 text-xs">{renderSortIcon('name')}</span></div>
+              <TableHead aria-sort={sortKey === 'name' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}>
+                <button type="button" onClick={() => handleSort('name')} className="flex items-center" aria-label="Sort by metric">{t('dashboard.metrics.table.metric')} <span className="ml-2 text-xs">{renderSortIcon('name')}</span></button>
               </TableHead>
-              <TableHead onClick={() => handleSort('firstValue')} className="cursor-pointer text-right">
-                <div className="flex items-center justify-end">{t('dashboard.metrics.table.start')} <span className="ml-2 text-xs">{renderSortIcon('firstValue')}</span></div>
+              <TableHead className="text-right" aria-sort={sortKey === 'firstValue' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}>
+                <button type="button" onClick={() => handleSort('firstValue')} className="ml-auto flex items-center justify-end" aria-label="Sort by start value">{t('dashboard.metrics.table.start')} <span className="ml-2 text-xs">{renderSortIcon('firstValue')}</span></button>
               </TableHead>
-              <TableHead onClick={() => handleSort('lastValue')} className="cursor-pointer text-right">
-                <div className="flex items-center justify-end">{t('dashboard.metrics.table.end')} <span className="ml-2 text-xs">{renderSortIcon('lastValue')}</span></div>
+              <TableHead className="text-right" aria-sort={sortKey === 'lastValue' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}>
+                <button type="button" onClick={() => handleSort('lastValue')} className="ml-auto flex items-center justify-end" aria-label="Sort by end value">{t('dashboard.metrics.table.end')} <span className="ml-2 text-xs">{renderSortIcon('lastValue')}</span></button>
               </TableHead>
-              <TableHead onClick={() => handleSort('percentageChange')} className="cursor-pointer text-right">
-                <div className="flex items-center justify-end">{t('dashboard.metrics.table.change')} <span className="ml-2 text-xs">{renderSortIcon('percentageChange')}</span></div>
+              <TableHead className="text-right" aria-sort={sortKey === 'percentageChange' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}>
+                <button type="button" onClick={() => handleSort('percentageChange')} className="ml-auto flex items-center justify-end" aria-label="Sort by percentage change">{t('dashboard.metrics.table.change')} <span className="ml-2 text-xs">{renderSortIcon('percentageChange')}</span></button>
               </TableHead>
-              <TableHead onClick={() => handleSort('n')} className="cursor-pointer text-right">
-                 <div className="flex items-center justify-end">{t('dashboard.metrics.table.points')} <span className="ml-2 text-xs">{renderSortIcon('n')}</span></div>
+              <TableHead className="text-right" aria-sort={sortKey === 'n' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}>
+                 <button type="button" onClick={() => handleSort('n')} className="ml-auto flex items-center justify-end" aria-label="Sort by points">{t('dashboard.metrics.table.points')} <span className="ml-2 text-xs">{renderSortIcon('n')}</span></button>
               </TableHead>
               <TableHead className="text-center">{t('dashboard.metrics.table.insight')}</TableHead>
             </TableRow>
@@ -285,6 +316,7 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
             ))}
           </TableBody>
         </Table>
+        </div>
       </CardContent>
     </Card>
   );

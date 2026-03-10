@@ -6,29 +6,29 @@
 
 ## 0. Program Alignment
 
-- [ ] Confirm final KPI definitions for the five target goals.
-- [ ] Freeze acceptance metrics:
-  - [ ] Dataset quality metrics (cloud-free ratio, invalid tile ratio).
-  - [ ] Scale metric for preprocessing throughput on >1TB workloads.
-  - [ ] Segmentation quality metric set (mIoU, class IoU, pixel accuracy).
-  - [ ] Dashboard UX metrics (response time and export success rate).
-- [ ] Assign owner per milestone in `docs/ROADMAP.md`.
+- [x] Confirm final KPI definitions for the five target goals.
+- [x] Freeze acceptance metrics:
+  - [x] Dataset quality metrics (cloud-free ratio, invalid tile ratio).
+  - [x] Scale metric for preprocessing throughput on >1TB workloads.
+  - [x] Segmentation quality metric set (mIoU, class IoU, pixel accuracy).
+  - [x] Dashboard UX metrics (response time and export success rate).
+- [x] Assign owner per milestone in `docs/ROADMAP.md`.
 
 ## 1. Critical Blockers (Carryover from Legacy Audit)
 
 ### Security and reliability
-- [ ] Remove/guard all production `rejectUnauthorized: false` usage.
-- [ ] Harden prompt-input handling against prompt injection in AI flows/tools.
-- [ ] Keep CSV injection protection and add tests to prevent regressions.
-- [ ] Prevent API key leakage through URLs and error logs.
-- [ ] Make Firebase init lazy and fail-safe when credentials are absent.
-- [ ] Ensure server-only modules are marked and not client-bundled.
+- [x] Remove/guard all production `rejectUnauthorized: false` usage.
+- [x] Harden prompt-input handling against prompt injection in AI flows/tools.
+- [x] Keep CSV injection protection and add tests to prevent regressions.
+- [x] Prevent API key leakage through URLs and error logs.
+- [x] Make Firebase init lazy and fail-safe when credentials are absent.
+- [x] Ensure server-only modules are marked and not client-bundled.
 
 ### App correctness
 - [x] Fix remaining chatbot hook dependency warnings.
-- [ ] Replace raw `<img>` in payment page with optimized image handling.
-- [ ] Remove stale/dead comments and remaining dead code paths in actions/flows.
-- [ ] Add robust error handling for all fire-and-forget async calls.
+- [x] Replace raw `<img>` in payment page with optimized image handling.
+- [x] Remove stale/dead comments and remaining dead code paths in actions/flows.
+- [x] Add robust error handling for all fire-and-forget async calls.
 
 ## 2. Foundation and DevOps (Roadmap Phase 0)
 
@@ -93,14 +93,14 @@
 ## 6. GIS Dashboard Maturity (Roadmap Phase 4)
 
 ### Visualization and analysis
-- [ ] Add map-centric view with segmentation overlay layers.
-- [ ] Add temporal slider and before/after comparison UX.
-- [ ] Add anomaly/change heatmap representation.
+- [x] Add map-centric view with segmentation overlay layers.
+- [x] Add temporal slider and before/after comparison UX.
+- [x] Add anomaly/change heatmap representation.
 
 ### Product quality
-- [ ] Add export options (CSV, report, geospatial artifact where relevant).
-- [ ] Improve accessibility (aria, reduced motion, keyboard-first flows).
-- [ ] Improve responsiveness/performance for large datasets.
+- [x] Add export options (CSV, report, geospatial artifact where relevant).
+- [x] Improve accessibility (aria, reduced motion, keyboard-first flows).
+- [x] Improve responsiveness/performance for large datasets.
 
 ## 7. Carryover Quality Backlog (Condensed from Legacy TODO)
 
@@ -126,7 +126,7 @@
 - [ ] M2 done: preprocessing pipeline produces clean dataset at >1TB scale.
 - [x] M3 done: U-Net reaches agreed >=88% validation target (or agreed equivalent metric).
 - [x] M4 done: serverless batch workflows run reliably with observability.
-- [ ] M5 done: GIS dashboard supports segmentation overlays and trend analysis in production UX.
+- [x] M5 done: GIS dashboard supports segmentation overlays and trend analysis in production UX.
 
 ## 9. Deferred / Nice-to-Have
 

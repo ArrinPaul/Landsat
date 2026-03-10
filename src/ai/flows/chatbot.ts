@@ -1,5 +1,6 @@
 
 'use server';
+import 'server-only';
 
 /**
  * @fileOverview A chatbot flow to assist users of the Earth Insights Dashboard.
@@ -13,10 +14,9 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { ChatMessageSchema } from '@/lib/types';
 import { generateAudio } from '@/ai/flows/text-to-speech';
-import { predictCropYield, type PredictCropYieldInput } from '@/ai/flows/predict-crop-yield';
-import { suggestCrop, type SuggestCropInput } from '@/ai/flows/suggest-crop';
-import { getAdvancedCropAdvice, type AdvancedCropAdviceInput } from '@/ai/flows/get-advanced-crop-advice';
 import { executePromptWithFallback } from '@/ai/ai-utils';
+import { logger } from '@/lib/logger';
+import { redactSensitive } from '@/lib/security';
 
 const ChatbotInputSchema = z.object({
   messages: z.array(ChatMessageSchema),
@@ -30,10 +30,6 @@ const ChatbotOutputSchema = z.object({
   audioDataUri: z.string().optional().describe("The generated audio for the response, as a data URI in WAV format."),
 });
 export type ChatbotOutput = z.infer<typeof ChatbotOutputSchema>;
-
-const ChatbotResponseSchema = z.object({
-    response: z.string().describe("The chatbot's response to the user."),
-});
 
 const chatbotPrompt = ai.definePrompt({
   name: 'chatbotPrompt',
@@ -76,7 +72,10 @@ export async function chatbot(input: ChatbotInput): Promise<ChatbotOutput> {
       try {
         audioDataUri = await generateAudio(textResponse);
       } catch (audioError) {
-        console.warn("Audio generation failed, returning response without audio:", audioError);
+        logger.warn('chatbot_audio_generation_failed', {
+          scope: 'ai.flows.chatbot',
+          error: redactSensitive(audioError instanceof Error ? audioError.message : String(audioError)),
+        });
         // Continue without audio - it's optional
       }
 
@@ -85,7 +84,10 @@ export async function chatbot(input: ChatbotInput): Promise<ChatbotOutput> {
           audioDataUri,
       };
     } catch (error: any) {
-      console.error("Chatbot error:", error);
+      logger.error('chatbot_flow_failed', {
+        scope: 'ai.flows.chatbot',
+        error: redactSensitive(error?.message || String(error)),
+      });
       
       // Provide a helpful fallback response
       const errorMessage = error?.message || 'Unknown error';

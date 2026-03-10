@@ -1,5 +1,6 @@
 
 'use server';
+import 'server-only';
 
 /**
  * @fileOverview A flow for computing environmental metrics using Google Earth Engine.
@@ -16,6 +17,8 @@ import type { HistoricalDataPoint } from '@/lib/types';
 import { analyzeChange, AnalyzeChangeOutput } from '@/ai/flows/analyze-change';
 import { getHistoricalBaseline } from '@/ai/tools/get-historical-baseline';
 import { packageModelArtifact, runSegmentationInference, trainUNetModel, type DatasetSplit } from '@/ml';
+import { logger } from '@/lib/logger';
+import { redactSensitive } from '@/lib/security';
 
 
 import { getFirestore } from '@/lib/firebase';
@@ -146,8 +149,12 @@ export async function startMetricsComputation(input: ComputeMetricsInput): Promi
   });
 
   // Do not await this. Let it run in the background.
-  computeMetricsFlow(input, jobId).catch(e => {
-    console.error(`Background flow for ${jobId} failed:`, e);
+    computeMetricsFlow(input, jobId).catch((e: unknown) => {
+        logger.error('metrics_background_flow_failed', {
+            scope: 'ai.flows.compute-metrics',
+            jobId,
+            error: redactSensitive(e instanceof Error ? e.message : String(e)),
+        });
   });
 
   return { jobId };
@@ -175,8 +182,9 @@ export async function getMetricsResult(jobId: string): Promise<JobResultOutput> 
         
         return { status: 'pending' };
     } catch (error: any) {
-        console.error(`Error fetching job result for ${jobId}:`, error);
-        return { status: 'error', error: `Failed to fetch job status: ${error.message}` };
+        const safeError = redactSensitive(error?.message || String(error));
+        logger.error('metrics_result_fetch_failed', { scope: 'ai.flows.compute-metrics', jobId, error: safeError });
+        return { status: 'error', error: `Failed to fetch job status: ${safeError}` };
     }
 }
 

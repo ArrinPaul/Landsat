@@ -2,6 +2,8 @@
 /**
  * @fileOverview A service to fetch agricultural and weather data from the Open-Meteo API.
  */
+import { logger } from '@/lib/logger';
+import { redactSensitive } from '@/lib/security';
 
 const ARCHIVE_API_URL = "https://archive-api.open-meteo.com/v1/archive";
 
@@ -112,13 +114,17 @@ export async function getSoilAndWeatherData(latitude: number, longitude: number)
             return data as SoilAndWeatherData;
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : String(error);
-            console.warn(`Failed to fetch from ${url}:`, message);
+            logger.warn('soil_fetch_failed', {
+                scope: 'services.open-meteo',
+                endpoint: url.split('?')[0],
+                error: redactSensitive(message),
+            });
             continue;
         }
     }
     
     // If all URLs fail, return mock data as last resort
-    console.error("All soil API URLs failed, using mock data");
+    logger.error('soil_all_endpoints_failed', { scope: 'services.open-meteo' });
     return {
         latitude,
         longitude,
@@ -162,8 +168,11 @@ export async function getHistoricalWeather(latitude: number, longitude: number, 
         const data = await response.json();
         return data as HistoricalWeatherData;
     } catch (error: unknown) {
-        console.error("Error fetching historical weather data:", error);
-        console.warn("Using mock historical weather data");
+        logger.error('historical_weather_fetch_failed', {
+            scope: 'services.open-meteo',
+            error: redactSensitive(error instanceof Error ? error.message : String(error)),
+        });
+        logger.warn('historical_weather_mock_fallback', { scope: 'services.open-meteo' });
         
         // Return mock historical data as fallback
         const days = Math.floor((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
@@ -240,8 +249,11 @@ export async function getHistoricalPrecipitation(latitude: number, longitude: nu
         
         return data as HistoricalPrecipitationData;
     } catch (error: unknown) {
-        console.error("Error fetching historical precipitation data:", error);
-        console.warn("Using mock historical precipitation data");
+        logger.error('historical_precipitation_fetch_failed', {
+            scope: 'services.open-meteo',
+            error: redactSensitive(error instanceof Error ? error.message : String(error)),
+        });
+        logger.warn('historical_precipitation_mock_fallback', { scope: 'services.open-meteo' });
         
         // Return mock 30-year average (global average ~500mm/year)
         return {

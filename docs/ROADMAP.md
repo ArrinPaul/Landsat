@@ -34,6 +34,32 @@
 - Keep training/inference concerns separated from product API/UI concerns.
 - Measure every milestone with clear acceptance criteria.
 
+## KPI Definitions (Frozen)
+
+1. Data Quality KPI (M2):
+  - `cloud_free_ratio >= 0.92`
+  - `invalid_tile_ratio <= 0.03`
+2. Scale KPI (M2):
+  - End-to-end preprocessing throughput `>= 45 MB/s` sustained on `>1TB` runs.
+  - Successful resumable completion with `<= 1%` unrecoverable chunk failures.
+3. Segmentation KPI (M3):
+  - `mIoU >= 0.88`
+  - Per-class IoU reported for all land-cover classes.
+  - Pixel accuracy tracked per run.
+4. Dashboard UX KPI (M5):
+  - Initial map-interaction response time `<= 1.5s` at p95.
+  - Export success rate (CSV/report/GeoJSON/raster summary) `>= 99%`.
+5. Reliability KPI (M4):
+  - Workflow stage success rate `>= 98%` with DLQ visibility and retries.
+
+## Milestone Ownership
+
+- M1: Platform Engineering (Owner: Platform Lead)
+- M2: Data Engineering (Owner: Data Pipeline Lead)
+- M3: ML Engineering (Owner: ML Lead)
+- M4: Cloud Platform / SRE (Owner: Cloud Ops Lead)
+- M5: Frontend + GIS Product (Owner: Product Engineering Lead)
+
 ## Phased Delivery Plan
 
 ## Phase 0: Stabilization and Foundations (Weeks 1-3)

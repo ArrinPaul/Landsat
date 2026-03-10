@@ -1,10 +1,13 @@
 
 'use server';
+import 'server-only';
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { getSoilAndWeatherData, getSoilTypeName } from '@/services/open-meteo';
 import { getCache, setCache } from '@/ai/cache';
+import { logger } from '@/lib/logger';
+import { redactSensitive } from '@/lib/security';
 
 export const getSoilType = ai.defineTool(
   {
@@ -27,13 +30,20 @@ export const getSoilType = ai.defineTool(
     }
     
     if (cacheResult.state === 'stale') {
-        console.log(`[STALE DATA] Using stale soil type data for ${latitude}, ${longitude}`);
+      logger.info('soil_type_cache_stale', { scope: 'ai.tools.get-soil-type', latitude, longitude });
         // Non-blocking call to refresh the cache in the background
-        getSoilAndWeatherData(latitude, longitude).then(data => {
+      getSoilAndWeatherData(latitude, longitude).then(data => {
             const soilTypeIndex = data.hourly.soil_type_0_to_10cm[0];
             const soilName = getSoilTypeName(soilTypeIndex);
             setCache(cacheKey, { soilType: soilName });
-        }).catch(err => console.error("Failed to refresh stale cache:", err));
+      }).catch((err: unknown) => {
+        logger.error('soil_type_cache_refresh_failed', {
+          scope: 'ai.tools.get-soil-type',
+          latitude,
+          longitude,
+          error: redactSensitive(err instanceof Error ? err.message : String(err)),
+        });
+      });
         return cacheResult.data;
     }
 
@@ -52,7 +62,10 @@ export const getSoilType = ai.defineTool(
 
       return result;
     } catch (error) {
-        console.error("Error in getSoilType tool:", error);
+      logger.error('soil_type_tool_failed', {
+        scope: 'ai.tools.get-soil-type',
+        error: redactSensitive(error instanceof Error ? error.message : String(error)),
+      });
         // Provide a fallback value in case of API failure to ensure the flow can continue.
         return { soilType: 'Loam' };
     }

@@ -64,6 +64,24 @@ function combineAndSortData(analysisResult: AnalysisResult, groundTruth: GroundT
         .filter((d): d is { ground: number, satellite: number } => d !== null);
 }
 
+function downsampleSeries<T>(data: T[], maxPoints = 240): T[] {
+  if (data.length <= maxPoints) {
+    return data;
+  }
+
+  const step = Math.ceil(data.length / maxPoints);
+  const sampled: T[] = [];
+  for (let i = 0; i < data.length; i += step) {
+    sampled.push(data[i] as T);
+  }
+  const last = data[data.length - 1];
+  if (sampled[sampled.length - 1] !== last) {
+    sampled.push(last as T);
+  }
+
+  return sampled;
+}
+
 
 interface VisualizationsProps {
   analysisResult: AnalysisResult;
@@ -100,7 +118,7 @@ export function Visualizations({ analysisResult, groundTruthData, selectedMetric
     const metricData = analysisResult.timeSeries[selectedMetric as keyof typeof analysisResult.timeSeries];
     const weatherMap = new Map(analysisResult.historicalWeather.map(d => [format(new Date(d.date), 'yyyy-MM-dd'), d]));
 
-    return metricData.map(metricPoint => {
+    const merged = metricData.map(metricPoint => {
         const dateStr = format(new Date(metricPoint.date), 'yyyy-MM-dd');
         const weatherPoint = weatherMap.get(dateStr);
         return {
@@ -110,6 +128,8 @@ export function Visualizations({ analysisResult, groundTruthData, selectedMetric
             precipitation: weatherPoint?.precipitation,
         }
     });
+
+    return downsampleSeries(merged);
 
   }, [analysisResult, selectedMetric]);
   

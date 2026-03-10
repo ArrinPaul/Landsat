@@ -2,8 +2,11 @@
  * @fileOverview Multi-provider AI configuration supporting free APIs
  * Providers: Groq (primary), HuggingFace (fallback), Mistral (fallback)
  */
+import 'server-only';
 
 import Groq from 'groq-sdk';
+import { logger } from '@/lib/logger';
+import { redactSensitive } from '@/lib/security';
 
 export interface ProviderConfig {
   name: string;
@@ -213,22 +216,26 @@ export async function generateWithFallback(
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       try {
         const generateFn = providerMap[provider];
-        console.log(`[AI] Attempting ${provider} (attempt ${attempt + 1}/${maxRetries})`);
+        logger.info('provider_attempt', { scope: 'ai.providers', provider, attempt: attempt + 1, maxRetries });
         
         const response = await generateFn(options.prompt, options.config);
-        console.log(`[AI] ✓ Success with ${provider}: ${response.model}`);
+        logger.info('provider_success', { scope: 'ai.providers', provider, model: response.model });
         return response;
       } catch (error: any) {
         lastError = error;
         const errorMsg = error.message || String(error);
         
-        console.warn(
-          `[AI] ✗ ${provider} failed (attempt ${attempt + 1}/${maxRetries}): ${errorMsg}`
-        );
+        logger.warn('provider_failure', {
+          scope: 'ai.providers',
+          provider,
+          attempt: attempt + 1,
+          maxRetries,
+          error: redactSensitive(errorMsg),
+        });
 
         // If API key is missing, skip to next provider immediately
         if (errorMsg.includes('not found in environment')) {
-          console.warn(`[AI] ${provider} API key not configured, trying next provider...`);
+          logger.warn('provider_missing_key', { scope: 'ai.providers', provider });
           break; // Move to next provider
         }
 
@@ -239,7 +246,7 @@ export async function generateWithFallback(
           errorMsg.includes('quota')
         ) {
           const delayMs = Math.min(1000 * Math.pow(2, attempt), 10000);
-          console.log(`[AI] Rate limited, waiting ${delayMs}ms before retry...`);
+          logger.info('provider_rate_limited_retry', { scope: 'ai.providers', provider, delayMs });
           await new Promise(resolve => setTimeout(resolve, delayMs));
           continue;
         }

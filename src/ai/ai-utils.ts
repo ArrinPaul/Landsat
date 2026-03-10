@@ -3,10 +3,12 @@
  * Provides retry logic and model fallback for handling API rate limits and errors.
  * Supports multi-provider setup: Groq → HuggingFace → Mistral → Google Gemini
  */
+import 'server-only';
 
 import { ai, MODELS } from '@/ai/genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 import { generateWithFallback as generateWithMultiProvider } from '@/ai/providers';
+import { sanitizePromptPayload } from '@/lib/security';
 
 export interface RetryConfig {
   maxRetries?: number;
@@ -129,6 +131,7 @@ export async function executePromptWithFallback<TInput, TOutput>(
   config?: FallbackConfig,
   flowHint?: string
 ): Promise<{ text: string }> {
+  const sanitizedInput = sanitizePromptPayload(input);
   const retryConfig = { ...DEFAULT_RETRY_CONFIG, ...config?.retryConfig };
   
   // FIRST: Try Google Gemini (but with AGGRESSIVE rate limit protection)
@@ -140,7 +143,7 @@ export async function executePromptWithFallback<TInput, TOutput>(
   
   for (let attempt = 0; attempt < MAX_GEMINI_ATTEMPTS; attempt++) {
     try {
-      const response = await promptFn(input);
+    const response = await promptFn(sanitizedInput);
       console.log(`[AI] ✓ Success with Gemini`);
       return response;
     } catch (error: any) {
@@ -167,10 +170,10 @@ export async function executePromptWithFallback<TInput, TOutput>(
     // Construct a proper prompt for the free providers based on flowHint or input structure
     let promptText: string;
     
-    if (typeof input === 'string') {
-      promptText = input;
+    if (typeof sanitizedInput === 'string') {
+      promptText = sanitizedInput;
     } else {
-      const inputData = input as Record<string, any>;
+      const inputData = sanitizedInput as Record<string, any>;
       const currentDate = new Date().toISOString();
       
       // Detect flow type from flowHint or input structure

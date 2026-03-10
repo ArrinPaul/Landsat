@@ -38,4 +38,31 @@ describe('csv helpers', () => {
 
     expect(csv).toContain("'=HYPERLINK");
   });
+
+  it('escapes other dangerous spreadsheet prefixes', () => {
+    const csv = generateCsv(
+      [
+        {
+          name: '+SUM(A1:A2)',
+          firstValue: 1,
+          lastValue: 2,
+          percentageChange: 100,
+          n: 5,
+          timeSeries: [],
+        },
+        {
+          name: '@cmd',
+          firstValue: 1,
+          lastValue: 2,
+          percentageChange: 100,
+          n: 5,
+          timeSeries: [],
+        },
+      ],
+      t
+    );
+
+    expect(csv).toContain("'+SUM(A1:A2)");
+    expect(csv).toContain("'@cmd");
+  });
 });

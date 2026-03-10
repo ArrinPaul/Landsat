@@ -3,6 +3,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Header } from "@/components/header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -145,7 +146,7 @@ export default function PaymentPage() {
                                             <Button type="submit" className="w-full">
                                                 <Lock className="mr-2 h-4 w-4" />
                                                 {t('payment.payButton', { amount: '$20' })}
-                                                 <img src="https://razorpay.com/assets/razorpay-logo.svg" alt="Razorpay" className="h-5 ml-4" />
+                                                 <Image src="https://razorpay.com/assets/razorpay-logo.svg" alt="Razorpay" width={72} height={20} className="h-5 ml-4 w-auto" unoptimized />
                                             </Button>
                                         </CardFooter>
                                     </form>

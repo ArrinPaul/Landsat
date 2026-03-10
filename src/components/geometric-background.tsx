@@ -15,6 +15,7 @@ export function GeometricBackground() {
     
     let width: number, height: number, stars: Star[];
     const numStars = 800;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     
     const resizeCanvas = () => {
       width = canvas.offsetWidth;
@@ -70,31 +71,38 @@ export function GeometricBackground() {
     }
 
     let animationFrameId: number;
-    function animate() {
+    function drawFrame() {
       if (!ctx) return;
       ctx.fillStyle = '#0a0a1a';
       ctx.fillRect(0, 0, width, height);
 
       for (const star of stars) {
-        star.update();
+        if (!prefersReducedMotion) {
+          star.update();
+        }
         star.project();
         star.draw();
       }
-      
-      animationFrameId = requestAnimationFrame(animate);
+
+      if (!prefersReducedMotion) {
+        animationFrameId = requestAnimationFrame(drawFrame);
+      }
     }
-    
-    window.addEventListener('resize', () => {
+
+    const onResize = () => {
         resizeCanvas();
         init();
-    });
+        drawFrame();
+    };
+
+    window.addEventListener('resize', onResize);
 
     resizeCanvas();
     init();
-    animate();
+    drawFrame();
 
     return () => {
-      window.removeEventListener('resize', resizeCanvas);
+      window.removeEventListener('resize', onResize);
       cancelAnimationFrame(animationFrameId);
     };
   }, []);

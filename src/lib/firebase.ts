@@ -1,4 +1,7 @@
 import admin from 'firebase-admin';
+import 'server-only';
+import { logger } from '@/lib/logger';
+import { redactSensitive } from '@/lib/security';
 
 let db: admin.firestore.Firestore | null = null;
 
@@ -13,7 +16,7 @@ export function getFirestore(): admin.firestore.Firestore {
     if (!admin.apps || admin.apps.length === 0) {
         const creds = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
         if (!creds) {
-            console.error("GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable not set.");
+            logger.error('firebase_credentials_missing', { scope: 'lib.firebase' });
             throw new Error("Firestore unavailable: Missing credentials.");
         }
         
@@ -31,10 +34,10 @@ export function getFirestore(): admin.firestore.Firestore {
             });
 
             db = admin.firestore();
-            console.log("Firestore initialized successfully.");
         } catch (e: any) {
-            console.error("Failed to initialize Firebase:", e.message);
-            throw new Error(`Firestore unavailable: ${e.message}`);
+            const safeError = redactSensitive(e?.message || 'Unknown firebase init error');
+            logger.error('firebase_init_failed', { scope: 'lib.firebase', error: safeError });
+            throw new Error(`Firestore unavailable: ${safeError}`);
         }
     } else {
         db = admin.app().firestore();

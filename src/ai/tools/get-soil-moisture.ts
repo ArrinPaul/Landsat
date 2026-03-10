@@ -1,13 +1,20 @@
 
 'use server';
+import 'server-only';
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { getSoilAndWeatherData, getMoistureLevel } from '@/services/open-meteo';
 import { getCache, setCache } from '@/ai/cache';
+import { logger } from '@/lib/logger';
+import { redactSensitive } from '@/lib/security';
 
-// Simple logging function (verbose is not exported from genkit)
-const verbose = (msg: string) => process.env.NODE_ENV === 'development' && console.log(msg);
+// Simple debug logging helper.
+const verbose = (msg: string) => {
+  if (process.env.NODE_ENV === 'development') {
+    logger.debug(msg, { scope: 'ai.tools.get-soil-moisture' });
+  }
+};
 
 export const getSoilMoisture = ai.defineTool(
   {
@@ -35,7 +42,14 @@ export const getSoilMoisture = ai.defineTool(
       getSoilAndWeatherData(latitude, longitude).then(data => {
         const moisture = getMoistureLevel(data.current.soil_moisture_0_to_1cm);
         setCache(cacheKey, { moistureLevel: moisture });
-      }).catch(err => console.error("Failed to refresh stale cache:", err));
+      }).catch((err: unknown) => {
+        logger.error('soil_moisture_cache_refresh_failed', {
+          scope: 'ai.tools.get-soil-moisture',
+          latitude,
+          longitude,
+          error: redactSensitive(err instanceof Error ? err.message : String(err)),
+        });
+      });
       return cacheResult.data;
     }
 
@@ -52,7 +66,10 @@ export const getSoilMoisture = ai.defineTool(
       return result;
 
     } catch (error) {
-        console.error("Error in getSoilMoisture tool:", error);
+        logger.error('soil_moisture_tool_failed', {
+          scope: 'ai.tools.get-soil-moisture',
+          error: redactSensitive(error instanceof Error ? error.message : String(error)),
+        });
         // Provide a fallback value in case of API failure to ensure the flow can continue.
         return { moistureLevel: 'Optimal' as const };
     }
