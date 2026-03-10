@@ -3,7 +3,6 @@
  * @fileOverview A service to fetch agricultural and weather data from the Open-Meteo API.
  */
 
-const API_URL = "https://api.open-meteo.com/v1/forecast";
 const ARCHIVE_API_URL = "https://archive-api.open-meteo.com/v1/archive";
 
 
@@ -87,7 +86,6 @@ export async function getSoilAndWeatherData(latitude: number, longitude: number)
         `https://archive-api.open-meteo.com/v1/archive?latitude=${latitude}&longitude=${longitude}&start_date=2024-01-01&end_date=2024-01-01&hourly=soil_moisture_0_to_1cm` // Fallback
     ];
 
-    let lastError: any;
     for (const url of urls) {
         try {
             const response = await fetch(url, { cache: 'no-store' });
@@ -112,9 +110,9 @@ export async function getSoilAndWeatherData(latitude: number, longitude: number)
             }
             
             return data as SoilAndWeatherData;
-        } catch (error: any) {
-            lastError = error;
-            console.warn(`Failed to fetch from ${url}:`, error.message);
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : String(error);
+            console.warn(`Failed to fetch from ${url}:`, message);
             continue;
         }
     }
@@ -163,7 +161,7 @@ export async function getHistoricalWeather(latitude: number, longitude: number, 
         }
         const data = await response.json();
         return data as HistoricalWeatherData;
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Error fetching historical weather data:", error);
         console.warn("Using mock historical weather data");
         
@@ -241,7 +239,7 @@ export async function getHistoricalPrecipitation(latitude: number, longitude: nu
         }
         
         return data as HistoricalPrecipitationData;
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Error fetching historical precipitation data:", error);
         console.warn("Using mock historical precipitation data");
         

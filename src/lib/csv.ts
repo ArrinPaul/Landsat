@@ -19,7 +19,7 @@ export function parseCsv(csvText: string, t: (key: string) => string): GroundTru
         value: parseFloat(columns[valueIndex]),
       };
     }).filter(p => !isNaN(p.value) && p.date);
-  } catch (e) {
+  } catch {
     return { error: t('dashboard.csv.error.parse') };
   }
 }
@@ -27,7 +27,7 @@ export function parseCsv(csvText: string, t: (key: string) => string): GroundTru
 /**
  * Escapes a value for CSV to prevent CSV injection (DDE) and handle special characters.
  */
-function escapeCsvValue(value: any): string {
+function escapeCsvValue(value: unknown): string {
   if (value === null || value === undefined) return '';
   let str = String(value);
   

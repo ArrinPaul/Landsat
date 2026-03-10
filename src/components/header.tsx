@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { Globe2, LayoutDashboard, Settings, BrainCircuit, Mail, Menu, DollarSign } from "lucide-react";
+import { Globe2, LayoutDashboard, Settings, Mail, Menu, DollarSign } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "./ui/button";
 import React, { useState, useEffect } from "react";

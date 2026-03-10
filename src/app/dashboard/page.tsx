@@ -7,7 +7,6 @@ import { useLanguage } from "@/hooks/use-language";
 import Link from "next/link";
 import { ContactSheet } from "@/components/contact-sheet";
 import React, { useState } from "react";
-import { Chatbot } from "@/components/chatbot";
 
 export default function DashboardPage() {
   const { t } = useLanguage();

@@ -8,20 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Header } from "@/components/header";
 import { ContactSheet } from "@/components/contact-sheet";
 import { useLanguage } from "@/hooks/use-language";
-import { GeometricBackground } from "@/components/geometric-background";
 import { Chatbot } from "@/components/chatbot";
 
 
 export default function LandingPage() {
     const { t } = useLanguage();
     const [isContactOpen, setContactOpen] = useState(false);
-
-    const scrollToFeatures = () => {
-        const featuresSection = document.getElementById('features');
-        if(featuresSection) {
-            featuresSection.scrollIntoView({ behavior: 'smooth' });
-        }
-    }
 
   return (
     <div className="flex flex-col min-h-screen bg-background">

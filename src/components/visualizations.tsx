@@ -1,9 +1,9 @@
 
 "use client";
 
-import React, { useRef, useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ScatterChart, Scatter, Label, Brush, Bar, ComposedChart
+  Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ScatterChart, Scatter, Label, Brush, Bar, ComposedChart
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,7 +13,7 @@ import { format } from 'date-fns';
 import type { DateRange } from "react-day-picker";
 import { useLanguage } from '@/hooks/use-language';
 import { Button } from './ui/button';
-import { Loader2, Video, Droplets, Thermometer } from 'lucide-react';
+import { Loader2, Video } from 'lucide-react';
 import { generateTimelapseVideoAction } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -82,8 +82,6 @@ const metricOrder = [
 export function Visualizations({ analysisResult, groundTruthData, selectedMetric, setSelectedMetric, locationDescription, dateRange }: VisualizationsProps) {
   const { t } = useLanguage();
   const { toast } = useToast();
-  const chartRef = useRef(null);
-  const scatterRef = useRef(null);
   const [brushStartIndex, setBrushStartIndex] = useState<number | undefined>();
   const [brushEndIndex, setBrushEndIndex] = useState<number | undefined>();
   
@@ -182,7 +180,7 @@ export function Visualizations({ analysisResult, groundTruthData, selectedMetric
                 </Select>
             </div>
             {combinedChartData && (
-              <div ref={chartRef} className="h-[400px] w-full">
+              <div className="h-[400px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart data={combinedChartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -217,7 +215,7 @@ export function Visualizations({ analysisResult, groundTruthData, selectedMetric
           </TabsContent>
           <TabsContent value="comparison" className="mt-4">
             <CardDescription className="text-center mb-2">{t('dashboard.viz.comparisonDescription')}</CardDescription>
-             <div ref={scatterRef} className="h-[400px] w-full">
+             <div className="h-[400px] w-full">
                  <ResponsiveContainer width="100%" height="100%">
                     <ScatterChart margin={{ top: 20, right: 20, bottom: 40, left: 20 }}>
                         <CartesianGrid />

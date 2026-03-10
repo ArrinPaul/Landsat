@@ -12,7 +12,6 @@ import { WeatherReport } from "@/components/weather-report";
 import { LandCoverAnalysis } from "@/components/land-cover-analysis";
 import { useToast } from "@/hooks/use-toast";
 import type { GroundTruthDataPoint, SatellitePassData, WeatherData, HistoryEntry, AnalysisResult } from "@/lib/types";
-import { Skeleton } from "@/components/ui/skeleton";
 import { predictSatellitePassAction, getWeatherReportAction, startMetricsComputationAction, getMetricsResultAction } from "@/lib/actions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
 import { Map, AlertTriangle, Loader2 } from "lucide-react";
@@ -44,20 +43,11 @@ export function Dashboard() {
   const [isFetchingPass, setIsFetchingPass] = useState(false);
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [isFetchingWeather, setIsFetchingWeather] = useState(false);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const pollingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    if ("Notification" in window) {
-      if (Notification.permission === "granted") {
-        setNotificationsEnabled(true);
-      }
-    }
-  }, []);
-  
   useEffect(() => {
     return () => {
       if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);

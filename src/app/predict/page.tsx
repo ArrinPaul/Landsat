@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Wand2, Loader2, Thermometer, Tractor, Droplets, LandPlot, BarChartBig, CloudRain, AlertTriangle, BrainCircuit } from "lucide-react";
+import { Wand2, Loader2, Thermometer, Tractor, Droplets, LandPlot, BarChartBig, AlertTriangle, BrainCircuit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { 
     suggestCoordinatesAction, 
@@ -129,7 +129,7 @@ export default function PredictPage() {
             } else if (success) {
                 setResultDialogOpen(true);
             }
-        } catch (error) {
+        } catch {
             toast({ title: t('predict.error.unexpected.title'), description: t('predict.error.unexpected.description'), variant: "destructive" });
         }
 

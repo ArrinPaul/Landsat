@@ -1,6 +1,5 @@
 "use client"
 
-import React from 'react';
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,7 +10,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Languages } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
-import { cn } from '@/lib/utils';
 
 interface LanguageSwitcherProps {
   className?: string;

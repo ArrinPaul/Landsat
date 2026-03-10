@@ -18,22 +18,19 @@ import { analyzeDroughtAndFloodRisk } from "@/ai/flows/analyze-drought-flood-ris
 import { getAdvancedCropAdvice, type AdvancedCropAdviceInput } from "@/ai/flows/get-advanced-crop-advice";
 import { generateTimelapseVideo } from "@/ai/flows/generate-timelapse-video";
 import { runScenarioAnalysis } from "@/ai/tools/run-scenario-analysis";
-import { getDroughtAndFloodRiskData } from "@/ai/tools/get-drought-flood-risk-data";
 
 
-import type { AnalysisResult, AdvancedCropAdvice, DroughtFloodRisk, GenerateTimelapseVideoInput, GenerateTimelapseVideoOutput, ScenarioAnalysis, CropPlan, CropYieldPrediction, IrrigationSchedule, SatellitePassData, SoilMoisturePrediction, WeatherData } from "@/lib/types";
+import type { AdvancedCropAdvice, DroughtFloodRisk, GenerateTimelapseVideoInput, GenerateTimelapseVideoOutput, ScenarioAnalysis } from "@/lib/types";
 import type { ChatbotInput, ChatbotOutput } from "@/ai/flows/chatbot";
 import type { GenerateDataInsightsInput } from "@/ai/flows/generate-insights";
 
 
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) {
-    // Check for nested errors or specific properties on the error object
-    const anyError = error as any;
-    if (anyError.cause) {
-      return getErrorMessage(anyError.cause);
+        if (error.cause) {
+            return getErrorMessage(error.cause);
     }
-    return anyError.message || 'An unknown error occurred.';
+        return error.message || 'An unknown error occurred.';
   }
   return String(error);
 };
@@ -108,7 +105,7 @@ export async function startMetricsComputationAction(input: ComputeMetricsInput):
     return handleAction(startMetricsComputation, input);
 }
 
-export async function getMetricsResultAction(jobId: string, latitude: number, longitude: number, locationDescription: string, dateRangeFrom: string, dateRangeTo: string): Promise<{data: JobResultOutput | null, error: string | null}> {
+export async function getMetricsResultAction(jobId: string, _latitude: number, _longitude: number, _locationDescription: string, _dateRangeFrom: string, _dateRangeTo: string): Promise<{data: JobResultOutput | null, error: string | null}> {
     return handleAction(getMetricsResult, jobId);
 }
 
@@ -154,7 +151,10 @@ export async function predictSoilMoistureAction(input: { latitude: number; longi
 }
 
 export async function predictCropYieldAction(input: { latitude: number; longitude: number; cropType?: string; }) {
-    return handleAction(predictCropYield, input as any);
+    return handleAction(predictCropYield, {
+        ...input,
+        cropType: input.cropType ?? 'Maize',
+    });
 }
 
 export async function suggestCropAction(input: SuggestCropInput): Promise<{ data: SuggestCropOutput | null; error: string | null; }> {
