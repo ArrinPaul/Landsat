@@ -22,6 +22,13 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   const [language, setLanguage] = useState('en');
   const [translations, setTranslations] = useState<Record<string, string>>({});
 
+  useEffect(() => {
+    const storedLanguage = window.localStorage.getItem('earth-insights.language');
+    if (storedLanguage) {
+      setLanguage(storedLanguage);
+    }
+  }, []);
+
   const fetchTranslations = useCallback(async (lang: string) => {
     try {
       const response = await import(`@/locales/${lang}.json`);
@@ -50,6 +57,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   
   const handleSetLanguage = (lang: string) => {
     setLanguage(lang);
+    window.localStorage.setItem('earth-insights.language', lang);
   };
 
   return (

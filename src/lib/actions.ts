@@ -21,6 +21,7 @@ import { generateTimelapseVideo } from "@/ai/flows/generate-timelapse-video";
 import { runScenarioAnalysis } from "@/ai/tools/run-scenario-analysis";
 import { logger } from '@/lib/logger';
 import { redactSensitive, sanitizePromptPayload } from '@/lib/security';
+import { z } from 'zod';
 
 
 import type { AdvancedCropAdvice, DroughtFloodRisk, GenerateTimelapseVideoInput, GenerateTimelapseVideoOutput, ScenarioAnalysis } from "@/lib/types";
@@ -39,6 +40,105 @@ const getErrorMessage = (error: unknown): string => {
 };
 
 import { isRateLimited } from '@/ai/rate-limiter';
+
+const CoordinatesSchema = z.object({
+    latitude: z.number().finite().min(-90).max(90),
+    longitude: z.number().finite().min(-180).max(180),
+});
+
+const DateStringSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+
+const ComputeMetricsInputActionSchema = CoordinatesSchema.extend({
+    startDate: DateStringSchema,
+    endDate: DateStringSchema,
+});
+
+const ChatbotMessageSchema = z.object({
+    role: z.enum(['user', 'model']),
+    content: z.string(),
+});
+
+const ChatbotInputActionSchema = z.object({
+    messages: z.array(ChatbotMessageSchema),
+    latitude: z.number().optional(),
+    longitude: z.number().optional(),
+});
+
+const SuggestCoordinatesActionSchema = z.object({
+    locationDescription: z.string().min(2).max(400),
+});
+
+const GenerateReportActionSchema = z.object({
+    metricsData: z.string().min(1),
+    location: z.string().min(1),
+    dateRange: z.string().min(1),
+});
+
+const TextToSpeechActionSchema = z.object({
+    text: z.string().min(1).max(6000),
+});
+
+const PredictCropYieldActionSchema = CoordinatesSchema.extend({
+    cropType: z.string().default('Maize'),
+});
+
+const ScenarioAnalysisActionSchema = CoordinatesSchema.extend({
+    scenarioDescription: z.string().min(3).max(1200),
+});
+
+const AdvancedCropAdviceActionSchema = z.object({
+    crop: z.string(),
+    latitude: z.number(),
+    longitude: z.number(),
+    climateDescription: z.string(),
+    language: z.string().default('en'),
+});
+
+const TimelapseVideoActionSchema = z.object({
+    metricName: z.string().min(1),
+    locationDescription: z.string().min(1),
+    startDate: DateStringSchema,
+    endDate: DateStringSchema,
+});
+
+const SuggestCropActionSchema = z.object({
+    latitude: z.number(),
+    longitude: z.number(),
+    climateDescription: z.string(),
+    currentCrop: z.string().optional(),
+    language: z.string().default('en'),
+});
+
+function normalizeConfidenceValue(value: number): number {
+    if (!Number.isFinite(value)) {
+        return 0;
+    }
+    if (value > 1 && value <= 100) {
+        return Math.min(Math.max(value / 100, 0), 1);
+    }
+    return Math.min(Math.max(value, 0), 1);
+}
+
+function normalizeConfidenceScale<T>(data: T): T {
+    if (Array.isArray(data)) {
+        return data.map((item) => normalizeConfidenceScale(item)) as T;
+    }
+
+    if (data && typeof data === 'object') {
+        const normalizedEntries = Object.entries(data as Record<string, unknown>).map(([key, value]) => {
+            const lowerKey = key.toLowerCase();
+            if (typeof value === 'number' && lowerKey.includes('confidence')) {
+                return [key, normalizeConfidenceValue(value)];
+            }
+
+            return [key, normalizeConfidenceScale(value)];
+        });
+
+        return Object.fromEntries(normalizedEntries) as T;
+    }
+
+    return data;
+}
 
 // Generic action creator
 async function handleAction<T, U>(action: (input: T) => Promise<U>, input: T): Promise<{ data: U | null; error: string | null; }> {
@@ -70,7 +170,7 @@ async function handleAction<T, U>(action: (input: T) => Promise<U>, input: T): P
     while (attempt < maxRetries) {
         try {
             const result = await action(safeInput);
-            return { data: result, error: null };
+            return { data: normalizeConfidenceScale(result), error: null };
         } catch (error) {
             logger.error('action_failed_attempt', {
                 scope: 'lib.actions',
@@ -109,79 +209,77 @@ async function handleAction<T, U>(action: (input: T) => Promise<U>, input: T): P
 
 
 export async function startMetricsComputationAction(input: ComputeMetricsInput): Promise<{data: StartComputationOutput | null, error: string | null}> {
-    return handleAction(startMetricsComputation, input);
+    return handleAction(startMetricsComputation, ComputeMetricsInputActionSchema.parse(input));
 }
 
 export async function getMetricsResultAction(jobId: string, _latitude: number, _longitude: number, _locationDescription: string, _dateRangeFrom: string, _dateRangeTo: string): Promise<{data: JobResultOutput | null, error: string | null}> {
-    return handleAction(getMetricsResult, jobId);
+    return handleAction(getMetricsResult, z.string().min(1).parse(jobId));
 }
 
 
 export async function suggestCoordinatesAction(locationDescription: string) {
-    return handleAction(suggestCoordinates, { locationDescription });
+    return handleAction(suggestCoordinates, SuggestCoordinatesActionSchema.parse({ locationDescription }));
 }
 
 export async function generateInsightAction(input: GenerateDataInsightsInput) {
-    return handleAction(generateDataInsights, input);
+    return handleAction(generateDataInsights, sanitizePromptPayload(input));
 }
 
 export async function generateReportAction(metricsData: string, location: string, dateRange: string) {
-    return handleAction(generateReportSummary, { metricsData, location, dateRange });
+    return handleAction(generateReportSummary, GenerateReportActionSchema.parse({ metricsData, location, dateRange }));
 }
 
 export async function predictSatellitePassAction(input: { latitude: number; longitude: number; }) {
-    return handleAction(predictSatellitePass, input);
+    return handleAction(predictSatellitePass, CoordinatesSchema.parse(input));
 }
 
 export async function getWeatherReportAction(input: { latitude: number; longitude: number; }) {
-    return handleAction(getWeatherReport, input);
+    return handleAction(getWeatherReport, CoordinatesSchema.parse(input));
 }
 
 export async function chatbotAction(input: ChatbotInput): Promise<{ data: ChatbotOutput | null, error: string | null}> {
-    return handleAction(chatbot, input);
+    return handleAction(chatbot, ChatbotInputActionSchema.parse(input));
 }
 
 export async function planCropsAction(input: { latitude: number; longitude: number; }) {
-    return handleAction(planCrops, input);
+    return handleAction(planCrops, CoordinatesSchema.parse(input));
 }
 
 export async function scheduleIrrigationAction(input: { latitude: number; longitude: number; }) {
-    return handleAction(scheduleIrrigation, input);
+    return handleAction(scheduleIrrigation, CoordinatesSchema.parse(input));
 }
 
 export async function textToSpeechAction(text: string) {
-    return handleAction(textToSpeech, { text });
+    return handleAction(textToSpeech, TextToSpeechActionSchema.parse({ text }));
 }
 
 export async function predictSoilMoistureAction(input: { latitude: number; longitude: number; }) {
-    return handleAction(predictSoilMoisture, input);
+    return handleAction(predictSoilMoisture, CoordinatesSchema.parse(input));
 }
 
 export async function predictCropYieldAction(input: { latitude: number; longitude: number; cropType?: string; }) {
-    return handleAction(predictCropYield, {
-        ...input,
-        cropType: input.cropType ?? 'Maize',
-    });
+    const parsed = PredictCropYieldActionSchema.parse(input);
+    return handleAction(predictCropYield, parsed);
 }
 
 export async function suggestCropAction(input: SuggestCropInput): Promise<{ data: SuggestCropOutput | null; error: string | null; }> {
-    return handleAction(suggestCrop, input);
+    return handleAction(suggestCrop, SuggestCropActionSchema.parse(input));
 }
 
 export async function getAdvancedCropAdviceAction(input: AdvancedCropAdviceInput): Promise<{ data: AdvancedCropAdvice | null; error: string | null; }> {
-    return handleAction(getAdvancedCropAdvice, input);
+    return handleAction(getAdvancedCropAdvice, AdvancedCropAdviceActionSchema.parse(input));
 }
 
 export async function generateTimelapseVideoAction(input: GenerateTimelapseVideoInput): Promise<{ data: GenerateTimelapseVideoOutput | null; error: string | null; }> {
-    return handleAction(generateTimelapseVideo, input);
+    return handleAction(generateTimelapseVideo, TimelapseVideoActionSchema.parse(input));
 }
 
 export async function runScenarioAnalysisAction(input: { latitude: number; longitude: number; scenarioDescription: string; }): Promise<{ data: ScenarioAnalysis | null; error: string | null; }> {
-    return handleAction(runScenarioAnalysis, input);
+    return handleAction(runScenarioAnalysis, ScenarioAnalysisActionSchema.parse(input));
 }
 
 export async function analyzeDroughtAndFloodRiskAction(input: { latitude: number; longitude: number; }): Promise<{ data: DroughtFloodRisk | null; error: string | null; }> {
-    return handleAction(analyzeDroughtAndFloodRisk, input);
+    return handleAction(analyzeDroughtAndFloodRisk, CoordinatesSchema.parse(input));
 }
 
 

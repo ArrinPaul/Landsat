@@ -21,6 +21,18 @@ describe('csv helpers', () => {
     expect(parsed).toEqual({ error: 'dashboard.csv.error.columns' });
   });
 
+  it('parses quoted date/value rows with commas and escaped quotes', () => {
+    const parsed = parseCsv('date,value\n"2026-01-01","0.55"\n"2026-01,02","0.61"\n"2026-01-03","""0.73"""', t);
+
+    if ('error' in parsed) {
+      throw new Error(parsed.error);
+    }
+
+    expect(parsed).toHaveLength(2);
+    expect(parsed[0]).toEqual({ date: '2026-01-01', value: 0.55 });
+    expect(parsed[1]).toEqual({ date: '2026-01,02', value: 0.61 });
+  });
+
   it('escapes formula-like values during csv generation', () => {
     const csv = generateCsv(
       [

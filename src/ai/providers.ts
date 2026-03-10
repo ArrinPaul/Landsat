@@ -13,12 +13,28 @@ export interface ProviderConfig {
   apiKey?: string;
   model: string;
   maxTokens?: number;
+  timeoutMs?: number;
 }
 
 export interface GenerationResponse {
   text: string;
   provider: string;
   model: string;
+}
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+  let timeoutId: NodeJS.Timeout | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(`${label} timed out after ${timeoutMs}ms`)), timeoutMs);
+  });
+
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+  }
 }
 
 // ============================================================================
@@ -77,6 +93,10 @@ export async function generateWithHuggingFace(
   const model = config?.model || 'mistralai/Mistral-7B-Instruct-v0.3';
   
   // Use the serverless inference endpoint with text-generation-inference
+  const controller = new AbortController();
+  const timeoutMs = config?.timeoutMs || 15000;
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
   const response = await fetch(
     `https://api-inference.huggingface.co/models/${model}`,
     {
@@ -85,6 +105,7 @@ export async function generateWithHuggingFace(
         'Content-Type': 'application/json'
       },
       method: 'POST',
+      signal: controller.signal,
       body: JSON.stringify({
         inputs: `<s>[INST] ${prompt} [/INST]`,
         parameters: {
@@ -94,6 +115,7 @@ export async function generateWithHuggingFace(
       }),
     }
   );
+  clearTimeout(timeoutId);
 
   if (!response.ok) {
     const errorBody = await response.text();
@@ -144,18 +166,24 @@ export async function generateWithMistral(
 
   const model = config?.model || 'mistral-small-latest';
 
+  const controller = new AbortController();
+  const timeoutMs = config?.timeoutMs || 15000;
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
   const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${apiKey}`,
     },
+    signal: controller.signal,
     body: JSON.stringify({
       model,
       messages: [{ role: 'user', content: prompt }],
       max_tokens: config?.maxTokens || 1024,
     }),
   });
+  clearTimeout(timeoutId);
 
   if (!response.ok) {
     const errorBody = await response.text();
@@ -198,6 +226,7 @@ export interface GenerateOptions {
   prompt: string;
   providers?: AIProvider[];
   maxRetries?: number;
+  timeoutMs?: number;
   config?: Partial<ProviderConfig>;
 }
 
@@ -209,7 +238,8 @@ export async function generateWithFallback(
   options: GenerateOptions
 ): Promise<GenerationResponse> {
   const providers = options.providers || PROVIDER_ORDER;
-  const maxRetries = options.maxRetries || 3;
+  const maxRetries = Math.min(options.maxRetries || 3, 5);
+  const timeoutMs = options.timeoutMs || 15000;
   let lastError: Error | null = null;
 
   for (const provider of providers) {
@@ -218,7 +248,11 @@ export async function generateWithFallback(
         const generateFn = providerMap[provider];
         logger.info('provider_attempt', { scope: 'ai.providers', provider, attempt: attempt + 1, maxRetries });
         
-        const response = await generateFn(options.prompt, options.config);
+        const response = await withTimeout(
+          generateFn(options.prompt, { ...options.config, timeoutMs }),
+          timeoutMs,
+          `${provider} request`
+        );
         logger.info('provider_success', { scope: 'ai.providers', provider, model: response.model });
         return response;
       } catch (error: any) {

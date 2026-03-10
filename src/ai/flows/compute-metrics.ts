@@ -16,25 +16,16 @@ import { getHistoricalWeather } from '@/services/open-meteo';
 import type { HistoricalDataPoint } from '@/lib/types';
 import { analyzeChange, AnalyzeChangeOutput } from '@/ai/flows/analyze-change';
 import { getHistoricalBaseline } from '@/ai/tools/get-historical-baseline';
-import { packageModelArtifact, runSegmentationInference, trainUNetModel, type DatasetSplit } from '@/ml';
+import { packageModelArtifact, runSegmentationInference, trainUNetModel } from '@/ml';
 import { logger } from '@/lib/logger';
 import { redactSensitive } from '@/lib/security';
+import { buildSyntheticSplitFromLandCover, getPercentageChange, latestMetricValue } from '@/ai/flows/compute-metrics-helpers';
 
 
 import { getFirestore } from '@/lib/firebase';
 
 // Use Firestore for job results to support serverless deployments.
 const JOBS_COLLECTION = 'analysis_jobs';
-
-// Helper function to calculate percentage change
-function getPercentageChange(start: number, end: number): number {
-    if (start === 0) {
-        return end > 0 ? 100.0 : 0.0;
-    }
-    // Clamp results to prevent astronomical values from tiny denominators
-    const result = ((end - start) / Math.abs(start)) * 100;
-    return Math.min(Math.max(result, -1000000), 1000000);
-}
 
 const DataPointSchema = z.object({
   date: z.string(),
@@ -500,45 +491,3 @@ const computeMetricsFlow = async (input: ComputeMetricsInput, jobId: string) => 
   }
 };
 
-function latestMetricValue(series: Array<{ value: number | null }>): number {
-    const latest = series[series.length - 1]?.value;
-    return typeof latest === 'number' && Number.isFinite(latest) ? latest : 0;
-}
-
-function buildSyntheticSplitFromLandCover(
-    landCover: {
-        vegetation: { endArea: number };
-        water: { endArea: number };
-        builtUp: { endArea: number };
-        other: { endArea: number };
-    },
-    ndvi: number,
-    ndwi: number,
-    ndbi: number,
-    nbr: number
-): DatasetSplit {
-    const samples = new Array(24).fill(null).map((_, idx) => {
-        const dominantClass = idx % 4;
-        return {
-            id: `synthetic-${idx}`,
-            dominantClass,
-            features: [
-                landCover.vegetation.endArea,
-                landCover.water.endArea,
-                landCover.builtUp.endArea,
-                landCover.other.endArea,
-                ndvi,
-                ndwi,
-                ndbi,
-                nbr,
-            ],
-            labelMask: new Array(256).fill(dominantClass),
-        };
-    });
-
-    return {
-        train: samples.slice(0, 16),
-        validation: samples.slice(16, 20),
-        test: samples.slice(20),
-    };
-}

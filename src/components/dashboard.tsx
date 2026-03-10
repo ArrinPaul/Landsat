@@ -23,6 +23,17 @@ import { Progress } from "@/components/ui/progress"; // New import
 import { GISDashboard } from "@/components/gis-dashboard";
 
 type ComputationStatus = 'idle' | 'computing' | 'polling' | 'completed' | 'error';
+const HISTORY_STORAGE_KEY = 'earth-insights.dashboard-history';
+
+type StoredHistoryEntry = {
+  id: string;
+  lat: string;
+  lon: string;
+  locationDesc: string;
+  timestamp: string;
+  dateFrom?: string;
+  dateTo?: string;
+};
 
 export function Dashboard() {
   const { t } = useLanguage();
@@ -45,6 +56,47 @@ export function Dashboard() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [isFetchingWeather, setIsFetchingWeather] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
+
+  useEffect(() => {
+    const raw = window.localStorage.getItem(HISTORY_STORAGE_KEY);
+    if (!raw) {
+      return;
+    }
+    try {
+      const parsed = JSON.parse(raw) as StoredHistoryEntry[];
+      const restored: HistoryEntry[] = parsed.map((entry) => ({
+        id: entry.id,
+        lat: entry.lat,
+        lon: entry.lon,
+        locationDesc: entry.locationDesc,
+        timestamp: new Date(entry.timestamp),
+        dateRange: {
+          from: entry.dateFrom ? new Date(entry.dateFrom) : undefined,
+          to: entry.dateTo ? new Date(entry.dateTo) : undefined,
+        },
+      }));
+      setHistory(
+        restored.filter(
+          (entry) => !!entry.dateRange?.from && !!entry.dateRange?.to
+        )
+      );
+    } catch {
+      window.localStorage.removeItem(HISTORY_STORAGE_KEY);
+    }
+  }, []);
+
+  useEffect(() => {
+    const serializable: StoredHistoryEntry[] = history.map((entry) => ({
+      id: entry.id,
+      lat: entry.lat,
+      lon: entry.lon,
+      locationDesc: entry.locationDesc,
+      timestamp: entry.timestamp.toISOString(),
+      dateFrom: entry.dateRange?.from?.toISOString(),
+      dateTo: entry.dateRange?.to?.toISOString(),
+    }));
+    window.localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(serializable));
+  }, [history]);
   
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const pollingTimeoutRef = useRef<NodeJS.Timeout | null>(null);

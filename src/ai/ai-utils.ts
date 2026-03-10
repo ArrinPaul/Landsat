@@ -9,6 +9,15 @@ import { ai, MODELS } from '@/ai/genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 import { generateWithFallback as generateWithMultiProvider } from '@/ai/providers';
 import { sanitizePromptPayload } from '@/lib/security';
+import {
+  calculateDelay,
+  isRetryableError,
+  logAIOperation,
+  safeParseAIJson,
+  sanitizeInput,
+  shouldTryNextModel,
+  sleep,
+} from '@/ai/ai-utils-helpers';
 
 export interface RetryConfig {
   maxRetries?: number;
@@ -34,76 +43,6 @@ const DEFAULT_MODELS = [
   MODELS.pro,       // gemini-2.0-flash-exp (most capable)
 ];
 
-/**
- * Determines if an error is retryable (rate limit, quota, temporary issues)
- */
-function isRetryableError(error: any): boolean {
-  const errorMessage = error?.message?.toLowerCase() || '';
-  const errorCode = error?.code || '';
-  
-  return (
-    errorMessage.includes('429') ||
-    errorMessage.includes('quota') ||
-    errorMessage.includes('resource_exhausted') ||
-    errorMessage.includes('rate limit') ||
-    errorMessage.includes('too many requests') ||
-    errorMessage.includes('temporarily unavailable') ||
-    errorCode === 'RESOURCE_EXHAUSTED' ||
-    errorCode === 'UNAVAILABLE'
-  );
-}
-
-/**
- * Determines if we should try a different model (model not found/not supported)
- */
-function shouldTryNextModel(error: any): boolean {
-  const errorMessage = error?.message?.toLowerCase() || '';
-  
-  return (
-    errorMessage.includes('404') ||
-    errorMessage.includes('not found') ||
-    errorMessage.includes('not supported') ||
-    errorMessage.includes('invalid model') ||
-    errorMessage.includes('model does not exist')
-  );
-}
-
-/**
- * Sleep for a specified duration
- */
-function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-/**
- * Calculate delay with optional exponential backoff
- */
-function calculateDelay(baseDelay: number, attempt: number, useExponentialBackoff: boolean): number {
-  if (useExponentialBackoff) {
-    // Add jitter to prevent thundering herd
-    const jitter = Math.random() * 500;
-    return Math.min(baseDelay * Math.pow(2, attempt) + jitter, 60000); // Max 60 seconds
-  }
-  return baseDelay;
-}
-
-/**
- * Sanitize user input to prevent prompt injection.
- * Removes common injection patterns and escapes sensitive characters.
- */
-function sanitizeInput(input: any): string {
-  if (input === null || input === undefined) return '';
-  const str = String(input);
-  // Basic sanitization: remove potential instruction-ending patterns and common injection keywords
-  return str
-    .replace(/<\|.*?\|>/g, '') // Remove special tokens
-    .replace(/\[INST\]/gi, '') // Remove Mistral instruction tags
-    .replace(/\[\/INST\]/gi, '')
-    .replace(/<system>|<user>|<assistant>/gi, '') // Remove common role tags
-    .replace(/ignore previous instructions/gi, '[INJECTION ATTEMPT]')
-    .replace(/you are now/gi, '[INJECTION ATTEMPT]')
-    .trim();
-}
 
 /**
  * Execute a prompt with automatic model fallback and retry logic.
@@ -538,63 +477,4 @@ export async function generateWithModelFallback<T>(
   throw lastError || new Error('All AI models and retry attempts exhausted');
 }
 
-/**
- * Safely parse JSON response from AI with fallback
- * Handles cases where AI returns markdown code blocks or extra text
- */
-export function safeParseAIJson<T>(text: string, validator?: (data: any) => T): T {
-  let cleanedText = text.trim();
-  
-  // Remove markdown code blocks if present
-  if (cleanedText.startsWith('```json')) {
-    cleanedText = cleanedText.slice(7);
-  } else if (cleanedText.startsWith('```')) {
-    cleanedText = cleanedText.slice(3);
-  }
-  
-  if (cleanedText.endsWith('```')) {
-    cleanedText = cleanedText.slice(0, -3);
-  }
-  
-  cleanedText = cleanedText.trim();
-  
-  // Try to find JSON object in the text
-  const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
-  if (jsonMatch) {
-    cleanedText = jsonMatch[0];
-  }
-  
-  try {
-    const parsed = JSON.parse(cleanedText);
-    return validator ? validator(parsed) : parsed;
-  } catch (e) {
-    console.error('[AI] Failed to parse JSON response:', text);
-    throw new Error('AI returned invalid JSON format. Please try again.');
-  }
-}
-
-/**
- * Log AI operation for debugging and monitoring
- */
-export function logAIOperation(
-  operation: string,
-  model: string,
-  success: boolean,
-  durationMs?: number,
-  error?: string
-): void {
-  const logData = {
-    timestamp: new Date().toISOString(),
-    operation,
-    model,
-    success,
-    durationMs,
-    error,
-  };
-  
-  if (success) {
-    console.log(`[AI] ✓ ${operation} completed with ${model}${durationMs ? ` in ${durationMs}ms` : ''}`);
-  } else {
-    console.error(`[AI] ✗ ${operation} failed with ${model}: ${error}`);
-  }
-}
+export { safeParseAIJson, logAIOperation } from '@/ai/ai-utils-helpers';

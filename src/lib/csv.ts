@@ -1,10 +1,42 @@
 
 import type { MetricData, GroundTruthDataPoint } from "@/lib/types";
 
+function parseCsvLine(line: string): string[] {
+  const values: string[] = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    const next = line[i + 1];
+
+    if (char === '"') {
+      if (inQuotes && next === '"') {
+        current += '"';
+        i++;
+        continue;
+      }
+      inQuotes = !inQuotes;
+      continue;
+    }
+
+    if (char === ',' && !inQuotes) {
+      values.push(current.trim());
+      current = '';
+      continue;
+    }
+
+    current += char;
+  }
+
+  values.push(current.trim());
+  return values;
+}
+
 export function parseCsv(csvText: string, t: (key: string) => string): GroundTruthDataPoint[] | { error: string } {
   try {
     const rows = csvText.trim().split(/\r?\n/);
-    const header = rows.shift()?.toLowerCase().split(',') || [];
+    const header = parseCsvLine((rows.shift() || '').toLowerCase());
     const dateIndex = header.indexOf('date');
     const valueIndex = header.indexOf('value');
 
@@ -13,7 +45,7 @@ export function parseCsv(csvText: string, t: (key: string) => string): GroundTru
     }
 
     return rows.map(row => {
-      const columns = row.split(',');
+      const columns = parseCsvLine(row);
       return {
         date: columns[dateIndex],
         value: parseFloat(columns[valueIndex]),

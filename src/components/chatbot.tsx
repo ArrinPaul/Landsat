@@ -20,6 +20,8 @@ interface MessageWithAudio extends ChatMessage {
     audioState?: AudioState;
 }
 
+const CHAT_STORAGE_KEY = 'earth-insights.chat-history';
+
 // Add types for Web Speech API
 interface SpeechRecognitionEvent extends Event {
   results: {
@@ -67,6 +69,29 @@ export function Chatbot({ lat, lon }: { lat?: string, lon?: string }) {
   const recognitionRef = useRef<any>(null);
   const hasInteracted = useRef(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const raw = window.localStorage.getItem(CHAT_STORAGE_KEY);
+    if (!raw) {
+      return;
+    }
+    try {
+      const parsed = JSON.parse(raw) as MessageWithAudio[];
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        setMessages(parsed.slice(-40));
+        messagesRef.current = parsed.slice(-40);
+      }
+    } catch {
+      window.localStorage.removeItem(CHAT_STORAGE_KEY);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (messages.length === 0) {
+      return;
+    }
+    window.localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages.slice(-40)));
+  }, [messages]);
 
   const handleSend = useCallback(async (textToSend?: string) => {
     const resolvedInput = (textToSend ?? input).trim();

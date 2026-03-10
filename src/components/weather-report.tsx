@@ -3,11 +3,21 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import * as LucideIcons from "lucide-react";
 import type { WeatherData, HourlyForecast } from "@/lib/types";
 import { ScrollArea, ScrollBar } from "./ui/scroll-area";
 import { Button } from "./ui/button";
-import { RefreshCw } from "lucide-react";
+import {
+  RefreshCw,
+  HelpCircle,
+  Sun,
+  Cloud,
+  CloudFog,
+  CloudDrizzle,
+  CloudRain,
+  CloudSnow,
+  CloudLightning,
+  Cloudy,
+} from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
 
 interface WeatherReportProps {
@@ -17,14 +27,19 @@ interface WeatherReportProps {
     onFetchWeather?: () => void;
 }
 
-// A type guard to check if a string is a valid Lucide icon name
-function isValidIcon(name: string): name is keyof typeof LucideIcons {
-  return name in LucideIcons;
-}
+const ICONS = {
+  Sun,
+  Cloud,
+  CloudFog,
+  CloudDrizzle,
+  CloudRain,
+  CloudSnow,
+  CloudLightning,
+  Cloudy,
+} as const;
 
 const Icon = ({ name, ...props }: {name: string, [key: string]: any}) => {
-    const IconComponent = isValidIcon(name) ? LucideIcons[name] as React.ComponentType<any> : LucideIcons.HelpCircle;
-    if (!IconComponent) return <LucideIcons.HelpCircle {...props} />;
+    const IconComponent = ICONS[name as keyof typeof ICONS] ?? HelpCircle;
     return <IconComponent {...props} />;
 }
 
