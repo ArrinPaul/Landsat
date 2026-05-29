@@ -130,7 +130,7 @@ Features:
 
 ## 5. System Design and Architecture
 
-## 5.1 High-Level Architecture
+### 5.1 High-Level Architecture
 
 The system follows a modular layered architecture:
 
@@ -145,7 +145,7 @@ The system follows a modular layered architecture:
 5. **Operations Layer** (`src/gcp-orchestration`, `infra/gcp`)
    - Batch orchestration, retries, observability, DLQ, and budget guardrails.
 
-## 5.2 Primary Runtime Flow (Interactive Request)
+### 5.2 Primary Runtime Flow (Interactive Request)
 
 1. User submits coordinates/date range from dashboard/predict pages.
 2. Server action validates input and starts/queries a computation job.
@@ -154,7 +154,7 @@ The system follows a modular layered architecture:
 5. UI renders metrics, maps, summaries, and optional chatbot context.
 6. User interactions may be persisted as history/preferences.
 
-## 5.3 Batch/Serverless Pipeline Flow (Phase 3)
+### 5.3 Batch/Serverless Pipeline Flow (Phase 3)
 
 Reference: `docs/GCP_SERVERLESS_ARCHITECTURE.md`
 
@@ -164,7 +164,7 @@ Reference: `docs/GCP_SERVERLESS_ARCHITECTURE.md`
 4. **Promote** stage updates model registry state/version pointer.
 5. Retries, DLQ routing, and monitoring policies govern failure handling.
 
-## 5.4 Reliability, Security, and Guardrails
+### 5.4 Reliability, Security, and Guardrails
 
 Implemented design patterns include:
 - Structured logging and observability-oriented scopes.
@@ -193,13 +193,13 @@ Implemented design patterns include:
 
 ## 7. Local Development and Validation
 
-## 7.1 Environment Setup
+### 7.1 Environment Setup
 
 1. Use Node version from `.nvmrc`.
 2. Copy `.env.example` values into a local `.env` file.
 3. Provide API keys and credentials for Earth Engine, AI providers, and optional GCP orchestration.
 
-## 7.2 Core Commands
+### 7.2 Core Commands
 
 - Install dependencies: `npm ci`
 - Start dev server: `npm run dev`
@@ -221,7 +221,7 @@ Domain-specific commands:
 
 ## 8. Improvement Opportunities
 
-## 8.1 Product and Feature Improvements
+### 8.1 Product and Feature Improvements
 
 1. Complete authentication and protected-route strategy (currently listed as deferred).
 2. Implement production-grade payments and subscription management.
@@ -229,7 +229,7 @@ Domain-specific commands:
 4. Provide richer GIS interaction tools (custom layers, annotations, collaboration sharing).
 5. Expand report exports to standards used by government/enterprise GIS workflows.
 
-## 8.2 Architecture and Scalability Improvements
+### 8.2 Architecture and Scalability Improvements
 
 1. Introduce stricter bounded contexts between UI/app/domain layers for long-term maintainability.
 2. Add asynchronous event-driven orchestration for all heavy interactive jobs (not only phase pipelines).
@@ -237,7 +237,7 @@ Domain-specific commands:
 4. Formalize model registry lifecycle (staging/canary/production) with policy-based promotion.
 5. Add tenant-aware design if multi-organization usage is expected.
 
-## 8.3 Data and ML Improvements
+### 8.3 Data and ML Improvements
 
 1. Add full data catalog and lineage tracking for datasets/manifests.
 2. Introduce drift detection and scheduled model re-evaluation.
@@ -245,7 +245,7 @@ Domain-specific commands:
 4. Expand quality gates for label consistency and geospatial anomaly detection.
 5. Add benchmark datasets and confidence calibration reporting in CI.
 
-## 8.4 Security and Compliance Improvements
+### 8.4 Security and Compliance Improvements
 
 1. Add centralized secret manager integration and rotation policy automation.
 2. Add stronger runtime authorization checks for sensitive server actions.
@@ -253,7 +253,7 @@ Domain-specific commands:
 4. Add audit trails for model promotion, user-sensitive actions, and admin workflows.
 5. Add compliance mapping (data retention, residency, and privacy controls) for production readiness.
 
-## 8.5 Testing and Quality Improvements
+### 8.5 Testing and Quality Improvements
 
 1. Expand E2E coverage for full dashboard and prediction user journeys.
 2. Add contract tests for external provider adapters (Earth Engine/Open-Meteo/LLM providers).
@@ -261,7 +261,7 @@ Domain-specific commands:
 4. Add chaos/failure-injection tests for orchestration retry and DLQ behavior.
 5. Add accessibility test automation integrated into CI.
 
-## 8.6 DevOps and Operations Improvements
+### 8.6 DevOps and Operations Improvements
 
 1. Add deployment environment strategy (dev/staging/prod) with policy checks.
 2. Add SLO error-budget dashboards and automated rollback triggers.
