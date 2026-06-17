@@ -37,5 +37,6 @@ The application is structured as a modern full-stack platform. Server-side logic
 ## Documentation
 
 For more detailed information, please refer to the following documents:
+*   [Comprehensive Project Documentation](docs/PROJECT_DOCUMENTATION.md)
 *   [Technical Architecture](docs/ARCHITECTURE.md)
 *   [Development Roadmap](docs/ROADMAP.md)
