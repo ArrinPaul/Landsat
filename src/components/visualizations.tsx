@@ -24,14 +24,32 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog"
 
+type TooltipPayloadItem = {
+  color?: string;
+  stroke?: string;
+  name?: string;
+  value?: number | null;
+  unit?: string;
+};
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+type CustomTooltipProps = {
+  active?: boolean;
+  payload?: TooltipPayloadItem[];
+  label?: string;
+};
+
+type BrushRange = {
+  startIndex?: number;
+  endIndex?: number;
+};
+
+const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   if (active && payload && payload.length) {
     const formattedLabel = label ? format(new Date(label), 'PPP') : 'No date';
     return (
       <div className="bg-background/80 backdrop-blur-sm p-2 border border-border rounded-md shadow-lg">
         <p className="label font-bold">{formattedLabel}</p>
-        {payload.map((pld: any, index: number) => (
+        {payload.map((pld, index: number) => (
            <p key={index} style={{ color: pld.color || pld.stroke }}>
                {`${pld.name}: `}
                {pld.value !== null && pld.value !== undefined ? pld.value.toFixed(4) : 'N/A'}
@@ -135,9 +153,9 @@ export function Visualizations({ analysisResult, groundTruthData, selectedMetric
   
   const comparisonData = combineAndSortData(analysisResult, groundTruthData);
   
-  const handleBrushChange = (range: any) => {
-    setBrushStartIndex(range.startIndex);
-    setBrushEndIndex(range.endIndex);
+  const handleBrushChange = (range: BrushRange | undefined) => {
+    setBrushStartIndex(range?.startIndex);
+    setBrushEndIndex(range?.endIndex);
   };
   
   const handleGenerateVideo = async () => {

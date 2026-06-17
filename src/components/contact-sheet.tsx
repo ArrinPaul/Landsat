@@ -28,19 +28,20 @@ export function ContactSheet({ open, onOpenChange }: ContactSheetProps) {
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    console.log("Form submitted");
     setSubmitted(true);
   };
 
-  const handleClose = () => {
-    onOpenChange(false);
-    setTimeout(() => {
+  const handleOpenChange = (isOpen: boolean) => {
+    onOpenChange(isOpen);
+    if (!isOpen) {
+      setTimeout(() => {
         setSubmitted(false);
-    }, 300);
-  }
+      }, 300);
+    }
+  };
 
   return (
-    <Sheet open={open} onOpenChange={handleClose}>
+    <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetContent>
         <SheetHeader>
           <SheetTitle>{t('contact.title')}</SheetTitle>
@@ -53,7 +54,7 @@ export function ContactSheet({ open, onOpenChange }: ContactSheetProps) {
                 <CheckCircle className="h-20 w-20 text-green-500" />
                 <h3 className="text-xl font-semibold">{t('contact.submitted.title')}</h3>
                 <p className="text-muted-foreground">{t('contact.submitted.description')}</p>
-                 <Button onClick={handleClose}>{t('contact.submitted.close')}</Button>
+                 <Button onClick={() => handleOpenChange(false)}>{t('contact.submitted.close')}</Button>
             </div>
         ) : (
             <form onSubmit={handleSubmit} className="py-4 space-y-4">

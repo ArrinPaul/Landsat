@@ -34,6 +34,10 @@ type TableRowData = {
 type SortKey = keyof TableRowData | '';
 type SortDirection = 'asc' | 'desc';
 
+type MetricPoint = {
+  value: number | null;
+};
+
 interface MetricsTableProps {
   analysisResult: AnalysisResult;
   location: string;
@@ -59,7 +63,7 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
   
   const [tableData, setTableData] = useState<TableRowData[]>(() => {
     const timeSeriesMetrics: TableRowData[] = Object.entries(analysisResult.timeSeries).map(([name, ts]) => {
-      const validPoints = ts.filter((d: any) => d.value !== null && !isNaN(d.value));
+      const validPoints = ts.filter((d: MetricPoint) => d.value !== null && !isNaN(d.value));
       const firstValue = validPoints.length > 0 ? validPoints[0].value : null;
       const lastValue = validPoints.length > 0 ? validPoints[validPoints.length - 1].value : null;
       let percentageChange: number | null = null;

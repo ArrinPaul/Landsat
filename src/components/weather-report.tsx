@@ -17,6 +17,7 @@ import {
   CloudSnow,
   CloudLightning,
   Cloudy,
+  type LucideProps,
 } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
 
@@ -38,7 +39,7 @@ const ICONS = {
   Cloudy,
 } as const;
 
-const Icon = ({ name, ...props }: {name: string, [key: string]: any}) => {
+const Icon = ({ name, ...props }: { name: string } & LucideProps) => {
     const IconComponent = ICONS[name as keyof typeof ICONS] ?? HelpCircle;
     return <IconComponent {...props} />;
 }

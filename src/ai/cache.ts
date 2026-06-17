@@ -16,7 +16,7 @@ export type CacheResult<T> =
     | { state: 'stale', data: T, age: number }
     | { state: 'miss' };
 
-const cache = new Map<string, CacheEntry<any>>();
+const cache = new Map<string, CacheEntry<unknown>>();
 const CACHE_TTL = 1000 * 60 * 5; // 5 minutes
 
 export function getCache<T>(key: string): CacheResult<T> {
