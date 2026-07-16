@@ -1,6 +1,6 @@
 
 'use server';
-import 'server-only';
+
 
 /**
  * @fileOverview A chatbot flow to assist users of the Earth Insights Dashboard.

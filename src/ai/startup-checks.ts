@@ -20,8 +20,7 @@ export function runStartupChecks() {
   // Check for Fallback Providers
   const fallbackProviders = [
     { name: 'Groq', key: process.env.GROQ_API_KEY },
-    { name: 'Mistral', key: process.env.MISTRAL_API_KEY },
-    { name: 'HuggingFace', key: process.env.HUGGINGFACE_API_KEY },
+    { name: 'HuggingFace', key: process.env.HUGGINGFACE_API_KEY }
   ];
 
   const availableFallbacks = fallbackProviders.filter(p => p.key);
@@ -29,7 +28,7 @@ export function runStartupChecks() {
   if (availableFallbacks.length === 0) {
     console.warn(
       chalk.yellow.bold('⚠️  Fallback AI Warning:'),
-      chalk.yellow('No fallback AI providers (Groq, Mistral, HF) configured.')
+      chalk.yellow('No fallback AI providers (Groq, HF) configured.')
     );
   } else {
     console.log(chalk.green(`✅ Fallback AI configured: ${availableFallbacks.map(p => p.name).join(', ')}`));

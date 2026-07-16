@@ -331,7 +331,7 @@ export function Dashboard() {
               <LandCoverAnalysis landCover={analysisResult.landCover} />
 
               <GISDashboard analysisResult={analysisResult} locationLabel={locationDesc} />
-    
+
               <MetricsTable 
                 analysisResult={analysisResult} 
                 location={`${lat}, ${lon}`}

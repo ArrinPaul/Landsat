@@ -25,7 +25,7 @@ import { useLanguage } from "@/hooks/use-language";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ContactSheet } from "@/components/contact-sheet";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { PredictResultDialogContent } from "@/components/predict-result-dialog-content";
 
@@ -301,6 +301,7 @@ export default function PredictPage() {
             
             <Dialog open={resultDialogOpen} onOpenChange={setResultDialogOpen}>
                 <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden flex flex-col">
+                     <DialogTitle className="sr-only">Prediction Results</DialogTitle>
                      <ScrollArea className="h-full w-full p-4">
                                                 <PredictResultDialogContent
                                                     type={currentResultType}

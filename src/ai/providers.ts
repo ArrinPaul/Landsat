@@ -1,8 +1,8 @@
 /**
  * @fileOverview Multi-provider AI configuration supporting free APIs
- * Providers: Groq (primary), HuggingFace (fallback), Mistral (fallback)
+ * Providers: Groq (primary), HuggingFace (fallback)
  */
-import 'server-only';
+
 
 import Groq from 'groq-sdk';
 import { logger } from '@/lib/logger';
@@ -149,77 +149,22 @@ function sanitizeError(error: string): string {
 }
 
 // ============================================================================
-// Mistral Provider (Free, Very Good)
-// Free Tier: 14,400 requests/day via API
-// Speed: Good
-// Models: mistral-small, mistral-medium
-// ============================================================================
-
-export async function generateWithMistral(
-  prompt: string,
-  config?: Partial<ProviderConfig>
-): Promise<GenerationResponse> {
-  const apiKey = config?.apiKey || process.env.MISTRAL_API_KEY;
-  if (!apiKey) {
-    throw new Error('MISTRAL_API_KEY not found in environment');
-  }
-
-  const model = config?.model || 'mistral-small-latest';
-
-  const controller = new AbortController();
-  const timeoutMs = config?.timeoutMs || 15000;
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-  const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    signal: controller.signal,
-    body: JSON.stringify({
-      model,
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: config?.maxTokens || 1024,
-    }),
-  });
-  clearTimeout(timeoutId);
-
-  if (!response.ok) {
-    const errorBody = await response.text();
-    throw new Error(`Mistral error: ${response.status} - ${sanitizeError(errorBody)}`);
-  }
-
-  const result: any = await response.json();
-  const text = result.choices?.[0]?.message?.content || '';
-
-  if (!text) {
-    throw new Error('No response from Mistral');
-  }
-
-  return { text, provider: 'mistral', model };
-}
-
-// ============================================================================
 // Provider Selection & Fallback
 // ============================================================================
 
 export enum AIProvider {
   GROQ = 'groq',
   HUGGINGFACE = 'huggingface',
-  MISTRAL = 'mistral',
 }
 
 export const PROVIDER_ORDER: AIProvider[] = [
-  AIProvider.GROQ, // PRIMARY FREE: Fastest, most generous, 100% free forever (14.4k/day)
-  AIProvider.MISTRAL, // SECONDARY: Good quality, reliable API
-  AIProvider.HUGGINGFACE, // TERTIARY: Backup (API may be unstable)
+  AIProvider.GROQ,
+  AIProvider.HUGGINGFACE,
 ];
 
 const providerMap: Record<AIProvider, typeof generateWithGroq> = {
   [AIProvider.GROQ]: generateWithGroq,
   [AIProvider.HUGGINGFACE]: generateWithHuggingFace,
-  [AIProvider.MISTRAL]: generateWithMistral,
 };
 
 export interface GenerateOptions {
@@ -305,7 +250,6 @@ export function getAvailableProviders(): AIProvider[] {
 
   if (process.env.GROQ_API_KEY) available.push(AIProvider.GROQ);
   if (process.env.HUGGINGFACE_API_KEY) available.push(AIProvider.HUGGINGFACE);
-  if (process.env.MISTRAL_API_KEY) available.push(AIProvider.MISTRAL);
 
   return available;
 }
@@ -314,15 +258,12 @@ export function getProviderStatus(): Record<AIProvider, boolean> {
   return {
     [AIProvider.GROQ]: !!process.env.GROQ_API_KEY,
     [AIProvider.HUGGINGFACE]: !!process.env.HUGGINGFACE_API_KEY,
-    [AIProvider.MISTRAL]: !!process.env.MISTRAL_API_KEY,
   };
 }
 
 export function getProviderLimits(): Record<AIProvider, string> {
   return {
-    [AIProvider.GROQ]:
-      '14,400 requests/day (~600/hour) - FASTEST & RECOMMENDED',
+    [AIProvider.GROQ]: '14,400 requests/day (~600/hour) - FASTEST & RECOMMENDED',
     [AIProvider.HUGGINGFACE]: '~30k requests/month - Good for backup',
-    [AIProvider.MISTRAL]: '14,400 requests/day - Good quality',
   };
 }

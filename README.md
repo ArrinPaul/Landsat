@@ -32,7 +32,7 @@ Real-time and historical data from the Open-Meteo API are correlated with satell
 
 ## Implementation Details
 
-The application is structured as a modern full-stack platform. Server-side logic handles high-compute tasks and secure API communication, while the client-side dashboard provides interactive visualizations using Recharts. A robust fallback mechanism is implemented to ensure AI service availability across multiple providers, including Groq and Mistral.
+The application is structured as a modern full-stack platform. Server-side logic handles high-compute tasks and secure API communication, while the client-side dashboard provides interactive visualizations using Recharts. A robust fallback mechanism is implemented to ensure AI service availability across multiple providers, including Groq and HuggingFace.
 
 ## Documentation
 

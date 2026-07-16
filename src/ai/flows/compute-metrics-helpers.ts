@@ -1,4 +1,8 @@
-import type { DatasetSplit } from '@/ml';
+export interface DatasetSplit {
+  train: any[];
+  validation: any[];
+  test: any[];
+}
 
 export function getPercentageChange(start: number, end: number): number {
   if (start === 0) {

@@ -27,6 +27,7 @@ export function ImageWithLoader({ src, alt, className }: ImageWithLoaderProps) {
             isLoading ? "opacity-0" : "opacity-100"
         )}
         onLoad={() => setIsLoading(false)}
+        onError={() => setIsLoading(false)}
         unoptimized // Necessary for external data URLs from Earth Engine
       />
     </div>

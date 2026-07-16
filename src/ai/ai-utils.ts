@@ -1,9 +1,9 @@
 /**
  * @fileOverview Utility functions for AI operations with fallback mechanisms.
  * Provides retry logic and model fallback for handling API rate limits and errors.
- * Supports multi-provider setup: Groq → HuggingFace → Mistral → Google Gemini
+ * Supports multi-provider setup: Groq → Gemini → HuggingFace
  */
-import 'server-only';
+
 
 import { ai, MODELS } from '@/ai/genkit';
 import { googleAI } from '@genkit-ai/google-genai';
@@ -57,8 +57,6 @@ const DEFAULT_MODELS = [
  * 2. Groq (FREE - 14,400 req/day, 100% free forever, no billing EVER)
  * 3. HuggingFace (FREE - ~30k req/month, 100% free forever, no billing EVER)
  * 
- * NOTE: Mistral removed from chain due to billing concerns
- * 
  * @param promptFn - The prompt function to execute (from ai.definePrompt)
  * @param input - The input to pass to the prompt
  * @param config - Optional configuration for fallback and retry behavior
@@ -75,42 +73,10 @@ export async function executePromptWithFallback<TInput, TOutput>(
   const retryConfig = { ...DEFAULT_RETRY_CONFIG, ...config?.retryConfig };
   const promptVersion = resolvePromptVersion(flowHint || 'generic');
   
-  // FIRST: Try Google Gemini (but with AGGRESSIVE rate limit protection)
   let lastError: Error | null = null;
-  console.log('[AI] Attempting Gemini (gemini-2.0-flash - with rate limit protection)...');
-  
-  // ONLY 1 ATTEMPT for Gemini to prevent hitting daily limits!
-  const MAX_GEMINI_ATTEMPTS = 1; // Prevents overuse and billing charges
-  
-  for (let attempt = 0; attempt < MAX_GEMINI_ATTEMPTS; attempt++) {
-    try {
-    const response = await promptFn(sanitizedInput);
-      console.log(`[AI] ✓ Success with Gemini`);
-    monitorPromptQuality(promptVersion.flow, 0.9, 1);
-      return response;
-    } catch (error: any) {
-      lastError = error;
-      const errorMessage = error?.message?.toLowerCase() || '';
-      
-      // AGGRESSIVE rate limit detection - immediately switch to free providers
-      if (isRetryableError(error)) {
-        console.warn(`[AI] ⚠️ Gemini rate limit detected! Switching to FREE providers to prevent billing...`);
-        // Don't retry Gemini - go straight to free providers to avoid hitting daily limit
-        break;
-      }
-      
-      // Any error - also switch to free providers to be safe
-      console.warn(`[AI] Gemini error: ${errorMessage.substring(0, 100)}. Switching to FREE providers...`);
-      break;
-    }
-  }
 
-  // SECOND: Try free providers as backup (Groq → Mistral → HuggingFace)
-  try {
-    console.log('[AI] Attempting FREE providers (Groq → Mistral → HuggingFace)...');
-    
-    // Construct a proper prompt for the free providers based on flowHint or input structure
-    let promptText: string;
+  // 1. Construct a proper prompt for the raw API providers (Groq, HuggingFace)
+  let promptText: string;
     
     if (typeof sanitizedInput === 'string') {
       promptText = sanitizedInput;
@@ -414,19 +380,44 @@ IMPORTANT: You MUST respond with ONLY a valid JSON object. No other text, no exp
 Now provide the JSON:`;
       }
     }
+
+    // Provider 1: Try Groq first
+    try {
+      console.log('[AI] Attempting Groq (primary provider)...');
+      const groqResponse = await generateWithMultiProvider({ prompt: promptText, providers: ['groq' as any] });
+      console.log(`[AI] ✓ Success with Groq: ${groqResponse.model}`);
+      monitorPromptQuality(promptVersion.flow, 0.85, 1);
+      return { text: groqResponse.text };
+    } catch (error: any) {
+      lastError = error;
+      console.warn(`[AI] Groq failed: ${error.message}. Falling back to Gemini...`);
+    }
+
+    // Provider 2: Try Gemini
+    try {
+      console.log('[AI] Attempting Gemini (secondary provider)...');
+      const response = await promptFn(sanitizedInput);
+      console.log(`[AI] ✓ Success with Gemini`);
+      monitorPromptQuality(promptVersion.flow, 0.9, 1);
+      return response;
+    } catch (error: any) {
+      lastError = error;
+      console.warn(`[AI] Gemini failed: ${error.message}. Falling back to HuggingFace...`);
+    }
+
+    // Provider 3: Try HuggingFace
+    try {
+      console.log('[AI] Attempting HuggingFace (tertiary provider)...');
+      const hfResponse = await generateWithMultiProvider({ prompt: promptText, providers: ['huggingface' as any] });
+      console.log(`[AI] ✓ Success with HuggingFace: ${hfResponse.model}`);
+      monitorPromptQuality(promptVersion.flow, 0.85, 1);
+      return { text: hfResponse.text };
+    } catch (error: any) {
+      lastError = error;
+      console.warn(`[AI] HuggingFace failed: ${error.message}. All providers exhausted.`);
+    }
     
-    // Try multi-provider fallback
-    const multiProviderResponse = await generateWithMultiProvider({ prompt: promptText });
-    console.log(`[AI] ✓ Success with ${multiProviderResponse.provider}: ${multiProviderResponse.model}`);
-    monitorPromptQuality(promptVersion.flow, 0.85, 1);
-    return { text: multiProviderResponse.text };
-  } catch (multiProviderError: any) {
-    const errorMsg = multiProviderError?.message || 'Unknown fallback error';
-    console.warn(`[AI] All free providers failed: ${errorMsg}`);
-    throw new Error(`AI Service Unavailable: Both Gemini and fallback providers (Groq/Mistral/HF) failed. Please check your API keys. Last error: ${errorMsg}`);
-  }
-  
-  throw lastError || new Error('All AI providers exhausted (Gemini failed, free providers unavailable)');
+    throw lastError || new Error('All AI providers (Groq, Gemini, HuggingFace) failed.');
 }
 
 /**

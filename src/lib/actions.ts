@@ -1,6 +1,6 @@
 
 "use server";
-import 'server-only';
+
 
 import { generateDataInsights } from "@/ai/flows/generate-insights";
 import { generateReportSummary } from "@/ai/flows/generate-report-summary";
@@ -106,12 +106,11 @@ async function handleAction<T, U>(action: (input: T) => Promise<U>, input: T): P
             process.env.GEMINI_API_KEY ||
             process.env.GOOGLE_GENAI_API_KEY ||
             process.env.GROQ_API_KEY ||
-            process.env.MISTRAL_API_KEY ||
             process.env.HUGGINGFACE_API_KEY
         );
 
         if (!hasAnyAIKey && !process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
-            const errorMessage = "All AI and Satellite services are disabled. No valid API keys (Gemini, Groq, Mistral, HF) or Earth Engine credentials found in environment. Please check your configuration.";
+            const errorMessage = "All AI and Satellite services are disabled. No valid API keys (Gemini, Groq, HF) or Earth Engine credentials found in environment. Please check your configuration.";
             logger.error('missing_credentials', { scope: 'lib.actions', message: errorMessage });
             return { data: null, error: errorMessage };
         }
@@ -137,11 +136,8 @@ async function handleAction<T, U>(action: (input: T) => Promise<U>, input: T): P
                 if (errorMessage.includes('400')) {
                     return { data: null, error: `Bad Request (400): The AI model rejected the request, likely due to an invalid input format. Details: ${errorMessage}` };
                 }
-                if (errorMessage.includes('5 NOT_FOUND') || errorMessage.includes('NOT_FOUND')) {
-                    return { data: null, error: `Firestore Database Not Found: Please enable Firestore API at https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=landsat-470215 and ensure GOOGLE_APPLICATION_CREDENTIALS_JSON is set in Vercel environment variables. Wait 2-3 minutes after enabling, then redeploy.` };
-                }
-                if (errorMessage.includes('PERMISSION_DENIED')) {
-                    return { data: null, error: `Firestore Permission Denied: Enable Firestore API at https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=landsat-470215 and verify service account has Firestore permissions.` };
+                if (errorMessage.includes('PGRST')) {
+                    return { data: null, error: `Database Error: Supabase encountered an error. Details: ${errorMessage}` };
                 }
 
                 attempt++;
@@ -224,7 +220,7 @@ export async function getAdvancedCropAdviceAction(input: AdvancedCropAdviceInput
 
 export async function generateTimelapseVideoAction(input: GenerateTimelapseVideoInput): Promise<{ data: GenerateTimelapseVideoOutput | null; error: string | null; }> {
     const auth = await getAuthContext();
-    requireRole(auth, ['analyst', 'admin']);
+    requireRole(auth, ['analyst', 'admin', 'viewer']);
     return handleAction(generateTimelapseVideo, TimelapseVideoActionSchema.parse(input));
 }
 
