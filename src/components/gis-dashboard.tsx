@@ -263,23 +263,7 @@ export function GISDashboard({ analysisResult, locationLabel }: GISDashboardProp
             </div>
 
             <div className="bg-muted/10 p-4 rounded-xl border">
-              <div className="mb-6 px-1">
-                <Slider
-                  value={[temporalIndex]}
-                  min={0}
-                  max={temporalSteps}
-                  step={1}
-                  onValueChange={(value) => setTemporalIndex(value[0] ?? 0)}
-                  aria-label="Temporal slider"
-                  className="py-2"
-                />
-                <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                  <span>Start of Period</span>
-                  <span>End of Period</span>
-                </div>
-              </div>
-
-              <div className="space-y-2">
+              <div className="space-y-2 mb-6">
                 <div className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
                   <AlertTriangle className="h-3 w-3" /> Spatial Anomaly Distribution
                 </div>
@@ -298,6 +282,22 @@ export function GISDashboard({ analysisResult, locationLabel }: GISDashboardProp
                 <p className="text-[11px] text-muted-foreground leading-relaxed pt-2">
                   The heatmap intensity combines the temporal index and aggregate land-cover change magnitude to highlight spatial clusters of potential anomalies. Darker red indicates higher confidence of unexpected environmental deviation.
                 </p>
+              </div>
+
+              <div className="px-1">
+                <Slider
+                  value={[temporalIndex]}
+                  min={0}
+                  max={temporalSteps}
+                  step={1}
+                  onValueChange={(value) => setTemporalIndex(value[0] ?? 0)}
+                  aria-label="Temporal slider"
+                  className="py-2"
+                />
+                <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                  <span>Start of Period</span>
+                  <span>End of Period</span>
+                </div>
               </div>
             </div>
           </div>

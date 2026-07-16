@@ -95,14 +95,16 @@ export function LandCoverAnalysis({ landCover }: LandCoverAnalysisProps) {
             <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
                  <div className="space-y-2">
                     <h3 className="text-center font-semibold">{t('dashboard.landCover.startArea')}</h3>
-                    <div className="aspect-square rounded-lg overflow-hidden border">
+                    <div className="aspect-square rounded-lg overflow-hidden border relative group">
                        <ImageWithLoader src={landCover.beforeMapUrl} alt="Land cover map at the start of the period." />
+                       <div className="absolute inset-0 bg-gradient-to-tr from-purple-600/40 via-red-500/40 to-yellow-500/40 mix-blend-color pointer-events-none" />
                     </div>
                 </div>
                  <div className="space-y-2">
                     <h3 className="text-center font-semibold">{t('dashboard.landCover.endArea')}</h3>
-                    <div className="aspect-square rounded-lg overflow-hidden border">
+                    <div className="aspect-square rounded-lg overflow-hidden border relative group">
                         <ImageWithLoader src={landCover.afterMapUrl} alt="Land cover map at the end of the period." />
+                        <div className="absolute inset-0 bg-gradient-to-tr from-purple-600/40 via-red-500/40 to-yellow-500/40 mix-blend-color pointer-events-none" />
                     </div>
                 </div>
             </div>
