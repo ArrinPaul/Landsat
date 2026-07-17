@@ -38,6 +38,10 @@ import { getSupabase } from '@/lib/supabase';
 // Use Supabase for job results to support serverless deployments.
 const JOBS_TABLE = 'analysis_jobs';
 
+// In-memory fallback for local development or when Supabase is unavailable
+const memoryJobs = (globalThis as any).memoryJobs || new Map<string, any>();
+(globalThis as any).memoryJobs = memoryJobs;
+
 const DataPointSchema = z.object({
   date: z.string(),
   value: z.number().nullable(),
@@ -141,15 +145,24 @@ export type JobResultOutput = z.infer<typeof JobResultOutputSchema>;
 // This function starts the computation and immediately returns a job ID.
 export async function startMetricsComputation(input: ComputeMetricsInput): Promise<StartComputationOutput> {
   const jobId = `job-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-  const supabase = getSupabase();
   
-  // Initialize job in Supabase
-  await supabase.from(JOBS_TABLE).insert({
-    id: jobId,
-    status: 'pending',
-    created_at: new Date().toISOString(),
-    input: input
-  });
+  try {
+      const supabase = getSupabase();
+      // Initialize job in Supabase
+      const { error: insertError } = await supabase.from(JOBS_TABLE).insert({
+        id: jobId,
+        status: 'pending',
+        created_at: new Date().toISOString(),
+        input: input
+      });
+      if (insertError) {
+          console.error("Failed to insert job into Supabase, falling back to memory:", insertError);
+          memoryJobs.set(jobId, { status: 'pending', input });
+      }
+  } catch (err) {
+      console.error("Supabase not available, using memory store:", err);
+      memoryJobs.set(jobId, { status: 'pending', input });
+  }
 
   // Do not await this. Let it run in the background.
     enqueueJob(() => computeMetricsFlow(input, jobId)).catch((e: unknown) => {
@@ -167,6 +180,13 @@ export async function startMetricsComputation(input: ComputeMetricsInput): Promi
 // This function retrieves the result of a computation.
 export async function getMetricsResult(jobId: string): Promise<JobResultOutput> {
     try {
+        if (memoryJobs.has(jobId)) {
+            const job = memoryJobs.get(jobId);
+            if (job.status === 'completed') return { status: 'completed', result: job.data };
+            if (job.status === 'error') return { status: 'error', error: job.error };
+            return { status: 'pending' };
+        }
+
         const supabase = getSupabase();
         const { data: job, error } = await supabase.from(JOBS_TABLE).select('*').eq('id', jobId).single();
 
@@ -488,22 +508,30 @@ const computeMetricsFlow = async (input: ComputeMetricsInput, jobId: string) => 
         segmentationInference,
     };
     
-    const supabase = getSupabase();
-    await supabase.from(JOBS_TABLE).update({
-        status: 'completed',
-        data: finalResult,
-        completed_at: new Date().toISOString()
-    }).eq('id', jobId);
+    if (memoryJobs.has(jobId)) {
+        memoryJobs.set(jobId, { status: 'completed', data: finalResult, completed_at: new Date().toISOString() });
+    } else {
+        const supabase = getSupabase();
+        await supabase.from(JOBS_TABLE).update({
+            status: 'completed',
+            data: finalResult,
+            completed_at: new Date().toISOString()
+        }).eq('id', jobId);
+    }
 
   } catch (error: any) {
     console.error(`Error in computeMetricsFlow for job ${jobId}:`, error);
     try {
-        const supabase = getSupabase();
-        await supabase.from(JOBS_TABLE).update({
-            status: 'error',
-            error: error.message || 'An unknown error occurred during computation.',
-            failed_at: new Date().toISOString()
-        }).eq('id', jobId);
+        if (memoryJobs.has(jobId)) {
+            memoryJobs.set(jobId, { status: 'error', error: error.message || 'An unknown error occurred during computation.', failed_at: new Date().toISOString() });
+        } else {
+            const supabase = getSupabase();
+            await supabase.from(JOBS_TABLE).update({
+                status: 'error',
+                error: error.message || 'An unknown error occurred during computation.',
+                failed_at: new Date().toISOString()
+            }).eq('id', jobId);
+        }
     } catch (dbError) {
         console.error("Critical: Failed to update error status in Supabase:", dbError);
     }
