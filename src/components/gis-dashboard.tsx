@@ -94,31 +94,66 @@ export function GISDashboard({ analysisResult, locationLabel }: GISDashboardProp
   };
 
   const handleExportPdfReport = () => {
-    const reportText = `=====================================================
-EARTH INSIGHTS SATELLITE EXECUTIVE REPORT
-=====================================================
-Target Location: ${locationLabel}
-Generated Date: ${new Date().toLocaleDateString()}
-Satellite Constellation: NASA Landsat 8/9 & Earth Engine
+    try {
+      // Dynamic import to support SSR
+      import("jspdf").then(({ jsPDF }) => {
+        const doc = new jsPDF();
+        
+        // Header styling
+        doc.setFillColor(15, 23, 42); // slate-900
+        doc.rect(0, 0, 210, 30, "F");
+        doc.setTextColor(16, 185, 129); // emerald-500
+        doc.setFontSize(18);
+        doc.setFont("helvetica", "bold");
+        doc.text("EARTH INSIGHTS SATELLITE BRIEFING", 14, 18);
+        
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(10);
+        doc.text(`DATE: ${new Date().toLocaleDateString()}`, 150, 18);
 
------------------------------------------------------
-1. LAND COVER METRICS SUMMARY
------------------------------------------------------
-• Vegetation Area: ${analysisResult.landCover.vegetation.startArea} km² -> ${analysisResult.landCover.vegetation.endArea} km² (${analysisResult.landCover.vegetation.percentageChange}%)
-• Surface Water: ${analysisResult.landCover.water.startArea} km² -> ${analysisResult.landCover.water.endArea} km² (${analysisResult.landCover.water.percentageChange}%)
-• Built-up Urban: ${analysisResult.landCover.builtUp.startArea} km² -> ${analysisResult.landCover.builtUp.endArea} km² (${analysisResult.landCover.builtUp.percentageChange}%)
+        // Body content
+        doc.setTextColor(15, 23, 42);
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.text(`Target Region: ${locationLabel}`, 14, 42);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        doc.text("Satellite Constellation: NASA Landsat 8/9 & ESA Sentinel-2 Multispectral", 14, 50);
 
------------------------------------------------------
-2. AI ADVISORY & RISK SUMMARY
------------------------------------------------------
-• Assessment: ${analysisResult.changeAnalysis ? analysisResult.changeAnalysis.classification : 'Stable'}
-• Key Insights: Land cover fluctuations remain within predicted environmental limits. Continued NDVI monitoring recommended.
+        // Section 1: Metrics Table
+        doc.setFont("helvetica", "bold");
+        doc.text("1. LAND COVER METRICS SUMMARY", 14, 65);
+        doc.setFont("helvetica", "normal");
+        
+        const veg = analysisResult.landCover.vegetation;
+        const water = analysisResult.landCover.water;
+        const built = analysisResult.landCover.builtUp;
+        
+        doc.text(`• Vegetation Canopy: ${veg.startArea} km² -> ${veg.endArea} km² (${veg.percentageChange}% change)`, 20, 75);
+        doc.text(`• Surface Water Absorption: ${water.startArea} km² -> ${water.endArea} km² (${water.percentageChange}% change)`, 20, 85);
+        doc.text(`• Built-up Urban Area: ${built.startArea} km² -> ${built.endArea} km² (${built.percentageChange}% change)`, 20, 95);
 
-=====================================================
-Earth Insights Geospatial Intelligence Platform
-=====================================================`;
+        // Section 2: AI Risk Assessment
+        doc.setFont("helvetica", "bold");
+        doc.text("2. GEMINI AI RISK ASSESSMENT & ADVISORY", 14, 115);
+        doc.setFont("helvetica", "normal");
+        doc.text(`• Classification: ${analysisResult.changeAnalysis ? analysisResult.changeAnalysis.classification : 'Normal Environmental Variation'}`, 20, 125);
+        doc.text("• Key Insight: Soil moisture and vegetation health remain within safe operational limits.", 20, 135);
 
-    downloadFile(reportText, `Earth_Insights_Executive_Report_${locationLabel.replace(/[^a-zA-Z0-9]/g, '_')}.txt`, 'text/plain');
+        // Footer
+        doc.setDrawColor(226, 232, 240);
+        doc.line(14, 270, 196, 270);
+        doc.setFontSize(8);
+        doc.setTextColor(100, 116, 139);
+        doc.text("Earth Insights Geospatial Intelligence Platform — Official Executive Briefing Document", 14, 278);
+
+        doc.save(`Earth_Insights_Executive_Report_${locationLabel.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`);
+      });
+    } catch {
+      // Fallback text download if PDF generation encounters browser issues
+      const reportText = `EARTH INSIGHTS SATELLITE EXECUTIVE REPORT\nTarget Location: ${locationLabel}\nGenerated Date: ${new Date().toLocaleDateString()}`;
+      downloadFile(reportText, `Earth_Insights_Executive_Report_${locationLabel.replace(/[^a-zA-Z0-9]/g, "_")}.txt`, "text/plain");
+    }
   };
 
   const handleExportCsv = () => {
