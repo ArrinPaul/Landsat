@@ -20,6 +20,7 @@ import { useLanguage } from "@/hooks/use-language";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { ContactSheet } from "@/components/contact-sheet";
+import { CropYieldAdvisoryAgent } from "@/components/crop-yield-advisory-agent";
 
 const cropOptions = ["Corn", "Wheat", "Rice", "Soybeans", "Cotton", "Potatoes", "Tomatoes", "Barley", "Sorghum"];
 
@@ -286,6 +287,8 @@ function CropAdvisorContent() {
                         </Card>
                     )}
 
+                    {/* Interactive Agronomic Advisory Chat Agent */}
+                    <CropYieldAdvisoryAgent lat={lat} lon={lon} locationLabel="Your Selected Plot" />
                 </div>
             </main>
             <footer id="contact" className="py-6 w-full shrink-0 border-t">
