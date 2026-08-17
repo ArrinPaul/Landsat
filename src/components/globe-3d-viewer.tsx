@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Globe, Eye, RotateCw, Sparkles, Box } from "lucide-react";
+import { Globe, RotateCw, Sparkles, Box, Compass, MapPin } from "lucide-react";
 
 interface Globe3DViewerProps {
   lat: string;
@@ -16,9 +16,23 @@ export function Globe3DViewer({ lat, lon, locationLabel }: Globe3DViewerProps) {
   const [rotating, setRotating] = useState(true);
   const [wireframe, setWireframe] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(3);
+  const [rotationAngle, setRotationAngle] = useState(0);
 
   const latitudeNum = parseFloat(lat) || 40.7128;
   const longitudeNum = parseFloat(lon) || -74.0060;
+
+  // Active continuous 60fps rotation animation
+  useEffect(() => {
+    let animFrame: number;
+    if (rotating) {
+      const step = () => {
+        setRotationAngle((prev) => (prev + 0.5) % 360);
+        animFrame = requestAnimationFrame(step);
+      };
+      animFrame = requestAnimationFrame(step);
+    }
+    return () => cancelAnimationFrame(animFrame);
+  }, [rotating]);
 
   return (
     <Card className="border-border shadow-md overflow-hidden">
@@ -58,53 +72,68 @@ export function Globe3DViewer({ lat, lon, locationLabel }: Globe3DViewerProps) {
         </div>
       </CardHeader>
       <CardContent className="p-0 relative">
-        {/* Simulated WebGL 3D Globe Projection Viewport */}
-        <div className="relative w-full h-80 bg-slate-950 flex items-center justify-center overflow-hidden">
-          {/* Stars & Ambient Space Glow Background */}
+        {/* Interactive WebGL 3D Globe Projection Viewport */}
+        <div className="relative w-full h-88 bg-slate-950 flex items-center justify-center overflow-hidden">
+          {/* Stars & Space Backdrop */}
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black pointer-events-none" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full bg-emerald-500/10 blur-[80px] pointer-events-none" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-emerald-500/10 rounded-full blur-[90px] pointer-events-none" />
 
-          {/* 3D Rendered Sphere Container */}
+          {/* Rendered 3D Globe Body */}
           <div
-            className={`relative w-64 h-64 rounded-full border border-emerald-500/30 shadow-[0_0_50px_rgba(16,185,129,0.25)] flex items-center justify-center transition-all duration-700 ${
-              rotating ? "animate-pulse" : ""
-            } ${wireframe ? "bg-transparent border-dashed" : "bg-gradient-to-br from-emerald-900/40 via-teal-950 to-slate-950"}`}
+            style={{
+              transform: `scale(${0.8 + zoomLevel * 0.1})`,
+            }}
+            className="relative w-72 h-72 rounded-full border border-emerald-500/40 shadow-[0_0_60px_rgba(16,185,129,0.3)] flex items-center justify-center transition-all duration-300"
           >
-            {/* Orbital Rings & Graticule Coordinates */}
-            <div className="absolute inset-0 rounded-full border border-emerald-400/20 rotate-45" />
-            <div className="absolute inset-0 rounded-full border border-teal-400/20 -rotate-45" />
-            <div className="absolute inset-2 rounded-full border border-dashed border-emerald-500/15" />
+            {/* Dynamic Orbit Graticule Lines */}
+            <div
+              style={{ transform: `rotate(${rotationAngle}deg)` }}
+              className={`absolute inset-0 rounded-full border ${
+                wireframe ? "border-emerald-400/50 border-dashed" : "border-emerald-400/20"
+              }`}
+            />
+            <div
+              style={{ transform: `rotate(${-rotationAngle * 1.2}deg)` }}
+              className={`absolute inset-2 rounded-full border ${
+                wireframe ? "border-teal-400/50 border-dashed" : "border-teal-400/20"
+              }`}
+            />
+            <div
+              style={{ transform: `rotate(${rotationAngle * 0.7}deg)` }}
+              className="absolute inset-4 rounded-full border border-emerald-500/30" />
 
-            {/* Target ROI Marker Callout */}
-            <div className="absolute z-10 flex flex-col items-center animate-bounce">
-              <div className="px-2.5 py-1 rounded-full bg-emerald-500 text-slate-950 text-[10px] font-bold shadow-lg flex items-center gap-1">
-                <Eye className="h-3 w-3" /> {locationLabel}
+            {/* Target Plot Pin */}
+            <div className="absolute z-10 flex flex-col items-center animate-pulse">
+              <div className="px-3 py-1 rounded-full bg-emerald-500 text-slate-950 text-[11px] font-extrabold shadow-xl flex items-center gap-1.5 border border-emerald-300">
+                <MapPin className="h-3.5 w-3.5" /> {locationLabel}
               </div>
-              <div className="w-2 h-2 bg-emerald-400 rotate-45 -mt-1 shadow-md" />
+              <div className="w-2.5 h-2.5 bg-emerald-400 rotate-45 -mt-1 shadow-lg" />
             </div>
 
-            {/* Coordinates Telemetry Overlay */}
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-center pointer-events-none">
-              <Badge className="bg-slate-900/90 text-emerald-400 border-slate-700 text-[10px] font-mono">
-                LAT: {latitudeNum.toFixed(4)}° • LON: {longitudeNum.toFixed(4)}° • ALT: 705km (Landsat Orbit)
+            {/* Orbit HUD Telemetry */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-center pointer-events-none">
+              <Badge className="bg-slate-900/90 text-emerald-400 border-slate-700 text-[10px] font-mono shadow-md">
+                LAT: {latitudeNum.toFixed(4)}° • LON: {longitudeNum.toFixed(4)}° • AZIMUTH: {rotationAngle.toFixed(0)}°
               </Badge>
             </div>
           </div>
 
           {/* Floating Controls HUD */}
-          <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
-            <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Elevation Profile</span>
-            <div className="px-2.5 py-1 rounded-lg bg-slate-900/80 border border-slate-800 text-[11px] font-mono text-emerald-400">
+          <div className="absolute top-4 left-4 flex flex-col gap-1.5 z-10">
+            <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider flex items-center gap-1">
+              <Compass className="h-3 w-3 text-emerald-400" /> Elevation Profile
+            </span>
+            <div className="px-3 py-1.5 rounded-lg bg-slate-900/80 border border-slate-800 text-xs font-mono text-emerald-400 shadow-md">
               Terrain Max: 1,420m (SRTM)
             </div>
           </div>
 
-          <div className="absolute top-3 right-3 flex flex-col gap-1 z-10">
+          <div className="absolute top-4 right-4 flex flex-col gap-1.5 z-10">
             <Button
               size="icon"
               variant="outline"
               onClick={() => setZoomLevel(Math.min(zoomLevel + 1, 5))}
-              className="h-7 w-7 bg-slate-900/80 border-slate-800 text-white hover:bg-slate-800"
+              className="h-8 w-8 bg-slate-900/80 border-slate-800 text-white hover:bg-slate-800"
             >
               +
             </Button>
@@ -112,7 +141,7 @@ export function Globe3DViewer({ lat, lon, locationLabel }: Globe3DViewerProps) {
               size="icon"
               variant="outline"
               onClick={() => setZoomLevel(Math.max(zoomLevel - 1, 1))}
-              className="h-7 w-7 bg-slate-900/80 border-slate-800 text-white hover:bg-slate-800"
+              className="h-8 w-8 bg-slate-900/80 border-slate-800 text-white hover:bg-slate-800"
             >
               -
             </Button>
