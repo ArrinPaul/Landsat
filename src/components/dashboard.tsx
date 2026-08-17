@@ -25,6 +25,8 @@ import { CustomPolygonDrawer } from "@/components/custom-polygon-drawer";
 import { TimeSeriesAnomalyDetector } from "@/components/time-series-anomaly-detector";
 import { VisionSatelliteAnalyzer } from "@/components/vision-satellite-analyzer";
 import { MultiSatelliteSelector, type SatelliteConstellation } from "@/components/multi-satellite-selector";
+import { OfflineTileCacheManager } from "@/components/offline-tile-cache-manager";
+import { NotificationWebhookCenter } from "@/components/notification-webhook-center";
 
 type ComputationStatus = 'idle' | 'computing' | 'polling' | 'completed' | 'error';
 const HISTORY_STORAGE_KEY = 'earth-insights.dashboard-history';
@@ -369,6 +371,11 @@ export function Dashboard() {
                   }}
                 />
                 <TimeSeriesAnomalyDetector />
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <OfflineTileCacheManager locationLabel={locationDesc} />
+                <NotificationWebhookCenter />
               </div>
 
               <GISDashboard analysisResult={analysisResult} locationLabel={locationDesc} />
