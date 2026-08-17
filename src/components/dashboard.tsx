@@ -21,6 +21,8 @@ import { MonitoringCard } from "./monitoring-card";
 import { ChangeInsightCard } from "./change-insight-card"; // New import
 import { Progress } from "@/components/ui/progress"; // New import
 import { GISDashboard } from "@/components/gis-dashboard";
+import { CustomPolygonDrawer } from "@/components/custom-polygon-drawer";
+import { TimeSeriesAnomalyDetector } from "@/components/time-series-anomaly-detector";
 
 type ComputationStatus = 'idle' | 'computing' | 'polling' | 'completed' | 'error';
 const HISTORY_STORAGE_KEY = 'earth-insights.dashboard-history';
@@ -344,6 +346,22 @@ export function Dashboard() {
                 locationDescription={locationDesc}
                 dateRange={dateRange}
               />
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <CustomPolygonDrawer
+                  initialLat={lat}
+                  initialLon={lon}
+                  onPolygonComplete={(points, avgLat, avgLng) => {
+                    setLat(avgLat);
+                    setLon(avgLng);
+                    toast({
+                      title: "Custom ROI Applied",
+                      description: `Polygon ROI set with center (${avgLat}, ${avgLng}).`,
+                    });
+                  }}
+                />
+                <TimeSeriesAnomalyDetector />
+              </div>
 
               <GISDashboard analysisResult={analysisResult} locationLabel={locationDesc} />
             </>
