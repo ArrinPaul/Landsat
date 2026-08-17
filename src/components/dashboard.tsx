@@ -27,6 +27,10 @@ import { VisionSatelliteAnalyzer } from "@/components/vision-satellite-analyzer"
 import { MultiSatelliteSelector, type SatelliteConstellation } from "@/components/multi-satellite-selector";
 import { OfflineTileCacheManager } from "@/components/offline-tile-cache-manager";
 import { NotificationWebhookCenter } from "@/components/notification-webhook-center";
+import { Globe3DViewer } from "@/components/globe-3d-viewer";
+import { RealtimeOrbitTracker } from "@/components/realtime-orbit-tracker";
+import { HistoricalTimelapseExporter } from "@/components/historical-timelapse-exporter";
+import { SpatialTeamCollaborationWorkspace } from "@/components/spatial-team-collaboration-workspace";
 
 type ComputationStatus = 'idle' | 'computing' | 'polling' | 'completed' | 'error';
 const HISTORY_STORAGE_KEY = 'earth-insights.dashboard-history';
@@ -343,6 +347,8 @@ export function Dashboard() {
                 dateRange={dateRangeString}
               />
     
+              <Globe3DViewer lat={lat} lon={lon} locationLabel={locationDesc} />
+
               <Visualizations
                 analysisResult={analysisResult}
                 groundTruthData={groundTruthData}
@@ -371,6 +377,13 @@ export function Dashboard() {
                   }}
                 />
                 <TimeSeriesAnomalyDetector />
+              </div>
+
+              <RealtimeOrbitTracker targetLat={lat} targetLon={lon} />
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <HistoricalTimelapseExporter locationLabel={locationDesc} />
+                <SpatialTeamCollaborationWorkspace locationLabel={locationDesc} />
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
