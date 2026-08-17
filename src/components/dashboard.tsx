@@ -27,6 +27,7 @@ import { VisionSatelliteAnalyzer } from "@/components/vision-satellite-analyzer"
 import { MultiSatelliteSelector, type SatelliteConstellation } from "@/components/multi-satellite-selector";
 import { OfflineTileCacheManager } from "@/components/offline-tile-cache-manager";
 import { NotificationWebhookCenter } from "@/components/notification-webhook-center";
+import { Globe3DViewer } from "@/components/globe-3d-viewer";
 
 type ComputationStatus = 'idle' | 'computing' | 'polling' | 'completed' | 'error';
 const HISTORY_STORAGE_KEY = 'earth-insights.dashboard-history';
@@ -343,6 +344,8 @@ export function Dashboard() {
                 dateRange={dateRangeString}
               />
     
+              <Globe3DViewer lat={lat} lon={lon} locationLabel={locationDesc} />
+
               <Visualizations
                 analysisResult={analysisResult}
                 groundTruthData={groundTruthData}
