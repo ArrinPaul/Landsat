@@ -23,6 +23,7 @@ import { Progress } from "@/components/ui/progress"; // New import
 import { GISDashboard } from "@/components/gis-dashboard";
 import { CustomPolygonDrawer } from "@/components/custom-polygon-drawer";
 import { TimeSeriesAnomalyDetector } from "@/components/time-series-anomaly-detector";
+import { VisionSatelliteAnalyzer } from "@/components/vision-satellite-analyzer";
 
 type ComputationStatus = 'idle' | 'computing' | 'polling' | 'completed' | 'error';
 const HISTORY_STORAGE_KEY = 'earth-insights.dashboard-history';
@@ -345,6 +346,11 @@ export function Dashboard() {
                 setSelectedMetric={setSelectedMetric}
                 locationDescription={locationDesc}
                 dateRange={dateRange}
+              />
+
+              <VisionSatelliteAnalyzer
+                mapUrl={analysisResult.landCover.afterMapUrl}
+                locationLabel={locationDesc}
               />
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
