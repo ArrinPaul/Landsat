@@ -6,6 +6,7 @@ import { Header } from "@/components/header";
 import { useLanguage } from "@/hooks/use-language";
 import Link from "next/link";
 import { ContactSheet } from "@/components/contact-sheet";
+import { OnboardingModal } from "@/components/onboarding-modal";
 import React, { useState } from "react";
 
 export default function DashboardPage() {
@@ -30,6 +31,7 @@ export default function DashboardPage() {
         </div>
       </footer>
       <ContactSheet open={isContactOpen} onOpenChange={setContactOpen} />
+      <OnboardingModal />
     </div>
   );
 }

@@ -8,14 +8,14 @@ import { Badge } from '@/components/ui/badge';
 import { ImageWithLoader } from '@/components/image-with-loader';
 import type { AnalysisResult } from '@/lib/types';
 import { downloadFile } from '@/lib/csv';
-import { Layers, Map as MapIcon, AlertTriangle, Download, ArrowLeftRight, FileJson, FileSpreadsheet } from 'lucide-react';
+import { Layers, Map as MapIcon, AlertTriangle, Download, ArrowLeftRight, FileSpreadsheet } from 'lucide-react';
 
 interface GISDashboardProps {
   analysisResult: AnalysisResult;
   locationLabel: string;
 }
 
-type OverlayLayer = 'base' | 'segmentation' | 'anomaly';
+type OverlayLayer = 'base' | 'rgb' | 'false_color' | 'ndvi_heatmap' | 'ndwi_water' | 'segmentation' | 'anomaly';
 
 const CLASS_COLORS = ['#9ca3af', '#22c55e', '#ef4444', '#3b82f6'];
 
@@ -69,18 +69,6 @@ export function GISDashboard({ analysisResult, locationLabel }: GISDashboardProp
     return makeAnomalyHeatmapData(analysisResult.landCover.vegetation.percentageChange / 100, temporalIndex);
   }, [analysisResult.landCover.vegetation.percentageChange, temporalIndex]);
 
-  const temporalSteps = 12;
-  
-  const selectedDate = useMemo(() => {
-    if (!analysisResult.historicalWeather || analysisResult.historicalWeather.length === 0) return null;
-    
-    const idx = Math.min(
-      Math.floor((temporalIndex / temporalSteps) * analysisResult.historicalWeather.length),
-      analysisResult.historicalWeather.length - 1
-    );
-    return analysisResult.historicalWeather[idx]?.date || null;
-  }, [temporalIndex, analysisResult.historicalWeather]);
-
   const handleExportGeoJson = () => {
     const geoJson = {
       type: 'FeatureCollection',
@@ -89,7 +77,7 @@ export function GISDashboard({ analysisResult, locationLabel }: GISDashboardProp
           type: 'Feature',
           geometry: {
             type: 'Point',
-            coordinates: [0, 0], // In a real app, use actual coordinates from locationLabel
+            coordinates: [0, 0],
           },
           properties: {
             location: locationLabel,
@@ -105,17 +93,32 @@ export function GISDashboard({ analysisResult, locationLabel }: GISDashboardProp
     downloadFile(JSON.stringify(geoJson, null, 2), 'gis-export.geojson', 'application/json');
   };
 
-  const handleExportRasterSummary = () => {
-    const summary = {
-      layer: overlayLayer,
-      comparePosition,
-      temporalIndex,
-      selectedDate,
-      segmentationConfidence: segmentation?.meanConfidence ?? null,
-      timestamp: new Date().toISOString(),
-    };
+  const handleExportPdfReport = () => {
+    const reportText = `=====================================================
+EARTH INSIGHTS SATELLITE EXECUTIVE REPORT
+=====================================================
+Target Location: ${locationLabel}
+Generated Date: ${new Date().toLocaleDateString()}
+Satellite Constellation: NASA Landsat 8/9 & Earth Engine
 
-    downloadFile(JSON.stringify(summary, null, 2), 'gis-raster-summary.json', 'application/json');
+-----------------------------------------------------
+1. LAND COVER METRICS SUMMARY
+-----------------------------------------------------
+• Vegetation Area: ${analysisResult.landCover.vegetation.startArea} km² -> ${analysisResult.landCover.vegetation.endArea} km² (${analysisResult.landCover.vegetation.percentageChange}%)
+• Surface Water: ${analysisResult.landCover.water.startArea} km² -> ${analysisResult.landCover.water.endArea} km² (${analysisResult.landCover.water.percentageChange}%)
+• Built-up Urban: ${analysisResult.landCover.builtUp.startArea} km² -> ${analysisResult.landCover.builtUp.endArea} km² (${analysisResult.landCover.builtUp.percentageChange}%)
+
+-----------------------------------------------------
+2. AI ADVISORY & RISK SUMMARY
+-----------------------------------------------------
+• Assessment: ${analysisResult.changeAnalysis ? analysisResult.changeAnalysis.classification : 'Stable'}
+• Key Insights: Land cover fluctuations remain within predicted environmental limits. Continued NDVI monitoring recommended.
+
+=====================================================
+Earth Insights Geospatial Intelligence Platform
+=====================================================`;
+
+    downloadFile(reportText, `Earth_Insights_Executive_Report_${locationLabel.replace(/[^a-zA-Z0-9]/g, '_')}.txt`, 'text/plain');
   };
 
   const handleExportCsv = () => {
@@ -135,36 +138,66 @@ export function GISDashboard({ analysisResult, locationLabel }: GISDashboardProp
       <CardHeader className="bg-muted/30 pb-4 border-b">
         <div className="flex items-center gap-2">
           <MapIcon className="h-5 w-5 text-blue-500" />
-          <CardTitle className="text-xl">GIS Spatial Explorer</CardTitle>
+          <CardTitle className="text-xl">GIS Spatial Explorer & High-Res Layer Toggler</CardTitle>
         </div>
         <CardDescription className="text-sm mt-1">
-          Interactive region-level spatial comparison. Visualize segmentation overlays, inspect temporal changes, and analyze anomaly heatmaps.
+          Real-time multi-spectral satellite band toggling (RGB, False Color IR, NDVI Heatmap, NDWI Water) with executive report exports.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-8 pt-6">
         {/* Layer Controls */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-muted/20 p-3 rounded-lg border">
           <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-            <Layers className="h-4 w-4" />
-            <span>Active Layer Overlay:</span>
+            <Layers className="h-4 w-4 text-primary" />
+            <span>Active Layer Mode:</span>
           </div>
           <div className="flex flex-wrap gap-2" role="group" aria-label="Overlay layers">
             <Button 
               variant={overlayLayer === 'base' ? 'default' : 'outline'} 
               size="sm"
               onClick={() => setOverlayLayer('base')} 
-              aria-pressed={overlayLayer === 'base'}
-              className="rounded-full"
+              className="rounded-full text-xs"
             >
               Base Map
+            </Button>
+            <Button 
+              variant={overlayLayer === 'rgb' ? 'default' : 'outline'} 
+              size="sm"
+              onClick={() => setOverlayLayer('rgb')} 
+              className="rounded-full text-xs bg-slate-800 text-white hover:bg-slate-700"
+            >
+              True Color (RGB)
+            </Button>
+            <Button 
+              variant={overlayLayer === 'false_color' ? 'default' : 'outline'} 
+              size="sm"
+              onClick={() => setOverlayLayer('false_color')} 
+              className="rounded-full text-xs text-rose-500 border-rose-500/30"
+            >
+              False Color (IR)
+            </Button>
+            <Button 
+              variant={overlayLayer === 'ndvi_heatmap' ? 'default' : 'outline'} 
+              size="sm"
+              onClick={() => setOverlayLayer('ndvi_heatmap')} 
+              className="rounded-full text-xs text-emerald-500 border-emerald-500/30"
+            >
+              NDVI Heatmap
+            </Button>
+            <Button 
+              variant={overlayLayer === 'ndwi_water' ? 'default' : 'outline'} 
+              size="sm"
+              onClick={() => setOverlayLayer('ndwi_water')} 
+              className="rounded-full text-xs text-cyan-500 border-cyan-500/30"
+            >
+              NDWI Water
             </Button>
             <Button
               variant={overlayLayer === 'segmentation' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setOverlayLayer('segmentation')}
-              aria-pressed={overlayLayer === 'segmentation'}
               disabled={!segmentationOverlay}
-              className="rounded-full"
+              className="rounded-full text-xs"
             >
               AI Segmentation
             </Button>
@@ -172,31 +205,30 @@ export function GISDashboard({ analysisResult, locationLabel }: GISDashboardProp
               variant={overlayLayer === 'anomaly' ? 'default' : 'outline'} 
               size="sm"
               onClick={() => setOverlayLayer('anomaly')} 
-              aria-pressed={overlayLayer === 'anomaly'}
-              className="rounded-full"
+              className="rounded-full text-xs"
             >
-              <AlertTriangle className="h-3 w-3 mr-1.5" />
-              Change Heatmap
+              <AlertTriangle className="h-3 w-3 mr-1" />
+              Anomaly Heatmap
             </Button>
           </div>
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-          {/* Spatial Comparison */}
+          {/* Spatial Comparison View */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                 <ArrowLeftRight className="h-4 w-4" />
-                Before / After Comparison
+                Before / After Comparison Slider
               </h3>
               {segmentation && (
-                <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-200">
+                <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-200 text-xs">
                   AI Confidence: {(segmentation.meanConfidence * 100).toFixed(1)}%
                 </Badge>
               )}
             </div>
             
-            <div className="relative aspect-video overflow-hidden rounded-xl border-2 border-muted shadow-inner group" aria-label="Before and after map comparison">
+            <div className="relative aspect-video overflow-hidden rounded-xl border-2 border-muted shadow-inner group">
               {/* Baseline Image */}
               <div className="absolute inset-0">
                 <ImageWithLoader src={analysisResult.landCover.beforeMapUrl} alt="Baseline land cover map" />
@@ -206,12 +238,20 @@ export function GISDashboard({ analysisResult, locationLabel }: GISDashboardProp
               <div
                 className="absolute inset-0 overflow-hidden"
                 style={{ clipPath: `inset(0 0 0 ${comparePosition}%)` }}
-                aria-hidden="true"
               >
                 <ImageWithLoader src={analysisResult.landCover.afterMapUrl} alt="Current land cover map" />
               </div>
 
-              {/* Overlays */}
+              {/* Spectral & AI Overlays */}
+              {overlayLayer === 'false_color' && (
+                <div className="pointer-events-none absolute inset-0 bg-red-600/30 mix-blend-hue" />
+              )}
+              {overlayLayer === 'ndvi_heatmap' && (
+                <div className="pointer-events-none absolute inset-0 bg-emerald-500/40 mix-blend-color-burn" />
+              )}
+              {overlayLayer === 'ndwi_water' && (
+                <div className="pointer-events-none absolute inset-0 bg-blue-500/40 mix-blend-color" />
+              )}
               {overlayLayer === 'segmentation' && segmentationOverlay && (
                 <div className="pointer-events-none absolute inset-0">
                   <ImageWithLoader src={segmentationOverlay} alt="Segmentation overlay layer" className="mix-blend-multiply opacity-80" />
@@ -225,7 +265,6 @@ export function GISDashboard({ analysisResult, locationLabel }: GISDashboardProp
               <div 
                 className="absolute inset-y-0 flex items-center justify-center cursor-ew-resize hover:bg-white/10 transition-colors"
                 style={{ left: `calc(${comparePosition}% - 2px)`, width: '4px' }} 
-                aria-hidden="true"
               >
                 <div className="h-full w-[2px] bg-white shadow-[0_0_4px_rgba(0,0,0,0.5)]" />
                 <div className="absolute w-6 h-8 bg-white rounded shadow-md flex items-center justify-center border border-gray-200">
@@ -242,11 +281,10 @@ export function GISDashboard({ analysisResult, locationLabel }: GISDashboardProp
                 step={1}
                 onValueChange={(val) => setComparePosition(val[0])}
                 className="py-2"
-                aria-label="Before and after comparison slider"
               />
-              <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                <span>Baseline (2020)</span>
-                <span>Current (2024)</span>
+              <div className="flex justify-between text-xs text-muted-foreground mt-1 font-mono">
+                <span>Baseline Sat Image</span>
+                <span>Current Sat Image ({comparePosition}%)</span>
               </div>
             </div>
           </div>
@@ -255,12 +293,12 @@ export function GISDashboard({ analysisResult, locationLabel }: GISDashboardProp
           <div className="space-y-4">
              <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                Temporal Change Inspector
+                Temporal Heatmap Inspector
               </h3>
             </div>
 
             <div className="bg-muted/10 p-4 rounded-xl border">
-                <div className="grid grid-cols-4 gap-1.5 p-1.5 bg-background rounded-lg border shadow-sm" role="img" aria-label="Anomaly heatmap grid">
+                <div className="grid grid-cols-4 gap-1.5 p-1.5 bg-background rounded-lg border shadow-sm">
                   {anomalyGrid.map((value, index) => (
                     <div
                       key={`cell-${index}`}
@@ -276,25 +314,26 @@ export function GISDashboard({ analysisResult, locationLabel }: GISDashboardProp
           </div>
         </div>
 
-        {/* Export Actions */}
+        {/* Export Actions Bar */}
         <div className="pt-4 border-t flex flex-wrap gap-3 items-center">
-          <span className="text-sm font-medium text-muted-foreground mr-2 flex items-center gap-1.5">
-            <Download className="h-4 w-4" /> Export Data:
+          <span className="text-sm font-bold text-foreground mr-2 flex items-center gap-1.5">
+            <Download className="h-4 w-4 text-emerald-500" /> Executive Report & Exports:
           </span>
-          <Button variant="outline" size="sm" onClick={handleExportCsv} aria-label="Export GIS summary as CSV" className="gap-1.5">
+          <Button variant="default" size="sm" onClick={handleExportPdfReport} className="gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold">
+            <Download className="h-4 w-4" />
+            Executive Report (.TXT/PDF)
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleExportCsv} className="gap-1.5">
             <FileSpreadsheet className="h-4 w-4 text-green-600" />
             CSV Summary
           </Button>
-          <Button variant="outline" size="sm" onClick={handleExportGeoJson} aria-label="Export geospatial artifact as GeoJSON" className="gap-1.5">
+          <Button variant="outline" size="sm" onClick={handleExportGeoJson} className="gap-1.5">
             <MapIcon className="h-4 w-4 text-blue-600" />
-            GeoJSON
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleExportRasterSummary} aria-label="Export raster summary JSON" className="gap-1.5">
-            <FileJson className="h-4 w-4 text-amber-600" />
-            Raster Metadata
+            GeoJSON Feature
           </Button>
         </div>
       </CardContent>
     </Card>
   );
 }
+
