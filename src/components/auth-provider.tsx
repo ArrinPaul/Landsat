@@ -3,6 +3,13 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { UserRole } from '@/lib/auth';
 
+export type UserPreferences = {
+  primaryGoal?: 'Agriculture & Crop Yield' | 'Water Resource Monitoring' | 'Urban Planning & Development' | 'Wildfire & Disaster Recovery';
+  favoriteRegion?: string;
+  defaultIndex?: 'NDVI' | 'NDWI' | 'NDBI' | 'NBR';
+  organizationType?: 'Government / NASA' | 'Agricultural Enterprise' | 'Academic / Research Institute' | 'Independent Consultant';
+};
+
 export type UserProfile = {
   id: string;
   email: string;
@@ -10,6 +17,7 @@ export type UserProfile = {
   role: UserRole;
   avatarUrl?: string;
   createdAt: string;
+  preferences?: UserPreferences;
 };
 
 type AuthContextType = {
@@ -19,6 +27,7 @@ type AuthContextType = {
   signUp: (email: string, name: string, role?: UserRole) => Promise<void>;
   signOut: () => Promise<void>;
   switchRole: (newRole: UserRole) => void;
+  updatePreferences: (newPrefs: UserPreferences) => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -37,8 +46,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const parsed = JSON.parse(stored);
         setUser(parsed);
         setAuthCookies(parsed.id, parsed.role);
-      } catch (e) {
-        console.error('Failed to parse saved user profile:', e);
+      } catch {
+        console.error('Failed to parse saved user profile');
       }
     } else {
       // Default dev fallback user if unauthenticated
@@ -48,6 +57,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         name: 'Lead Geospatial Admin',
         role: 'admin',
         createdAt: new Date().toISOString(),
+        preferences: {
+          primaryGoal: 'Agriculture & Crop Yield',
+          favoriteRegion: 'Iowa Corn Belt (41.8781, -93.0977)',
+          defaultIndex: 'NDVI',
+          organizationType: 'Government / NASA',
+        },
       };
       setUser(defaultUser);
       localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(defaultUser));
@@ -68,12 +83,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, role: UserRole = 'analyst') => {
     setLoading(true);
+    const existing = localStorage.getItem(LOCAL_STORAGE_USER_KEY);
+    let existingUser: Partial<UserProfile> = {};
+    if (existing) {
+      try {
+        existingUser = JSON.parse(existing);
+      } catch {
+      }
+    }
+
     const mockUser: UserProfile = {
-      id: `usr_${Math.random().toString(36).substring(2, 9)}`,
+      id: existingUser.id || `usr_${Math.random().toString(36).substring(2, 9)}`,
       email,
-      name: email.split('@')[0] || 'Explorer',
+      name: existingUser.name || email.split('@')[0] || 'Explorer',
       role,
-      createdAt: new Date().toISOString(),
+      createdAt: existingUser.createdAt || new Date().toISOString(),
+      preferences: existingUser.preferences || {
+        primaryGoal: 'Agriculture & Crop Yield',
+        favoriteRegion: 'Central Valley, California',
+        defaultIndex: 'NDVI',
+        organizationType: 'Agricultural Enterprise',
+      },
     };
     setUser(mockUser);
     localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(mockUser));
@@ -89,6 +119,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       name,
       role,
       createdAt: new Date().toISOString(),
+      preferences: {
+        primaryGoal: 'Agriculture & Crop Yield',
+        defaultIndex: 'NDVI',
+      },
     };
     setUser(mockUser);
     localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(mockUser));
@@ -112,8 +146,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAuthCookies(updated.id, updated.role);
   };
 
+  const updatePreferences = (newPrefs: UserPreferences) => {
+    if (!user) return;
+    const updated = { ...user, preferences: { ...user.preferences, ...newPrefs } };
+    setUser(updated);
+    localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(updated));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, switchRole }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, switchRole, updatePreferences }}>
       {children}
     </AuthContext.Provider>
   );
