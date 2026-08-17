@@ -21,6 +21,12 @@ import { MonitoringCard } from "./monitoring-card";
 import { ChangeInsightCard } from "./change-insight-card"; // New import
 import { Progress } from "@/components/ui/progress"; // New import
 import { GISDashboard } from "@/components/gis-dashboard";
+import { CustomPolygonDrawer } from "@/components/custom-polygon-drawer";
+import { TimeSeriesAnomalyDetector } from "@/components/time-series-anomaly-detector";
+import { VisionSatelliteAnalyzer } from "@/components/vision-satellite-analyzer";
+import { MultiSatelliteSelector, type SatelliteConstellation } from "@/components/multi-satellite-selector";
+import { OfflineTileCacheManager } from "@/components/offline-tile-cache-manager";
+import { NotificationWebhookCenter } from "@/components/notification-webhook-center";
 
 type ComputationStatus = 'idle' | 'computing' | 'polling' | 'completed' | 'error';
 const HISTORY_STORAGE_KEY = 'earth-insights.dashboard-history';
@@ -51,6 +57,7 @@ export function Dashboard() {
   const [computationStatus, setComputationStatus] = useState<ComputationStatus>('idle');
   const [progress, setProgress] = useState(0);
   const [selectedMetric, setSelectedMetric] = useState<string>("NDVI");
+  const [selectedConstellation, setSelectedConstellation] = useState<SatelliteConstellation>("landsat");
   const [nextPass, setNextPass] = useState<SatellitePassData | null>(null);
   const [isFetchingPass, setIsFetchingPass] = useState(false);
   const [weather, setWeather] = useState<WeatherData | null>(null);
@@ -345,6 +352,32 @@ export function Dashboard() {
                 dateRange={dateRange}
               />
 
+              <VisionSatelliteAnalyzer
+                mapUrl={analysisResult.landCover.afterMapUrl}
+                locationLabel={locationDesc}
+              />
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <CustomPolygonDrawer
+                  initialLat={lat}
+                  initialLon={lon}
+                  onPolygonComplete={(points, avgLat, avgLng) => {
+                    setLat(avgLat);
+                    setLon(avgLng);
+                    toast({
+                      title: "Custom ROI Applied",
+                      description: `Polygon ROI set with center (${avgLat}, ${avgLng}).`,
+                    });
+                  }}
+                />
+                <TimeSeriesAnomalyDetector />
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <OfflineTileCacheManager locationLabel={locationDesc} />
+                <NotificationWebhookCenter />
+              </div>
+
               <GISDashboard analysisResult={analysisResult} locationLabel={locationDesc} />
             </>
           )
@@ -355,6 +388,17 @@ export function Dashboard() {
 
   return (
     <div className="container mx-auto p-2 sm:p-4 space-y-6">
+      <MultiSatelliteSelector
+        selectedConstellation={selectedConstellation}
+        onSelectConstellation={(c) => {
+          setSelectedConstellation(c);
+          toast({
+            title: "Constellation Switched",
+            description: `Switched telemetry provider to ${c.toUpperCase()}.`,
+          });
+        }}
+      />
+
       <InputPanel
         lat={lat}
         setLat={setLat}
