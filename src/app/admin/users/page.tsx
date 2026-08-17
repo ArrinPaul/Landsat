@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { User, Shield, Search, Filter, MoreVertical, Check, Ban, UserCheck, ShieldAlert } from "lucide-react";
+import { Search, Ban, UserCheck } from "lucide-react";
 import type { UserRole } from "@/lib/auth";
 
 type ManagedUser = {

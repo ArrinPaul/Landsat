@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Globe, Lock, Mail, User, ShieldAlert, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Globe, Lock, Mail, User, ShieldAlert, ArrowRight } from 'lucide-react';
 import type { UserRole } from '@/lib/auth';
 
 export default function SignUpPage() {

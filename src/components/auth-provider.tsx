@@ -1,7 +1,6 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { createBrowserClient } from '@/lib/supabase';
 import type { UserRole } from '@/lib/auth';
 
 export type UserProfile = {

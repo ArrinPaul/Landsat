@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Cpu, Activity, Server, Zap, AlertTriangle, ArrowUpRight } from "lucide-react";
+import { Users, Cpu, Server, Zap, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 

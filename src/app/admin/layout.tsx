@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Header } from "@/components/header";
-import { Shield, Users, Activity, Cpu, FileText, Settings, Database, AlertCircle } from "lucide-react";
+import { Shield, Users, Activity, Cpu, FileText, Database, AlertCircle } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { Button } from "@/components/ui/button";
 
