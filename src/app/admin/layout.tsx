@@ -16,6 +16,7 @@ import {
   Settings,
   Layers,
   AlertCircle,
+  ArrowLeft,
 } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { Button } from "@/components/ui/button";
@@ -37,8 +38,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <p className="text-muted-foreground max-w-md mt-2 mb-6 text-sm">
             You require <span className="font-semibold text-rose-500">Admin</span> privileges to access the Earth Insights management console. Current role: <span className="uppercase font-bold">{user.role}</span>.
           </p>
-          <Button asChild variant="outline">
-            <Link href="/dashboard">Return to Dashboard</Link>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/dashboard" className="gap-1.5">
+              <ArrowLeft className="h-4 w-4" /> Return to Dashboard
+            </Link>
           </Button>
         </div>
       </div>
@@ -85,7 +88,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mt-6">
           {/* Admin Sidebar Navigation */}
-          <aside className="lg:col-span-1 space-y-1">
+          <aside className="lg:col-span-1 space-y-3">
+            <Button
+              variant="outline"
+              size="sm"
+              asChild
+              className="w-full justify-start gap-2 text-xs font-medium border-border hover:bg-muted/80 h-9"
+            >
+              <Link href="/dashboard">
+                <ArrowLeft className="h-3.5 w-3.5 text-muted-foreground" />
+                <span>Return to Dashboard</span>
+              </Link>
+            </Button>
+
             <nav className="flex flex-row lg:flex-col gap-1 overflow-x-auto pb-2 lg:pb-0 scrollbar-none">
               {navItems.map((item) => {
                 const Icon = item.icon;
@@ -94,7 +109,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-3 px-3 py-2.5 text-xs font-medium rounded-lg whitespace-nowrap transition-all ${
+                    className={`flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-lg whitespace-nowrap transition-all ${
                       isActive
                         ? "bg-primary text-primary-foreground font-semibold shadow-sm"
                         : "text-muted-foreground hover:bg-muted hover:text-foreground"

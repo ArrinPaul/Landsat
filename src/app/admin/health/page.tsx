@@ -100,7 +100,7 @@ export default function AdminHealthPage() {
             </span>
           </div>
           <p className="text-[10px] text-muted-foreground mt-1 font-mono">
-            Platform: {metrics?.serverPlatform || process.platform} • Node {metrics?.nodeVersion || process.version}
+            Platform: {metrics?.serverPlatform || "Runtime"} • Node {metrics?.nodeVersion || "..."}
           </p>
         </Card>
 
