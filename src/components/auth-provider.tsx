@@ -50,23 +50,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('Failed to parse saved user profile');
       }
     } else {
-      // Default dev fallback user if unauthenticated
-      const defaultUser: UserProfile = {
-        id: 'usr_demo_admin',
-        email: 'admin@earthinsights.nasa.gov',
-        name: 'Lead Geospatial Admin',
-        role: 'admin',
-        createdAt: new Date().toISOString(),
-        preferences: {
-          primaryGoal: 'Agriculture & Crop Yield',
-          favoriteRegion: 'Iowa Corn Belt (41.8781, -93.0977)',
-          defaultIndex: 'NDVI',
-          organizationType: 'Government / NASA',
-        },
-      };
-      setUser(defaultUser);
-      localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(defaultUser));
-      setAuthCookies(defaultUser.id, defaultUser.role);
+      setUser(null);
+      clearAuthCookies();
     }
     setLoading(false);
   }, []);
@@ -81,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     document.cookie = `earth_insights_user_role=; path=/; max-age=0`;
   };
 
-  const signIn = async (email: string, role: UserRole = 'analyst') => {
+  const signIn = async (email: string, role?: UserRole) => {
     setLoading(true);
     const existing = localStorage.getItem(LOCAL_STORAGE_USER_KEY);
     let existingUser: Partial<UserProfile> = {};
@@ -92,17 +77,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
+    const isAdmin =
+      normalizedEmail === 'admin' ||
+      normalizedEmail === 'admin@earthinsights.nasa.gov' ||
+      normalizedEmail === 'admin@nasa.gov' ||
+      normalizedEmail.startsWith('admin@');
+
+    const resolvedRole: UserRole = role || (isAdmin ? 'admin' : 'analyst');
+
     const mockUser: UserProfile = {
-      id: existingUser.id || `usr_${Math.random().toString(36).substring(2, 9)}`,
+      id: existingUser.id || (isAdmin ? 'usr_admin' : `usr_${Math.random().toString(36).substring(2, 9)}`),
       email,
-      name: existingUser.name || email.split('@')[0] || 'Explorer',
-      role,
+      name: isAdmin ? 'System Administrator' : (existingUser.name || email.split('@')[0] || 'Explorer'),
+      role: resolvedRole,
       createdAt: existingUser.createdAt || new Date().toISOString(),
       preferences: existingUser.preferences || {
         primaryGoal: 'Agriculture & Crop Yield',
         favoriteRegion: 'Central Valley, California',
         defaultIndex: 'NDVI',
-        organizationType: 'Agricultural Enterprise',
+        organizationType: isAdmin ? 'Government / NASA' : 'Agricultural Enterprise',
       },
     };
     setUser(mockUser);

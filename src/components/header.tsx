@@ -24,7 +24,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export function Header() {
   const { t } = useLanguage();
-  const { user, signOut, switchRole } = useAuth();
+  const { user, signOut } = useAuth();
   const router = useRouter();
   const [isScrolled, setIsScrolled] = useState(false);
   const pathname = usePathname();
@@ -80,14 +80,7 @@ export function Header() {
                     {t('header.pricing')}
                 </Link>
             </Button>
-            {user?.role === 'admin' && (
-              <Button variant="ghost" asChild className={cn(buttonLinkClass, "text-rose-500 font-medium")}>
-                  <Link href="/admin">
-                      <Shield className="mr-2 h-4 w-4"/>
-                      Admin System
-                  </Link>
-              </Button>
-            )}
+
             <Button variant="ghost" asChild className={buttonLinkClass}>
                 <Link href="/settings">
                     <Settings className="mr-2 h-4 w-4"/>
@@ -145,17 +138,6 @@ export function Header() {
                     <span>Account Settings</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuLabel className="text-[10px] text-muted-foreground uppercase">Switch Role (Demo)</DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => switchRole('viewer')} className="text-xs">
-                    Set as Viewer
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => switchRole('analyst')} className="text-xs">
-                    Set as Analyst
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => switchRole('admin')} className="text-xs text-rose-500">
-                    Set as Admin
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => { signOut(); router.push('/login'); }}>
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Log out</span>
@@ -186,13 +168,6 @@ export function Header() {
                                     <LayoutDashboard className="h-5 w-5" /> {t('header.dashboard')}
                                 </Link>
                             </SheetClose>
-                            {user?.role === 'admin' && (
-                              <SheetClose asChild>
-                                  <Link href="/admin" className="flex items-center gap-2 text-lg font-semibold text-rose-500">
-                                      <Shield className="h-5 w-5" /> Admin System
-                                  </Link>
-                              </SheetClose>
-                            )}
                             <SheetClose asChild>
                                 <Link href="/pricing" className="flex items-center gap-2 text-lg font-medium">
                                     <DollarSign className="h-5 w-5" /> {t('header.pricing')}

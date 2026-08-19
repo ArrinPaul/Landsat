@@ -24,7 +24,6 @@ export default function SignUpPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState<UserRole>('analyst');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -47,8 +46,20 @@ export default function SignUpPage() {
     setLoading(true);
 
     try {
-      await signUp(email, name, role);
-      router.push('/dashboard');
+      const normalizedEmail = email.trim().toLowerCase();
+      const isAdmin =
+        normalizedEmail === 'admin' ||
+        normalizedEmail === 'admin@earthinsights.nasa.gov' ||
+        normalizedEmail === 'admin@nasa.gov' ||
+        normalizedEmail.startsWith('admin@');
+      const assignedRole: UserRole = isAdmin ? 'admin' : 'analyst';
+
+      await signUp(email, name, assignedRole);
+      if (assignedRole === 'admin') {
+        router.push('/admin');
+      } else {
+        router.push('/dashboard');
+      }
     } catch (err: any) {
       setError(err?.message || 'Failed to create account.');
     } finally {
@@ -141,26 +152,6 @@ export default function SignUpPage() {
                       required
                       className="pl-9"
                     />
-                  </div>
-                </div>
-
-                <div className="space-y-2 pt-2">
-                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Select Initial Role</Label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {(['viewer', 'analyst', 'admin'] as UserRole[]).map((r) => (
-                      <button
-                        key={r}
-                        type="button"
-                        onClick={() => setRole(r)}
-                        className={`px-3 py-2 text-xs font-medium rounded-lg capitalize border transition-all ${
-                          role === r
-                            ? 'border-primary bg-primary/10 text-primary font-semibold'
-                            : 'border-border bg-muted/40 text-muted-foreground hover:bg-muted'
-                        }`}
-                      >
-                        {r}
-                      </button>
-                    ))}
                   </div>
                 </div>
               </CardContent>

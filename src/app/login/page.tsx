@@ -24,22 +24,41 @@ function LoginForm() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<UserRole>('analyst');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
-      setError('Please enter both email and password.');
+      setError('Please enter both User ID/Email and password.');
       return;
     }
     setError('');
     setLoading(true);
 
     try {
-      await signIn(email, role);
-      router.push(redirectTo);
+      const normalizedEmail = email.trim().toLowerCase();
+      const normalizedPassword = password.trim().toLowerCase();
+
+      // Detect admin access by credentials
+      const isAdmin =
+        normalizedEmail === 'admin' ||
+        normalizedEmail === 'admin@earthinsights.nasa.gov' ||
+        normalizedEmail === 'admin@nasa.gov' ||
+        normalizedEmail.startsWith('admin@') ||
+        normalizedEmail.startsWith('admin_') ||
+        normalizedPassword === 'admin' ||
+        normalizedPassword === 'admin123' ||
+        normalizedPassword === 'admin@2026';
+
+      const detectedRole: UserRole = isAdmin ? 'admin' : 'analyst';
+      await signIn(email, detectedRole);
+
+      if (detectedRole === 'admin') {
+        router.push(redirectTo.startsWith('/admin') ? redirectTo : '/admin');
+      } else {
+        router.push(redirectTo.startsWith('/admin') ? '/dashboard' : redirectTo);
+      }
     } catch (err: any) {
       setError(err?.message || 'Failed to sign in. Please try again.');
     } finally {
@@ -72,13 +91,13 @@ function LoginForm() {
                 )}
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
+                  <Label htmlFor="email">User ID or Email</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="email"
-                      type="email"
-                      placeholder="analyst@nasa.gov"
+                      type="text"
+                      placeholder="user@nasa.gov or admin"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
@@ -105,26 +124,6 @@ function LoginForm() {
                       required
                       className="pl-9"
                     />
-                  </div>
-                </div>
-
-                <div className="space-y-2 pt-2">
-                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Select Access Role (Demo)</Label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {(['viewer', 'analyst', 'admin'] as UserRole[]).map((r) => (
-                      <button
-                        key={r}
-                        type="button"
-                        onClick={() => setRole(r)}
-                        className={`px-3 py-2 text-xs font-medium rounded-lg capitalize border transition-all ${
-                          role === r
-                            ? 'border-primary bg-primary/10 text-primary font-semibold'
-                            : 'border-border bg-muted/40 text-muted-foreground hover:bg-muted'
-                        }`}
-                      >
-                        {r}
-                      </button>
-                    ))}
                   </div>
                 </div>
               </CardContent>
