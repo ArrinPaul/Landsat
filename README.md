@@ -83,7 +83,7 @@ graph TB
         DB["Supabase Database / Storage<br/>Jobs, Preferences, History"]
     end
 
-    CLIENT -->|User Invocation| SECURITY_GATEWAY
+    CLIENT -->|"User Invocation"| SECURITY_GATEWAY
     SECURITY_GATEWAY --> SERVER_ACTIONS
     SERVER_ACTIONS --> AI_PIPELINE
     SERVER_ACTIONS --> JobQueue
@@ -91,9 +91,9 @@ graph TB
     SERVER_ACTIONS --> Meteo
     JobQueue --> DB
     AI_PIPELINE --> PrimaryModel
-    PrimaryModel -.->|Auto Fallback| FallbackGemini
-    FallbackGemini -.->|Auto Fallback| FallbackGroq
-    FallbackGroq -.->|Auto Fallback| FallbackHF
+    PrimaryModel -.->|"Auto Fallback"| FallbackGemini
+    FallbackGemini -.->|"Auto Fallback"| FallbackGroq
+    FallbackGroq -.->|"Auto Fallback"| FallbackHF
     AI_PIPELINE --> TTSFlow
 ```
 
@@ -178,12 +178,12 @@ classDiagram
 
 ```mermaid
 graph LR
-    User((User / Researcher / Agronomist))
-    Admin((System Administrator))
+    User["User / Researcher / Agronomist"]
+    Admin["System Administrator"]
 
     subgraph Landsat_Platform["Landsat Intelligence System"]
-        UC1["Explore Global Satellite Imagery and Indices (NDVI/NDWI/NDBI)"]
-        UC2["Upload and Validate Ground Truth CSV against Satellite Data"]
+        UC1["Explore Global Satellite Imagery and Indices"]
+        UC2["Upload and Validate Ground Truth CSV"]
         UC3["Execute Land Cover Classification and Change Detection"]
         UC4["Query 24-hr Forecast and Historical Climate Data"]
         UC5["Obtain AI Precision Crop and Fertilizer Advisory"]
@@ -317,26 +317,26 @@ The platform AI layer is managed by Google Genkit with multi-provider redundancy
 graph TD
     Request["AI Flow Request<br/>(e.g., crop advice, change summary, metrics insight)"]
     Sanitize["Prompt Sanitizer and Token Redactor"]
-    RateCheck{"Rate Limit Check<br/>(Sliding Window)"}
+    RateCheck{"Rate Limit Check<br/>Sliding Window"}
 
     Primary["Primary Model:<br/><b>Gemini 3.6 Flash / 3.7 Flash</b>"]
     FB1["Fallback 1:<br/><b>Gemini 3.1 Flash-Lite</b>"]
     FB2["Fallback 2:<br/><b>Groq SDK (Llama 3.3 70B)</b>"]
     FB3["Fallback 3:<br/><b>HuggingFace Inference API</b>"]
 
-    Response["Structured Zod Output<br/>+ Confidence Normalization"]
+    Response["Structured Zod Output<br/>with Normalized Confidence"]
 
     Request --> Sanitize --> RateCheck
-    RateCheck -->|Pass| Primary
-    RateCheck -->|Limit Exceeded| Error["429 Rate Limit Error"]
+    RateCheck -->|"Pass"| Primary
+    RateCheck -->|"Limit Exceeded"| Error["429 Rate Limit Error"]
 
-    Primary -->|Success| Response
-    Primary -.->|Quota (429) / Fail| FB1
-    FB1 -->|Success| Response
-    FB1 -.->|Quota / Error| FB2
-    FB2 -->|Success| Response
-    FB2 -.->|Fail| FB3
-    FB3 -->|Success| Response
+    Primary -->|"Success"| Response
+    Primary -.->|"Quota 429 or Fail"| FB1
+    FB1 -->|"Success"| Response
+    FB1 -.->|"Quota or Error"| FB2
+    FB2 -->|"Success"| Response
+    FB2 -.->|"Fail"| FB3
+    FB3 -->|"Success"| Response
 ```
 
 ### Core Genkit AI Flows and Tools
