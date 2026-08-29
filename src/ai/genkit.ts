@@ -20,8 +20,8 @@ console.log('[AI] Provider Limits:', JSON.stringify(getProviderLimits(), null, 2
 // Primary model configuration - using stable Gemini models
 // gemini-2.0-flash is the current recommended model (best for cost/performance balance)
 // Fallback to gemini-1.5-pro if 2.0 has issues
-const PRIMARY_MODEL = 'googleai/gemini-2.0-flash'; // Current recommended model
-const FALLBACK_MODEL = 'googleai/gemini-2.0-flash-exp'; // Updated fallback
+const PRIMARY_MODEL = 'googleai/gemini-3.6-flash'; // Current recommended active model
+const FALLBACK_MODEL = 'googleai/gemini-3.1-flash-lite'; // Active lightweight fallback
 
 // Initialize Genkit with primary Gemini model
 export const ai = genkit({
@@ -31,10 +31,10 @@ export const ai = genkit({
 
 // Model constants for use in specific flows
 export const MODELS = {
-  primary: PRIMARY_MODEL,           // gemini-2.0-flash (current recommended)
-  fallback: FALLBACK_MODEL,         // gemini-2.0-flash-exp (updated fallback)
-  fast: 'googleai/gemini-2.0-flash', // Same as primary for consistency
-  pro: 'googleai/gemini-2.0-flash-exp',    // High capability fallback
+  primary: PRIMARY_MODEL,           // gemini-3.6-flash (current recommended)
+  fallback: FALLBACK_MODEL,         // gemini-3.1-flash-lite (fast fallback)
+  fast: 'googleai/gemini-3.6-flash', // Fast responsive model
+  pro: 'googleai/gemini-3.7-flash',  // High capability model
 } as const;
 
 // Utility function to execute AI generation with automatic model fallback (Gemini only)

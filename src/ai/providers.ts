@@ -55,22 +55,29 @@ export async function generateWithGroq(
 
   const client = new Groq({ apiKey });
   
-  const model = config?.model || 'llama-3.3-70b-versatile';
-  
-  const response = await client.chat.completions.create({
-    messages: [{ role: 'user', content: prompt }],
-    model,
-    max_tokens: config?.maxTokens || 2048,
-    temperature: 0.7,
-  });
+  const modelsToTry = config?.model ? [config.model] : ['openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'groq/compound'];
+  let lastErr: Error | null = null;
 
-  const text = response.choices[0]?.message?.content || '';
-  
-  if (!text) {
-    throw new Error('No response from Groq');
+  for (const model of modelsToTry) {
+    try {
+      const response = await client.chat.completions.create({
+        messages: [{ role: 'user', content: prompt }],
+        model,
+        max_tokens: config?.maxTokens || 2048,
+        temperature: 0.7,
+      });
+
+      const text = response.choices[0]?.message?.content || '';
+      if (text) {
+        return { text, provider: 'groq', model };
+      }
+    } catch (err: any) {
+      lastErr = err;
+      logger.warn('groq_model_attempt_failed', { scope: 'ai.providers', model, error: err.message });
+    }
   }
 
-  return { text, provider: 'groq', model };
+  throw lastErr || new Error('No response from Groq');
 }
 
 // ============================================================================
@@ -90,15 +97,15 @@ export async function generateWithHuggingFace(
   }
 
   // Use a model that supports text-generation on HF Inference API
-  const model = config?.model || 'mistralai/Mistral-7B-Instruct-v0.3';
+  const model = config?.model || 'Qwen/Qwen2.5-72B-Instruct';
   
-  // Use the serverless inference endpoint with text-generation-inference
+  // Use the serverless inference endpoint with router
   const controller = new AbortController();
   const timeoutMs = config?.timeoutMs || 15000;
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   const response = await fetch(
-    `https://api-inference.huggingface.co/models/${model}`,
+    `https://router.huggingface.co/hf-inference/models/${model}`,
     {
       headers: { 
         'Authorization': `Bearer ${apiKey}`,

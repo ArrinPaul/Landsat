@@ -54,6 +54,49 @@ export function sanitizeInput(input: unknown): string {
     .trim();
 }
 
+function normalizeDataTypes(data: any): any {
+  if (Array.isArray(data)) {
+    return data.map(normalizeDataTypes);
+  }
+  if (data && typeof data === 'object') {
+    const res: any = {};
+    for (const [k, v] of Object.entries(data)) {
+      if (typeof v === 'string') {
+        const lowerKey = k.toLowerCase();
+        if (
+          lowerKey.includes('latitude') ||
+          lowerKey.includes('longitude') ||
+          lowerKey.includes('score') ||
+          lowerKey.includes('confidence') ||
+          lowerKey.includes('depth') ||
+          lowerKey.includes('yield') ||
+          lowerKey.includes('vwc')
+        ) {
+          if (!isNaN(Number(v)) && v.trim() !== '') {
+            res[k] = Number(v);
+            continue;
+          }
+          if (v.toLowerCase() === 'high' || v.toLowerCase() === 'very high') {
+            res[k] = 0.9;
+            continue;
+          }
+          if (v.toLowerCase() === 'medium' || v.toLowerCase() === 'moderate') {
+            res[k] = 0.7;
+            continue;
+          }
+          if (v.toLowerCase() === 'low' || v.toLowerCase() === 'very low') {
+            res[k] = 0.4;
+            continue;
+          }
+        }
+      }
+      res[k] = normalizeDataTypes(v);
+    }
+    return res;
+  }
+  return data;
+}
+
 export function safeParseAIJson<T>(text: string, validator?: (data: unknown) => T): T {
   let cleanedText = text.trim();
 
@@ -76,7 +119,8 @@ export function safeParseAIJson<T>(text: string, validator?: (data: unknown) => 
 
   try {
     const parsed = JSON.parse(cleanedText);
-    return validator ? validator(parsed) : parsed;
+    const normalized = normalizeDataTypes(parsed);
+    return validator ? validator(normalized) : (normalized as T);
   } catch {
     logger.error('ai_json_parse_failed', {
       scope: 'ai.ai-utils',
