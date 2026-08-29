@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🌐 HealthNex Intelligence Protocol
+# 🌐 Landsat Intelligence Protocol
 
 ### Unified Global Health Surveillance and Proactive Response Layer
 
@@ -13,7 +13,7 @@
 ![Vitest](https://img.shields.io/badge/Vitest-4-6E9F18?style=for-the-badge&logo=vitest)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
-HealthNex is an enterprise-grade intelligence protocol designed to standardize the world's health response through decentralized reporting, neural forecasting, and zero-trust data synchronization. It bridges the gap between ground-level community intelligence and institutional medical response using advanced AI.
+Landsat is an enterprise-grade intelligence protocol designed to standardize the world's health response through decentralized reporting, neural forecasting, and zero-trust data synchronization. It bridges the gap between ground-level community intelligence and institutional medical response using advanced AI.
 
 ---
 
@@ -43,7 +43,7 @@ HealthNex is an enterprise-grade intelligence protocol designed to standardize t
 
 ## 🏗 System Architecture
 
-HealthNex operates as a distributed intelligence network where every user acts as a sensor node. The system is built on a **zero-trust architecture** with end-to-end authentication at every layer.
+Landsat operates as a distributed intelligence network where every user acts as a sensor node. The system is built on a **zero-trust architecture** with end-to-end authentication at every layer.
 
 ### High-Level Component Architecture
 
@@ -539,7 +539,7 @@ classDiagram
 ```bash
 # 1. Clone the repository
 git clone <repository-url>
-cd HealthNex
+cd Landsat
 
 # 2. Install dependencies
 npm install
@@ -935,7 +935,7 @@ Data is saved to the user profile via `completeOnboarding()` and used by the hos
 
 ## 🔐 Role-Based Access Control (RBAC)
 
-HealthNex utilizes a strict, hierarchical access control model managed natively via Convex `mutationWithAuth`/`queryWithAuth` wrappers and Next.js Edge Middleware.
+Landsat utilizes a strict, hierarchical access control model managed natively via Convex `mutationWithAuth`/`queryWithAuth` wrappers and Next.js Edge Middleware.
 
 ### Role Hierarchy
 
@@ -1084,7 +1084,7 @@ graph TB
 
 ## 🗄 Database Schema (ERD)
 
-HealthNex maintains **11 tables** in the Convex real-time NoSQL database. All tables use Convex auto-generated `_id` fields and support compound indexes for efficient querying.
+Landsat maintains **11 tables** in the Convex real-time NoSQL database. All tables use Convex auto-generated `_id` fields and support compound indexes for efficient querying.
 
 ```mermaid
 erDiagram
@@ -1427,7 +1427,7 @@ interface JWTPayload {
 
 ## 🎨 Design System
 
-HealthNex uses a **noir biotech aesthetic** with dual-theme support (light/dark) powered by CSS custom properties and Tailwind CSS 4.
+Landsat uses a **noir biotech aesthetic** with dual-theme support (light/dark) powered by CSS custom properties and Tailwind CSS 4.
 
 ### Typography
 
@@ -1472,7 +1472,7 @@ HealthNex uses a **noir biotech aesthetic** with dual-theme support (light/dark)
 ## 📂 Project Structure
 
 ```
-HealthNex/
+Landsat/
 ├── convex/                              # Convex Backend (Serverless Functions + Schema)
 │   ├── lib/
 │   │   ├── jwt.ts                       # JWT verification via Web Crypto API (V8 isolate)
@@ -1625,7 +1625,7 @@ This project follows [Conventional Commits](https://www.conventionalcommits.org/
 
 ### Built for Global Health Security
 
-**HealthNex Intelligence Protocol** — Bridging community intelligence with institutional response through AI-powered surveillance.
+**Landsat Intelligence Protocol** — Bridging community intelligence with institutional response through AI-powered surveillance.
 
 11 database tables · 22 API endpoints · 30 pages · 50+ Convex functions · 5-level RBAC · Multilingual AI
 
