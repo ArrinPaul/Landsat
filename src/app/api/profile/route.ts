@@ -5,6 +5,7 @@ import { getProfile, recordAccountEvent, upsertProfile } from '@/lib/profile-sto
 import { getSupabase } from '@/lib/supabase';
 
 const profileUpdateSchema = z.object({
+  name: z.string().min(2).optional(),
   phone: z.string().optional(),
   locationState: z.string().min(1).optional(),
   locationDistrict: z.string().min(1).optional(),
@@ -14,6 +15,7 @@ const profileUpdateSchema = z.object({
   preferredLanguage: z.string().optional(),
   irrigationType: z.string().optional(),
   goals: z.array(z.string()).optional(),
+  avatarUrl: z.string().url().optional().or(z.literal('')),
 });
 
 export async function GET() {
@@ -43,8 +45,16 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: 'Invalid input', details: result.error.flatten() }, { status: 400 });
   }
 
+  const { name, ...profileFields } = result.data;
+
   try {
-    const profile = await upsertProfile(auth.userId, result.data);
+    if (name) {
+      const supabase = getSupabase();
+      const { error: nameError } = await supabase.from('users').update({ name }).eq('id', auth.userId);
+      if (nameError) throw new Error(nameError.message);
+    }
+
+    const profile = await upsertProfile(auth.userId, profileFields);
     await recordAccountEvent(auth.userId, 'profile_updated', { fields: Object.keys(result.data) });
     return NextResponse.json({ success: true, profile });
   } catch (err: any) {

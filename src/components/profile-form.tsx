@@ -43,7 +43,6 @@ const GOAL_OPTIONS = [
 
 export function ProfileForm() {
   const { toast } = useToast();
-  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -56,7 +55,6 @@ export function ProfileForm() {
         const res = await fetch("/api/profile");
         if (!res.ok) return;
         const json = await res.json();
-        setUser(json.user ? { name: json.user.name, email: json.user.email } : null);
         if (json.profile) {
           setForm({
             phone: json.profile.phone || "",
@@ -133,19 +131,6 @@ export function ProfileForm() {
 
   return (
     <div className="space-y-6">
-      {user && (
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <Label>Name</Label>
-            <Input value={user.name} disabled />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Email</Label>
-            <Input value={user.email} disabled />
-          </div>
-        </div>
-      )}
-
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <Label htmlFor="p-state">State *</Label>

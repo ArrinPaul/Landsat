@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/hooks/use-language";
 import { ContactSheet } from "@/components/contact-sheet";
 import { ProfileForm } from "@/components/profile-form";
+import { AccountForm } from "@/components/account-form";
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -60,16 +61,31 @@ export default function SettingsPage() {
       <Header />
       <main className="flex-1 p-4 md:p-6">
             <div className="max-w-2xl mx-auto space-y-6">
-            <Tabs defaultValue="profile">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="profile">Profile</TabsTrigger>
+            <Tabs defaultValue="account">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="account">Account</TabsTrigger>
+                <TabsTrigger value="profile">Farm profile</TabsTrigger>
                 <TabsTrigger value="preferences">{t('settings.title')}</TabsTrigger>
               </TabsList>
+
+              <TabsContent value="account" className="mt-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Account details</CardTitle>
+                    <CardDescription>
+                      Update your name, photo, email, and password.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <AccountForm />
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
               <TabsContent value="profile" className="mt-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Your profile</CardTitle>
+                    <CardTitle>Your farm profile</CardTitle>
                     <CardDescription>
                       This is the same information you provided during onboarding. Update it any time.
                     </CardDescription>
