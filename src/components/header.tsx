@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { ContactSheet } from "./contact-sheet";
 import { LanguageSwitcher } from "./language-switcher";
 import { useLanguage } from "@/hooks/use-language";
+import { AuthNav } from "@/components/auth-nav";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 
 export function Header() {
@@ -30,7 +31,8 @@ export function Header() {
   }, []);
 
   const navClass = cn(
-    "sticky top-0 z-50 w-full transition-all duration-300",
+    "top-0 z-50 w-full transition-all duration-300",
+    isLandingPage ? "fixed" : "sticky",
     isLandingPage && !isScrolled ? "bg-transparent text-white" : "border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 text-foreground"
   );
   
@@ -77,6 +79,7 @@ export function Header() {
                     <Mail className="mr-2 h-4 w-4" />
                     {t('header.contact')}
                 </Button>
+                <AuthNav className={buttonLinkClass} />
             </div>
             
             <div className="md:hidden">
@@ -112,6 +115,9 @@ export function Header() {
                             <div className="flex items-center justify-between pt-4 border-t">
                                 <LanguageSwitcher />
                                 <ThemeToggle />
+                            </div>
+                            <div className="pt-2 border-t">
+                                <AuthNav variant="stacked" />
                             </div>
                         </nav>
                     </SheetContent>

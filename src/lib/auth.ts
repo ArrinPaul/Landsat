@@ -1,43 +1,35 @@
-
-
 import { cookies, headers } from 'next/headers';
+import { SESSION_COOKIE, verifySession } from '@/lib/jwt';
 
 export type UserRole = 'viewer' | 'analyst' | 'admin';
 
 export type AuthContext = {
   userId: string;
+  email: string | null;
   role: UserRole;
   ip: string;
 };
 
-function normalizeRole(role: string | undefined): UserRole {
-  if (role === 'admin' || role === 'analyst' || role === 'viewer') {
-    return role;
-  }
-  return 'viewer';
-}
-
 export async function getAuthContext(): Promise<AuthContext> {
-  const headerStore = await headers();
   const cookieStore = await cookies();
+  const headerStore = await headers();
+  const token = cookieStore.get(SESSION_COOKIE)?.value;
 
-  const userIdFromHeader = headerStore.get('x-user-id') ?? undefined;
-  const roleFromHeader = headerStore.get('x-user-role') ?? undefined;
-  const ipHeader = headerStore.get('x-forwarded-for');
-
-  const userIdFromCookie = cookieStore.get('earth_insights_user_id')?.value;
-  const roleFromCookie = cookieStore.get('earth_insights_user_role')?.value;
-
-  const userId = userIdFromHeader || userIdFromCookie || 'anonymous';
-  const role = normalizeRole(roleFromHeader || roleFromCookie);
-  const ip = (ipHeader || '0.0.0.0').split(',')[0]?.trim() || '0.0.0.0';
+  const session = token ? await verifySession(token) : null;
 
   const authRequired = process.env.AUTH_REQUIRED === 'true';
-  if (authRequired && userId === 'anonymous') {
-    throw new Error('Unauthorized: missing authenticated user context.');
+  if (authRequired && !session) {
+    throw new Error('Unauthorized: missing or invalid session.');
   }
 
-  return { userId, role, ip };
+  const ipHeader = headerStore.get('x-forwarded-for');
+  const ip = (ipHeader || '0.0.0.0').split(',')[0]?.trim() || '0.0.0.0';
+
+  if (!session) {
+    return { userId: 'anonymous', email: null, role: 'viewer', ip };
+  }
+
+  return { userId: session.userId, email: session.email, role: session.role, ip };
 }
 
 export function requireRole(context: AuthContext, allowedRoles: UserRole[]): void {
