@@ -1,14 +1,16 @@
 import { expect, test } from '@playwright/test';
 
-test('loads dashboard and shows compute action', async ({ page }) => {
+test('anonymous visit to dashboard redirects to login', async ({ page }) => {
   await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
-  await expect(page.locator('#latitude')).toBeVisible();
-  await expect(page.locator('#longitude')).toBeVisible();
+  await expect(page).toHaveURL(/\/login\?next=%2Fdashboard/);
 });
 
-test('loads predict workflow inputs', async ({ page }) => {
+test('anonymous visit to predict redirects to login', async ({ page }) => {
   await page.goto('/predict', { waitUntil: 'domcontentloaded' });
-  await expect(page.locator('#location-desc')).toBeVisible();
-  await expect(page.locator('#latitude')).toBeVisible();
-  await expect(page.locator('#longitude')).toBeVisible();
+  await expect(page).toHaveURL(/\/login\?next=%2Fpredict/);
+});
+
+test('anonymous visit to crop-advisor redirects to login', async ({ page }) => {
+  await page.goto('/crop-advisor', { waitUntil: 'domcontentloaded' });
+  await expect(page).toHaveURL(/\/login\?next=%2Fcrop-advisor/);
 });

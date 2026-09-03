@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Globe2, Loader2, ArrowRight } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -27,7 +27,16 @@ const loginSchema = z.object({
 });
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -55,7 +64,9 @@ export default function LoginPage() {
       }
 
       toast({ title: "Welcome back", description: "You've been signed in." });
-      router.push("/dashboard");
+      const next = searchParams.get("next");
+      const redirectTo = next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
+      router.push(redirectTo);
       router.refresh();
     } catch (error: any) {
       toast({

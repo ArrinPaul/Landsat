@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SESSION_COOKIE, verifySession } from '@/lib/jwt';
 
-// /dashboard, /predict, and /crop-advisor are intentionally public: the app's server
-// actions already accept the anonymous 'viewer' role for them (see requireRole calls
-// in lib/actions.ts), and the landing page's primary CTA sends visitors straight to
-// /dashboard without requiring an account first.
-const PROTECTED_PREFIXES = ['/settings', '/onboarding', '/admin'];
+// Every feature area requires a signed-in account: visitors must register/log in
+// before they can use the dashboard, predictive tools, or crop advisor. Only the
+// landing page and the auth pages themselves are reachable anonymously.
+const PROTECTED_PREFIXES = ['/dashboard', '/predict', '/crop-advisor', '/settings', '/onboarding', '/admin'];
 const ADMIN_PREFIXES = ['/admin'];
 const AUTH_PAGES = ['/login', '/register'];
 
@@ -44,6 +43,8 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/dashboard/:path*',
+    '/predict/:path*',
+    '/crop-advisor/:path*',
     '/settings/:path*',
     '/onboarding/:path*',
     '/admin/:path*',
