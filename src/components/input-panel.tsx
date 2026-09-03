@@ -101,6 +101,7 @@ export function InputPanel({
             <div className="flex gap-2">
               <Input
                 id="location-desc"
+                className="flex-1"
                 placeholder={t('dashboard.input.locationDescPlaceholder')}
                 value={locationDesc}
                 onChange={(e) => setLocationDesc(e.target.value)}

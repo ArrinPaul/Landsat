@@ -10,6 +10,9 @@ export type Profile = {
   farmingExperienceYears: number | null;
   preferredLanguage: string;
   irrigationType: string | null;
+  soilType: string | null;
+  plantingSeason: string | null;
+  machineryAccess: string | null;
   goals: string[];
   avatarUrl: string | null;
 };
@@ -25,6 +28,9 @@ const COLUMN_MAP: Record<keyof ProfileInput, string> = {
   farmingExperienceYears: 'farming_experience_years',
   preferredLanguage: 'preferred_language',
   irrigationType: 'irrigation_type',
+  soilType: 'soil_type',
+  plantingSeason: 'planting_season',
+  machineryAccess: 'machinery_access',
   goals: 'goals',
   avatarUrl: 'avatar_url',
 };
@@ -40,6 +46,9 @@ function toProfile(row: any): Profile {
     farmingExperienceYears: row.farming_experience_years,
     preferredLanguage: row.preferred_language ?? 'en',
     irrigationType: row.irrigation_type,
+    soilType: row.soil_type,
+    plantingSeason: row.planting_season,
+    machineryAccess: row.machinery_access,
     goals: row.goals ?? [],
     avatarUrl: row.avatar_url,
   };

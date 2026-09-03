@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { CROP_OPTIONS, GOAL_OPTIONS, IRRIGATION_OPTIONS } from "@/lib/farm-options";
+import { CROP_OPTIONS, GOAL_OPTIONS, IRRIGATION_OPTIONS, SOIL_OPTIONS, SEASON_OPTIONS, MACHINERY_OPTIONS } from "@/lib/farm-options";
 
 type OnboardingData = {
   locationState: string;
@@ -20,6 +20,9 @@ type OnboardingData = {
   farmSizeAcres: string;
   primaryCrops: string[];
   irrigationType: string;
+  soilType: string;
+  plantingSeason: string;
+  machineryAccess: string;
   farmingExperienceYears: string;
   goals: string[];
   preferredLanguage: string;
@@ -32,6 +35,9 @@ const EMPTY: OnboardingData = {
   farmSizeAcres: "",
   primaryCrops: [],
   irrigationType: "",
+  soilType: "",
+  plantingSeason: "",
+  machineryAccess: "",
   farmingExperienceYears: "",
   goals: [],
   preferredLanguage: "en",
@@ -69,6 +75,9 @@ export default function OnboardingPage() {
             farmSizeAcres: json.profile.farmSizeAcres?.toString() || "",
             primaryCrops: json.profile.primaryCrops || [],
             irrigationType: json.profile.irrigationType || "",
+            soilType: json.profile.soilType || "",
+            plantingSeason: json.profile.plantingSeason || "",
+            machineryAccess: json.profile.machineryAccess || "",
             farmingExperienceYears: json.profile.farmingExperienceYears?.toString() || "",
             goals: json.profile.goals || [],
             preferredLanguage: json.profile.preferredLanguage || "en",
@@ -266,6 +275,56 @@ export default function OnboardingPage() {
                     ))}
                   </select>
                 </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="soilType">Soil Type</Label>
+                    <select
+                      id="soilType"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      value={data.soilType}
+                      onChange={(e) => setData({ ...data, soilType: e.target.value })}
+                    >
+                      <option value="">Select...</option>
+                      {SOIL_OPTIONS.map((opt) => (
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="plantingSeason">Planting Season</Label>
+                    <select
+                      id="plantingSeason"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      value={data.plantingSeason}
+                      onChange={(e) => setData({ ...data, plantingSeason: e.target.value })}
+                    >
+                      <option value="">Select...</option>
+                      {SEASON_OPTIONS.map((opt) => (
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="machinery">Machinery Access</Label>
+                  <select
+                    id="machinery"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    value={data.machineryAccess}
+                    onChange={(e) => setData({ ...data, machineryAccess: e.target.value })}
+                  >
+                    <option value="">Select...</option>
+                    {MACHINERY_OPTIONS.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </>
             )}
 
@@ -304,6 +363,9 @@ export default function OnboardingPage() {
                 <ReviewRow label="Farm size" value={data.farmSizeAcres ? `${data.farmSizeAcres} acres` : "—"} />
                 <ReviewRow label="Primary crops" value={data.primaryCrops.join(", ") || "—"} />
                 <ReviewRow label="Irrigation" value={data.irrigationType || "—"} />
+                <ReviewRow label="Soil Type" value={data.soilType || "—"} />
+                <ReviewRow label="Planting Season" value={data.plantingSeason || "—"} />
+                <ReviewRow label="Machinery Access" value={data.machineryAccess || "—"} />
                 <ReviewRow label="Experience" value={data.farmingExperienceYears ? `${data.farmingExperienceYears} years` : "—"} />
                 <ReviewRow label="Goals" value={data.goals.join(", ") || "—"} />
               </div>

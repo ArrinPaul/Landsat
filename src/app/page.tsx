@@ -1,130 +1,171 @@
-
 "use client";
 
 import Link from "next/link";
 import React from "react";
-import { Cpu, BarChart, Download, SlidersHorizontal, CheckCircle, ArrowRight, BrainCircuit } from "lucide-react";
+import { Cpu, BarChart, Download, SlidersHorizontal, CheckCircle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { useLanguage } from "@/hooks/use-language";
 import { Chatbot } from "@/components/chatbot";
-
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 export default function LandingPage() {
     const { t } = useLanguage();
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col min-h-screen bg-background overflow-x-hidden w-full">
       <Header />
       <main className="flex-1">
-        <section className="relative w-full h-[80vh] md:h-[90vh] flex items-center justify-center text-center text-white overflow-hidden">
-             <div className="absolute inset-0 z-0 bg-gray-900 bg-gradient-to-b from-black/50 to-gray-900/80">
-             </div>
-
-            <div className="container px-4 md:px-6 z-10">
-              <div className="flex flex-col justify-center space-y-4">
-                <div className="space-y-2">
-                  <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none text-shadow-lg">
+        {/* HERO SECTION */}
+        <section className="w-full py-20 md:py-32 lg:py-48 flex items-center justify-center text-center bg-muted/20">
+            <div className="container px-4 md:px-6">
+              <div className="flex flex-col justify-center items-center space-y-8">
+                <div className="space-y-4 max-w-4xl">
+                  <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl xl:text-6xl text-foreground">
                     {t('landing.hero.title')}
                   </h1>
-                  <p className="max-w-[700px] mx-auto text-lg text-gray-200 md:text-xl">
+                  <p className="max-w-[700px] mx-auto text-lg text-muted-foreground md:text-xl leading-relaxed">
                     {t('landing.hero.subtitle')}
                   </p>
                 </div>
-                <div className="flex flex-col gap-2 min-[400px]:flex-row justify-center">
-                   <Button asChild size="lg" className="bg-primary/90 hover:bg-primary text-primary-foreground hover:scale-105 transition-transform duration-300 shadow-lg">
-                    <Link href="/dashboard">{t('landing.hero.getStarted')} <ArrowRight className="ml-2 h-5 w-5" /></Link>
-                  </Button>
-                  <Button asChild size="lg" variant="secondary" className="hover:scale-105 transition-transform duration-300 shadow-lg">
-                    <Link href="/predict">{t('landing.hero.predictiveTools')} <BrainCircuit className="ml-2 h-5 w-5" /></Link>
+                
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                   <Button asChild size="lg" className="px-8 text-base">
+                    <Link href="/dashboard">
+                        {t('landing.hero.getStarted')} <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
                   </Button>
                 </div>
               </div>
             </div>
         </section>
 
-        <section id="features" className="w-full py-12 md:py-24 lg:py-32 bg-background">
+        {/* FEATURES SECTION */}
+        <section id="features" className="w-full py-16 md:py-24 lg:py-32 bg-background border-t">
           <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center">
-              <div className="space-y-2">
-                <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">
+            <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
+                <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm font-medium">
                   {t('landing.features.keyFeatures')}
                 </div>
-                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">
+                <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
                   {t('landing.features.title')}
                 </h2>
-                <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                <p className="max-w-[900px] text-muted-foreground md:text-lg">
                   {t('landing.features.subtitle')}
                 </p>
-              </div>
             </div>
-            <div className="mx-auto grid max-w-5xl items-start gap-8 sm:grid-cols-2 md:gap-12 lg:grid-cols-4 mt-12">
-              <div className="grid gap-2 text-center p-4 rounded-lg hover:bg-muted/50 transition-colors">
-                <SlidersHorizontal className="h-10 w-10 text-primary mx-auto" />
-                <h3 className="text-lg font-bold">{t('landing.features.coordinateInput')}</h3>
-                <p className="text-sm text-muted-foreground">
-                    {t('landing.features.coordinateInputDesc')}
-                </p>
-              </div>
-              <div className="grid gap-2 text-center p-4 rounded-lg hover:bg-muted/50 transition-colors">
-                <Cpu className="h-10 w-10 text-primary mx-auto" />
-                <h3 className="text-lg font-bold">{t('landing.features.metricComputation')}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {t('landing.features.metricComputationDesc')}
-                </p>
-              </div>
-              <div className="grid gap-2 text-center p-4 rounded-lg hover:bg-muted/50 transition-colors">
-                <BarChart className="h-10 w-10 text-primary mx-auto" />
-                <h3 className="text-lg font-bold">{t('landing.features.interactiveVisuals')}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {t('landing.features.interactiveVisualsDesc')}
-                </p>
-              </div>
-               <div className="grid gap-2 text-center p-4 rounded-lg hover:bg-muted/50 transition-colors">
-                <Download className="h-10 w-10 text-primary mx-auto" />
-                <h3 className="text-lg font-bold">{t('landing.features.exportEasily')}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {t('landing.features.exportEasilyDesc')}
-                </p>
-              </div>
+            
+            <div className="mx-auto grid max-w-5xl gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {/* Feature 1 */}
+              <Card className="border shadow-sm">
+                <CardHeader className="text-center pb-2">
+                    <div className="mx-auto bg-primary/10 text-primary p-3 rounded-lg mb-4 w-fit">
+                        <SlidersHorizontal className="h-6 w-6" />
+                    </div>
+                    <CardTitle className="text-lg">{t('landing.features.coordinateInput')}</CardTitle>
+                </CardHeader>
+                <CardContent className="text-center">
+                    <CardDescription className="text-sm">
+                        {t('landing.features.coordinateInputDesc')}
+                    </CardDescription>
+                </CardContent>
+              </Card>
+              
+              {/* Feature 2 */}
+              <Card className="border shadow-sm">
+                <CardHeader className="text-center pb-2">
+                    <div className="mx-auto bg-primary/10 text-primary p-3 rounded-lg mb-4 w-fit">
+                        <Cpu className="h-6 w-6" />
+                    </div>
+                    <CardTitle className="text-lg">{t('landing.features.metricComputation')}</CardTitle>
+                </CardHeader>
+                <CardContent className="text-center">
+                    <CardDescription className="text-sm">
+                    {t('landing.features.metricComputationDesc')}
+                    </CardDescription>
+                </CardContent>
+              </Card>
+
+              {/* Feature 3 */}
+              <Card className="border shadow-sm">
+                <CardHeader className="text-center pb-2">
+                    <div className="mx-auto bg-primary/10 text-primary p-3 rounded-lg mb-4 w-fit">
+                        <BarChart className="h-6 w-6" />
+                    </div>
+                    <CardTitle className="text-lg">{t('landing.features.interactiveVisuals')}</CardTitle>
+                </CardHeader>
+                <CardContent className="text-center">
+                    <CardDescription className="text-sm">
+                    {t('landing.features.interactiveVisualsDesc')}
+                    </CardDescription>
+                </CardContent>
+              </Card>
+              
+              {/* Feature 4 */}
+              <Card className="border shadow-sm">
+                <CardHeader className="text-center pb-2">
+                    <div className="mx-auto bg-primary/10 text-primary p-3 rounded-lg mb-4 w-fit">
+                        <Download className="h-6 w-6" />
+                    </div>
+                    <CardTitle className="text-lg">{t('landing.features.exportEasily')}</CardTitle>
+                </CardHeader>
+                <CardContent className="text-center">
+                    <CardDescription className="text-sm">
+                    {t('landing.features.exportEasilyDesc')}
+                    </CardDescription>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </section>
 
-        <section id="about" className="w-full py-12 md:py-24 lg:py-32 bg-muted/30">
+        {/* ABOUT / WHY US SECTION */}
+        <section id="about" className="w-full py-16 md:py-24 lg:py-32 bg-muted/30 border-t">
             <div className="container px-4 md:px-6">
-                 <div className="grid gap-10 lg:grid-cols-2 items-center">
-                    <div className="lg:col-span-2 text-center">
-                        <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm mb-2">{t('landing.whyUs.tag')}</div>
-                        <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">{t('landing.whyUs.title')}</h2>
-                        <p className="max-w-3xl mx-auto text-muted-foreground md:text-xl/relaxed mt-4">
+                 <div className="grid gap-12 lg:grid-cols-2 items-center max-w-6xl mx-auto">
+                    <div className="space-y-6">
+                        <div className="inline-block rounded-lg bg-background border px-3 py-1 text-sm font-medium">
+                            {t('landing.whyUs.tag')}
+                        </div>
+                        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
+                            {t('landing.whyUs.title')}
+                        </h2>
+                        <p className="text-lg text-muted-foreground leading-relaxed">
                             {t('landing.whyUs.subtitle')}
                         </p>
                     </div>
-                    <div className="col-span-1 lg:col-span-2">
-                        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
-                            <li className="flex items-start">
-                                <CheckCircle className="h-6 w-6 mr-3 text-primary flex-shrink-0 mt-1" />
-                                <span className="text-muted-foreground"><strong>{t('landing.whyUs.point1')}</strong></span>
-                            </li>
-                             <li className="flex items-start">
-                                <CheckCircle className="h-6 w-6 mr-3 text-primary flex-shrink-0 mt-1" />
-                                <span className="text-muted-foreground"><strong>{t('landing.whyUs.point2')}</strong></span>
-                            </li>
-                             <li className="flex items-start">
-                                <CheckCircle className="h-6 w-6 mr-3 text-primary flex-shrink-0 mt-1" />
-                                <span className="text-muted-foreground"><strong>{t('landing.whyUs.point3')}</strong></span>
-                            </li>
-                             <li className="flex items-start">
-                                <CheckCircle className="h-6 w-6 mr-3 text-primary flex-shrink-0 mt-1" />
-                                <span className="text-muted-foreground"><strong>{t('landing.whyUs.point4')}</strong></span>
-                            </li>
+                    
+                    <div className="bg-background border rounded-xl p-8 shadow-sm">
+                        <ul className="grid grid-cols-1 gap-6">
+                            {[
+                                { text: t('landing.whyUs.point1') },
+                                { text: t('landing.whyUs.point2') },
+                                { text: t('landing.whyUs.point3') },
+                                { text: t('landing.whyUs.point4') },
+                            ].map((point, i) => (
+                                <li key={i} className="flex items-start">
+                                    <CheckCircle className="h-6 w-6 mr-4 text-primary flex-shrink-0 mt-0.5" />
+                                    <span className="text-foreground font-medium">{point.text}</span>
+                                </li>
+                            ))}
                         </ul>
                     </div>
                  </div>
             </div>
         </section>
+        
+        {/* CTA SECTION */}
+        <section className="w-full py-16 md:py-24 bg-background border-t">
+             <div className="container px-4 md:px-6 text-center max-w-3xl mx-auto">
+                <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">Ready to get started?</h2>
+                <p className="text-lg text-muted-foreground mb-8">Join the platform to unlock powerful environmental insights today.</p>
+                <Button asChild size="lg" className="px-8">
+                    <Link href="/dashboard">Go to Dashboard <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                </Button>
+             </div>
+        </section>
+
       </main>
       <Footer />
       <Chatbot />

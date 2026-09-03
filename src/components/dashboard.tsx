@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
-import Link from "next/link";
+import { } from "next/link";
 import { addDays, format, formatISO } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { InputPanel } from "@/components/input-panel";
@@ -16,13 +16,15 @@ import type { GroundTruthDataPoint, SatellitePassData, WeatherData, HistoryEntry
 import { appendUserHistoryAction, listUserHistoryAction, predictSatellitePassAction, getWeatherReportAction, startMetricsComputationAction, getMetricsResultAction } from "@/lib/actions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
 import { Button } from "./ui/button";
-import { Map, AlertTriangle, Loader2, Sprout, BrainCircuit, ArrowRight } from "lucide-react";
+import { LayoutDashboard, Leaf, Map, Menu, Moon, Sun, CloudRain } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
 import { Chatbot } from "./chatbot";
 import { MonitoringCard } from "./monitoring-card";
-import { ChangeInsightCard } from "./change-insight-card"; // New import
-import { Progress } from "@/components/ui/progress"; // New import
-import { GISDashboard } from "@/components/gis-dashboard";
+import { ChangeInsightCard } from "./change-insight-card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PredictTabContent } from "@/components/predict-content";
+import { CropAdvisorTabContent } from "@/components/crop-advisor-content";
 
 type ComputationStatus = 'idle' | 'computing' | 'polling' | 'completed' | 'error';
 const HISTORY_STORAGE_KEY = 'earth-insights.dashboard-history';
@@ -310,66 +312,63 @@ export function Dashboard() {
 
       if (computationStatus === 'completed' && analysisResult) {
           return (
-            <>
-              {analysisResult.changeAnalysis && (
-                <ChangeInsightCard changeAnalysis={analysisResult.changeAnalysis} />
-              )}
-              <div className="grid gap-6 lg:grid-cols-1 xl:grid-cols-4">
-                <div className="xl:col-span-3 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  <SummaryCards 
-                    landCover={analysisResult.landCover}
-                  />
-                </div>
-                <div className="xl:col-span-1 grid gap-6">
-                     <WeatherReport 
-                        weather={weather} 
-                        isLoading={isFetchingWeather} 
-                        showForecast={false}
+            <Tabs defaultValue="overview" className="space-y-6">
+              <TabsList className="grid w-full sm:w-auto grid-cols-1 md:grid-cols-3">
+                <TabsTrigger value="overview">Overview & Analysis</TabsTrigger>
+                <TabsTrigger value="predict">AI Predict</TabsTrigger>
+                <TabsTrigger value="crop-advisor">Crop Advisor</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="overview" className="space-y-6">
+                {analysisResult.changeAnalysis && (
+                  <ChangeInsightCard changeAnalysis={analysisResult.changeAnalysis} />
+                )}
+                <div className="grid gap-6 lg:grid-cols-1 xl:grid-cols-4">
+                  <div className="xl:col-span-3 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    <SummaryCards 
+                      landCover={analysisResult.landCover}
                     />
-                     <MonitoringCard nextPass={nextPass} isLoading={isFetchingPass} />
+                  </div>
+                  <div className="xl:col-span-1 grid gap-6">
+                       <WeatherReport 
+                          weather={weather} 
+                          isLoading={isFetchingWeather} 
+                          showForecast={false}
+                      />
+                       <MonitoringCard nextPass={nextPass} isLoading={isFetchingPass} />
+                  </div>
                 </div>
-              </div>
-    
-              <LandCoverAnalysis landCover={analysisResult.landCover} />
 
-              <MetricsTable 
-                analysisResult={analysisResult} 
-                location={`${lat}, ${lon}`}
-                dateRange={dateRangeString}
-              />
-    
-              <Visualizations
-                analysisResult={analysisResult}
-                groundTruthData={groundTruthData}
-                selectedMetric={selectedMetric}
-                setSelectedMetric={setSelectedMetric}
-                locationDescription={locationDesc}
-                dateRange={dateRange}
-              />
+                <LandCoverAnalysis landCover={analysisResult.landCover} />
+                
+                <MetricsTable 
+                  analysisResult={analysisResult} 
+                  location={`${lat}, ${lon}`}
+                  dateRange={dateRangeString}
+                />
+                
+                <Visualizations
+                  analysisResult={analysisResult}
+                  groundTruthData={groundTruthData}
+                  selectedMetric={selectedMetric}
+                  setSelectedMetric={setSelectedMetric}
+                  locationDescription={locationDesc}
+                  dateRange={dateRange}
+                />
+                
+                <GISDashboard analysisResult={analysisResult} locationLabel={locationDesc} />
+              </TabsContent>
 
-              <GISDashboard analysisResult={analysisResult} locationLabel={locationDesc} />
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">{t('dashboard.nextSteps.title')}</CardTitle>
-                  <CardDescription>{t('dashboard.nextSteps.description')}</CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-col sm:flex-row gap-3">
-                  <Button asChild variant="outline" className="flex-1 justify-between">
-                    <Link href={`/crop-advisor?lat=${lat}&lon=${lon}`}>
-                      <span className="flex items-center gap-2"><Sprout className="h-4 w-4" /> {t('dashboard.nextSteps.cropAdvisor')}</span>
-                      <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                  <Button asChild variant="outline" className="flex-1 justify-between">
-                    <Link href={`/predict?lat=${lat}&lon=${lon}`}>
-                      <span className="flex items-center gap-2"><BrainCircuit className="h-4 w-4" /> {t('dashboard.nextSteps.predict')}</span>
-                      <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            </>
+
+              <TabsContent value="predict">
+                <PredictTabContent lat={lat} lon={lon} />
+              </TabsContent>
+
+              <TabsContent value="crop-advisor">
+                <CropAdvisorTabContent lat={lat} lon={lon} locationDesc={locationDesc} />
+              </TabsContent>
+            </Tabs>
           )
       }
       
@@ -377,7 +376,7 @@ export function Dashboard() {
   }
 
   return (
-    <div className="container mx-auto p-2 sm:p-4 space-y-6">
+    <div className="w-full max-w-full overflow-x-hidden px-4 md:px-6 space-y-6">
       <InputPanel
         lat={lat}
         setLat={setLat}

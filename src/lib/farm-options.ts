@@ -10,3 +10,6 @@ export const GOAL_OPTIONS = [
   "Track field health over time",
 ];
 export const IRRIGATION_OPTIONS = ["Rain-fed", "Canal", "Borewell / tube well", "Drip", "Sprinkler"];
+export const SOIL_OPTIONS = ["Sandy", "Clay", "Loam", "Silt", "Peat", "Chalk", "Unknown"];
+export const SEASON_OPTIONS = ["Spring", "Summer", "Autumn", "Winter", "Year-round"];
+export const MACHINERY_OPTIONS = ["Manual Labor", "Basic Machinery (Tractor)", "Advanced/Precision Ag"];

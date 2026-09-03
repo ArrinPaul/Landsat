@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { CROP_OPTIONS, GOAL_OPTIONS, IRRIGATION_OPTIONS } from "@/lib/farm-options";
+import { CROP_OPTIONS, GOAL_OPTIONS, IRRIGATION_OPTIONS, SOIL_OPTIONS, SEASON_OPTIONS, MACHINERY_OPTIONS } from "@/lib/farm-options";
 
 type FormState = {
   phone: string;
@@ -19,6 +19,9 @@ type FormState = {
   primaryCrops: string[];
   farmingExperienceYears: string;
   irrigationType: string;
+  soilType: string;
+  plantingSeason: string;
+  machineryAccess: string;
   goals: string[];
 };
 
@@ -30,6 +33,9 @@ const EMPTY: FormState = {
   primaryCrops: [],
   farmingExperienceYears: "",
   irrigationType: "",
+  soilType: "",
+  plantingSeason: "",
+  machineryAccess: "",
   goals: [],
 };
 
@@ -56,6 +62,9 @@ export function ProfileForm() {
             primaryCrops: json.profile.primaryCrops || [],
             farmingExperienceYears: json.profile.farmingExperienceYears?.toString() || "",
             irrigationType: json.profile.irrigationType || "",
+            soilType: json.profile.soilType || "",
+            plantingSeason: json.profile.plantingSeason || "",
+            machineryAccess: json.profile.machineryAccess || "",
             goals: json.profile.goals || [],
           });
         }
@@ -183,6 +192,59 @@ export function ProfileForm() {
         >
           <option value="">Select...</option>
           {IRRIGATION_OPTIONS.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
+          ))}
+        </select>
+      </div>
+      
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="p-soil">Soil Type</Label>
+          <select
+            id="p-soil"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            value={form.soilType}
+            onChange={(e) => update("soilType", e.target.value)}
+          >
+            <option value="">Select...</option>
+            {SOIL_OPTIONS.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
+            ))}
+          </select>
+        </div>
+        
+        <div className="space-y-1.5">
+          <Label htmlFor="p-season">Planting Season</Label>
+          <select
+            id="p-season"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            value={form.plantingSeason}
+            onChange={(e) => update("plantingSeason", e.target.value)}
+          >
+            <option value="">Select...</option>
+            {SEASON_OPTIONS.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+      
+      <div className="space-y-1.5">
+        <Label htmlFor="p-machinery">Machinery Access</Label>
+        <select
+          id="p-machinery"
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          value={form.machineryAccess}
+          onChange={(e) => update("machineryAccess", e.target.value)}
+        >
+          <option value="">Select...</option>
+          {MACHINERY_OPTIONS.map((opt) => (
             <option key={opt} value={opt}>
               {opt}
             </option>
