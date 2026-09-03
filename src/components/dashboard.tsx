@@ -16,12 +16,14 @@ import type { GroundTruthDataPoint, SatellitePassData, WeatherData, HistoryEntry
 import { appendUserHistoryAction, listUserHistoryAction, predictSatellitePassAction, getWeatherReportAction, startMetricsComputationAction, getMetricsResultAction } from "@/lib/actions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
 import { Button } from "./ui/button";
-import { LayoutDashboard, Leaf, Map, Menu, Moon, Sun, CloudRain } from "lucide-react";
+import { LayoutDashboard, Leaf, Map, Menu, Moon, Sun, CloudRain, Loader2, AlertTriangle } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
 import { Chatbot } from "./chatbot";
 import { MonitoringCard } from "./monitoring-card";
 import { ChangeInsightCard } from "./change-insight-card";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { GISDashboard } from "@/components/gis-dashboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PredictTabContent } from "@/components/predict-content";
 import { CropAdvisorTabContent } from "@/components/crop-advisor-content";
