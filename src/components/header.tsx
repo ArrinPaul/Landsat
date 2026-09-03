@@ -12,7 +12,7 @@ import { ContactSheet } from "./contact-sheet";
 import { LanguageSwitcher } from "./language-switcher";
 import { useLanguage } from "@/hooks/use-language";
 import { AuthNav } from "@/components/auth-nav";
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 
 export function Header() {
   const { t } = useLanguage();
@@ -91,6 +91,7 @@ export function Header() {
                         </Button>
                     </SheetTrigger>
                     <SheetContent side="right" className="w-[300px]">
+                        <SheetTitle className="sr-only">Navigation menu</SheetTitle>
                         <nav className="flex flex-col gap-4 mt-8">
                             <SheetClose asChild>
                                 <Link href="/dashboard" className="flex items-center gap-2 text-lg font-medium">
