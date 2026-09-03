@@ -1,31 +1,41 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, Bar, BarChart, Legend } from "recharts";
-import { BrainCircuit, CloudRain, ServerCog } from "lucide-react";
+import { BrainCircuit, CloudRain, ServerCog, Loader2 } from "lucide-react";
 
-// Mock data based on server logs (AI token usage, Open-Meteo calls, etc.)
-const tokenUsageData = [
-  { date: "Aug 28", tokens: 12400 },
-  { date: "Aug 29", tokens: 21000 },
-  { date: "Aug 30", tokens: 18500 },
-  { date: "Aug 31", tokens: 35000 },
-  { date: "Sep 01", tokens: 42000 },
-  { date: "Sep 02", tokens: 39500 },
-  { date: "Sep 03", tokens: 55000 },
-];
+export default function AdminAnalyticsPage() {
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-const apiCallsData = [
-  { date: "Aug 28", openMeteo: 120, soilApi: 45, success: 160, failed: 5 },
-  { date: "Aug 29", openMeteo: 150, soilApi: 60, success: 200, failed: 10 },
-  { date: "Aug 30", openMeteo: 140, soilApi: 55, success: 190, failed: 5 },
-  { date: "Aug 31", openMeteo: 280, soilApi: 90, success: 360, failed: 10 },
-  { date: "Sep 01", openMeteo: 310, soilApi: 110, success: 410, failed: 10 },
-  { date: "Sep 02", openMeteo: 290, soilApi: 105, success: 380, failed: 15 },
-  { date: "Sep 03", openMeteo: 420, soilApi: 150, success: 550, failed: 20 },
-];
+  useEffect(() => {
+    fetch('/api/admin/analytics')
+      .then(res => res.json())
+      .then(json => {
+        if (json.data) {
+          setData(json.data);
+        }
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
 
-export default function AnalyticsPage() {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Calculate totals for summary cards
+  const totalTokens = data.reduce((sum, day) => sum + (day.aiTokens || 0), 0);
+  const totalApiCalls = data.reduce((sum, day) => sum + (day.weatherCalls || 0), 0);
+  const avgSuccessRate = data.length > 0 
+    ? Math.round(data.reduce((sum, day) => sum + (day.successRate || 100), 0) / data.length)
+    : 100;
+
   return (
     <div className="space-y-6 max-w-6xl">
       <div>
@@ -36,12 +46,12 @@ export default function AnalyticsPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Token Usage</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Token Usage</CardTitle>
             <BrainCircuit className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">31,914</div>
-            <p className="text-xs text-muted-foreground">+14% from last week</p>
+            <div className="text-2xl font-bold">{totalTokens.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">Across selected period</p>
           </CardContent>
         </Card>
         <Card>
@@ -50,18 +60,18 @@ export default function AnalyticsPage() {
             <CloudRain className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1,710</div>
-            <p className="text-xs text-muted-foreground">+32% from last week</p>
+            <div className="text-2xl font-bold">{totalApiCalls.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">Total API requests</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">API Error Rate</CardTitle>
+            <CardTitle className="text-sm font-medium">Avg Success Rate</CardTitle>
             <AlertTriangleIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">3.2%</div>
-            <p className="text-xs text-muted-foreground">Historical weather fetch fails</p>
+            <div className="text-2xl font-bold">{avgSuccessRate}%</div>
+            <p className="text-xs text-muted-foreground">Historical consistency</p>
           </CardContent>
         </Card>
         <Card>
@@ -84,7 +94,7 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={tokenUsageData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+              <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorTokens" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8} />
@@ -95,7 +105,7 @@ export default function AnalyticsPage() {
                 <YAxis fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value / 1000}k`} />
                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
                 <Tooltip />
-                <Area type="monotone" dataKey="tokens" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorTokens)" />
+                <Area type="monotone" dataKey="aiTokens" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorTokens)" />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
@@ -108,7 +118,7 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={apiCallsData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+              <BarChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                 <XAxis dataKey="date" fontSize={12} tickLine={false} axisLine={false} />
                 <YAxis fontSize={12} tickLine={false} axisLine={false} />
                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />

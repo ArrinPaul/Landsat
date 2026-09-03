@@ -5,6 +5,7 @@
 import { logger } from '@/lib/logger';
 import { redactSensitive } from '@/lib/security';
 import { getTraceContext } from '@/lib/trace';
+import { logSystemMetric } from '@/lib/metrics';
 
 const ARCHIVE_API_URL = "https://archive-api.open-meteo.com/v1/archive";
 
@@ -101,6 +102,8 @@ export async function getSoilAndWeatherData(latitude: number, longitude: number)
             }
             const data = await response.json();
             
+            logSystemMetric({ metric_type: 'api_call', provider: 'open-meteo', is_success: true, metadata: { endpoint: 'soil' } });
+            
             // Normalize fallback data structure
             if (!data.current) {
                 data.current = {
@@ -124,6 +127,7 @@ export async function getSoilAndWeatherData(latitude: number, longitude: number)
                 endpoint: url.split('?')[0],
                 error: redactSensitive(message),
             });
+            logSystemMetric({ metric_type: 'api_call', provider: 'open-meteo', is_success: false, error_message: message, metadata: { endpoint: 'soil' } });
             continue;
         }
     }
@@ -175,12 +179,17 @@ export async function getHistoricalWeather(latitude: number, longitude: number, 
             throw new Error(`Open-Meteo Archive API returned an error: ${response.status} ${response.statusText}`);
         }
         const data = await response.json();
+        
+        logSystemMetric({ metric_type: 'api_call', provider: 'open-meteo', is_success: true, metadata: { endpoint: 'historical_weather' } });
+
         return data as HistoricalWeatherData;
     } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
         logger.error('historical_weather_fetch_failed', {
             scope: 'services.open-meteo',
-            error: redactSensitive(error instanceof Error ? error.message : String(error)),
+            error: redactSensitive(message),
         });
+        logSystemMetric({ metric_type: 'api_call', provider: 'open-meteo', is_success: false, error_message: message, metadata: { endpoint: 'historical_weather' } });
         logger.warn('historical_weather_mock_fallback', { scope: 'services.open-meteo' });
         
         // Return mock historical data as fallback
@@ -251,6 +260,8 @@ export async function getHistoricalPrecipitation(latitude: number, longitude: nu
         }
         const data = await response.json();
         
+        logSystemMetric({ metric_type: 'api_call', provider: 'open-meteo', is_success: true, metadata: { endpoint: 'historical_precipitation' } });
+        
         // The API returns yearly data for the whole range. We need to average it.
         if (data.yearly && data.yearly.precipitation_sum && data.yearly.precipitation_sum.length > 0) {
             const validValues = data.yearly.precipitation_sum.filter((p: number | null) => p !== null);
@@ -262,10 +273,12 @@ export async function getHistoricalPrecipitation(latitude: number, longitude: nu
         
         return data as HistoricalPrecipitationData;
     } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
         logger.error('historical_precipitation_fetch_failed', {
             scope: 'services.open-meteo',
-            error: redactSensitive(error instanceof Error ? error.message : String(error)),
+            error: redactSensitive(message),
         });
+        logSystemMetric({ metric_type: 'api_call', provider: 'open-meteo', is_success: false, error_message: message, metadata: { endpoint: 'historical_precipitation' } });
         logger.warn('historical_precipitation_mock_fallback', { scope: 'services.open-meteo' });
         
         // Return mock 30-year average (global average ~500mm/year)

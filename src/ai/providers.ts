@@ -7,6 +7,7 @@
 import Groq from 'groq-sdk';
 import { logger } from '@/lib/logger';
 import { redactSensitive } from '@/lib/security';
+import { logSystemMetric } from '@/lib/metrics';
 
 export interface ProviderConfig {
   name: string;
@@ -69,11 +70,25 @@ export async function generateWithGroq(
 
       const text = response.choices[0]?.message?.content || '';
       if (text) {
+        logSystemMetric({
+          metric_type: 'ai_generation',
+          provider: 'groq',
+          tokens_used: response.usage?.total_tokens || 0,
+          is_success: true,
+          metadata: { model }
+        });
         return { text, provider: 'groq', model };
       }
     } catch (err: any) {
       lastErr = err;
       logger.warn('groq_model_attempt_failed', { scope: 'ai.providers', model, error: err.message });
+      logSystemMetric({
+        metric_type: 'ai_generation',
+        provider: 'groq',
+        is_success: false,
+        error_message: err.message,
+        metadata: { model }
+      });
     }
   }
 
