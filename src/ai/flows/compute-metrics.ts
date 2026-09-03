@@ -214,6 +214,28 @@ const initialize = () => new Promise<void>((resolve, reject) => {
     ee.initialize(null, null, () => resolve(), (err: string) => reject(new Error(err)));
 });
 
+// Wraps a single ee.evaluate() call with retries + exponential backoff, since Earth Engine's
+// own generic "Please try again" error is a transient/timeout signal, not a fatal one.
+function evaluateWithRetry(eeObject: any, description: string, retries = 3): Promise<any> {
+    return new Promise((resolve, reject) => {
+        const attempt = (remaining: number) => {
+            eeObject.evaluate((result: any, error: any) => {
+                if (error) {
+                    if (remaining > 0) {
+                        const delayMs = (retries - remaining + 1) * 1500;
+                        setTimeout(() => attempt(remaining - 1), delayMs);
+                        return;
+                    }
+                    reject(new Error(`Earth Engine Error during ${description}: ${error}`));
+                    return;
+                }
+                resolve(result);
+            });
+        };
+        attempt(retries);
+    });
+}
+
 async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
     const creds = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
     if (!creds) {
@@ -228,118 +250,107 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
     await authenticate(privateKey);
     await initialize();
 
-    return new Promise((resolve, reject) => {
-        try {
-            const point = ee.Geometry.Point([input.longitude, input.latitude]);
-            const areaOfInterest = point.buffer(5000); // 5km buffer around the point
+    const point = ee.Geometry.Point([input.longitude, input.latitude]);
+    const areaOfInterest = point.buffer(5000); // 5km buffer around the point
 
-            const collection = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
-                .filterBounds(areaOfInterest)
-                .filterDate(input.startDate, input.endDate)
-                .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 75));
-            
-            collection.size().evaluate((size: any, error: any) => {
-                if (error) {
-                    return reject(new Error(`Earth Engine Error during size evaluation: ${error}`));
-                }
-                if (size === 0) {
-                    return reject(new Error("No valid satellite imagery found for the selected location, date range, and cloud cover settings. Try expanding the date range or choosing a different area."));
-                }
-                
-                const allBands = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B9', 'B11', 'B12'];
+    const collection = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
+        .filterBounds(areaOfInterest)
+        .filterDate(input.startDate, input.endDate)
+        .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 75));
 
-                const withMetrics = collection.map((image: any) => {
-                    const ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI');
-                    const ndwi = image.normalizedDifference(['B3', 'B8']).rename('NDWI');
-                    const ndbi = image.normalizedDifference(['B11', 'B8']).rename('NDBI');
-                    const nbr = image.normalizedDifference(['B8A', 'B12']).rename('NBR');
-                    return image.addBands([ndvi, ndwi, ndbi, nbr]);
-                });
+    const size = await evaluateWithRetry(collection.size(), 'size evaluation');
+    if (size === 0) {
+        throw new Error("No valid satellite imagery found for the selected location, date range, and cloud cover settings. Try expanding the date range or choosing a different area.");
+    }
 
-                const chartData = withMetrics.select(['NDVI', 'NDWI', 'NDBI', 'NBR', ...allBands]).map((image: any) => {
-                    const mean = image.reduceRegion({
-                        reducer: ee.Reducer.mean(),
-                        geometry: point,
-                        scale: 10,
-                        maxPixels: 1e9,
-                        bestEffort: true,
-                        tileScale: 4
-                    });
-                    const featureProps: any = {
-                        'system:time_start': image.get('system:time_start'),
-                        'NDVI': mean.get('NDVI'),
-                        'NDWI': mean.get('NDWI'),
-                        'NDBI': mean.get('NDBI'),
-                        'NBR': mean.get('NBR'),
-                    };
-                    allBands.forEach(band => {
-                        featureProps[band] = mean.get(band);
-                    });
-                    return ee.Feature(null, featureProps);
-                });
+    const allBands = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B9', 'B11', 'B12'];
 
-                const firstImage = withMetrics.first();
-                const lastImage = withMetrics.sort('system:time_start', false).first();
-
-                // Real per-pixel land-cover classification grid for the end date, built from the
-                // same NDVI/NDWI/NDBI thresholds used for the area stats below (0=other, 1=vegetation,
-                // 2=built-up, 3=water) - sampled at a coarse scale so it stays a small, fast payload.
-                const classImage = classifyLandCover(lastImage)
-                    .reproject({ crs: 'EPSG:4326', scale: 200 });
-                const classGridSample = classImage.sampleRectangle({ region: areaOfInterest, defaultValue: 0 });
-
-                // Real per-pixel change magnitude between the start and end images (mean absolute
-                // difference across NDVI/NDWI/NDBI), sampled at the same grid - not a synthetic pattern.
-                const changeImage = lastImage.select(['NDVI', 'NDWI', 'NDBI'])
-                    .subtract(firstImage.select(['NDVI', 'NDWI', 'NDBI']))
-                    .abs()
-                    .reduce(ee.Reducer.mean())
-                    .rename('changeMag')
-                    .reproject({ crs: 'EPSG:4326', scale: 200 });
-                const changeGridSample = changeImage.sampleRectangle({ region: areaOfInterest, defaultValue: 0 });
-
-                const evaluateAll = ee.Dictionary({
-                    timeSeries: chartData.toList(chartData.size()),
-                    landCoverStart: calculateLandCoverStats(firstImage, areaOfInterest),
-                    landCoverEnd: calculateLandCoverStats(lastImage, areaOfInterest),
-                    regionGeoJSON: areaOfInterest,
-                    classGrid: classGridSample.get('classId'),
-                    changeGrid: changeGridSample.get('changeMag'),
-                    avgCloudyPct: collection.aggregate_mean('CLOUDY_PIXEL_PERCENTAGE'),
-                });
-
-                evaluateAll.evaluate((result: any, error: any) => {
-                    if (error) return reject(new Error(`Earth Engine Error during final evaluation: ${error}`));
-                    if (!result || !result.timeSeries || !Array.isArray(result.timeSeries)) return reject(new Error("No time-series data returned from Earth Engine."));
-                    if (!result.landCoverStart || !result.landCoverEnd) return reject(new Error("Could not compute land cover analysis. The area might be too small or lack valid imagery at the start/end dates."));
-                    if (!result.regionGeoJSON) return reject(new Error("Could not evaluate the region geometry for map generation."));
-
-                    const createTrueColorImage = (image: any) => {
-                        return image.visualize({
-                            bands: ['B4', 'B3', 'B2'],
-                            min: 0,
-                            max: 3000,
-                            gamma: 1.4
-                        });
-                    };
-
-                    const beforeVis = createTrueColorImage(firstImage);
-                    const afterVis = createTrueColorImage(lastImage);
-                    
-                    result.beforeMapUrl = beforeVis.getThumbURL({ dimensions: '512x512', region: result.regionGeoJSON, format: 'png' });
-                    result.afterMapUrl = afterVis.getThumbURL({ dimensions: '512x512', region: result.regionGeoJSON, format: 'png' });
-
-                    if (!result.beforeMapUrl || !result.afterMapUrl) return reject(new Error("Could not generate land cover map URLs."));
-                    
-                    resolve(result);
-                });
-            });
-
-        } catch (e) {
-            console.error('Error during Earth Engine processing setup:', e);
-            reject(e);
-        }
+    const withMetrics = collection.map((image: any) => {
+        const ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI');
+        const ndwi = image.normalizedDifference(['B3', 'B8']).rename('NDWI');
+        const ndbi = image.normalizedDifference(['B11', 'B8']).rename('NDBI');
+        const nbr = image.normalizedDifference(['B8A', 'B12']).rename('NBR');
+        return image.addBands([ndvi, ndwi, ndbi, nbr]);
     });
+
+    const chartData = withMetrics.select(['NDVI', 'NDWI', 'NDBI', 'NBR', ...allBands]).map((image: any) => {
+        const mean = image.reduceRegion({
+            reducer: ee.Reducer.mean(),
+            geometry: point,
+            scale: 10,
+            maxPixels: 1e9,
+            bestEffort: true,
+            tileScale: 4
+        });
+        const featureProps: any = {
+            'system:time_start': image.get('system:time_start'),
+            'NDVI': mean.get('NDVI'),
+            'NDWI': mean.get('NDWI'),
+            'NDBI': mean.get('NDBI'),
+            'NBR': mean.get('NBR'),
+        };
+        allBands.forEach(band => {
+            featureProps[band] = mean.get(band);
+        });
+        return ee.Feature(null, featureProps);
+    });
+
+    const firstImage = withMetrics.first();
+    const lastImage = withMetrics.sort('system:time_start', false).first();
+
+    // Real per-pixel land-cover classification grid for the end date, built from the
+    // same NDVI/NDWI/NDBI thresholds used for the area stats below (0=other, 1=vegetation,
+    // 2=built-up, 3=water) - sampled at a coarse scale so it stays a small, fast payload.
+    const classImage = classifyLandCover(lastImage)
+        .reproject({ crs: 'EPSG:4326', scale: 200 });
+    const classGridSample = classImage.sampleRectangle({ region: areaOfInterest, defaultValue: 0 });
+
+    // Real per-pixel change magnitude between the start and end images (mean absolute
+    // difference across NDVI/NDWI/NDBI), sampled at the same grid - not a synthetic pattern.
+    const changeImage = lastImage.select(['NDVI', 'NDWI', 'NDBI'])
+        .subtract(firstImage.select(['NDVI', 'NDWI', 'NDBI']))
+        .abs()
+        .reduce(ee.Reducer.mean())
+        .rename('changeMag')
+        .reproject({ crs: 'EPSG:4326', scale: 200 });
+    const changeGridSample = changeImage.sampleRectangle({ region: areaOfInterest, defaultValue: 0 });
+
+    // Split into separate evaluate() calls (rather than one combined ee.Dictionary) so a single
+    // heavy computation timing out doesn't sink the whole job, and each piece can retry on its own.
+    const [timeSeries, landCoverStart, landCoverEnd, regionGeoJSON, classGrid, changeGrid, avgCloudyPct] = await Promise.all([
+        evaluateWithRetry(chartData.toList(chartData.size()), 'time series evaluation'),
+        evaluateWithRetry(calculateLandCoverStats(firstImage, areaOfInterest), 'start land cover evaluation'),
+        evaluateWithRetry(calculateLandCoverStats(lastImage, areaOfInterest), 'end land cover evaluation'),
+        evaluateWithRetry(areaOfInterest, 'region geometry evaluation'),
+        evaluateWithRetry(classGridSample.get('classId'), 'class grid evaluation'),
+        evaluateWithRetry(changeGridSample.get('changeMag'), 'change grid evaluation'),
+        evaluateWithRetry(collection.aggregate_mean('CLOUDY_PIXEL_PERCENTAGE'), 'cloud percentage evaluation'),
+    ]);
+
+    if (!timeSeries || !Array.isArray(timeSeries)) throw new Error("No time-series data returned from Earth Engine.");
+    if (!landCoverStart || !landCoverEnd) throw new Error("Could not compute land cover analysis. The area might be too small or lack valid imagery at the start/end dates.");
+    if (!regionGeoJSON) throw new Error("Could not evaluate the region geometry for map generation.");
+
+    const result: any = { timeSeries, landCoverStart, landCoverEnd, regionGeoJSON, classGrid, changeGrid, avgCloudyPct };
+
+    const createTrueColorImage = (image: any) => {
+        return image.visualize({
+            bands: ['B4', 'B3', 'B2'],
+            min: 0,
+            max: 3000,
+            gamma: 1.4
+        });
+    };
+
+    const beforeVis = createTrueColorImage(firstImage);
+    const afterVis = createTrueColorImage(lastImage);
+
+    result.beforeMapUrl = beforeVis.getThumbURL({ dimensions: '512x512', region: result.regionGeoJSON, format: 'png' });
+    result.afterMapUrl = afterVis.getThumbURL({ dimensions: '512x512', region: result.regionGeoJSON, format: 'png' });
+
+    if (!result.beforeMapUrl || !result.afterMapUrl) throw new Error("Could not generate land cover map URLs.");
+
+    return result;
 }
 
 // Shared NDVI/NDWI/NDBI thresholds: single source of truth for what counts as
