@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { Globe2, LayoutDashboard, Settings, Mail, Menu, BrainCircuit, Sprout } from "lucide-react";
+import { Globe2, LayoutDashboard, Settings, Mail, Menu, BrainCircuit, Sprout, ChevronDown } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "./ui/button";
 import React, { useState, useEffect } from "react";
@@ -13,6 +13,7 @@ import { LanguageSwitcher } from "./language-switcher";
 import { useLanguage } from "@/hooks/use-language";
 import { AuthNav } from "@/components/auth-nav";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export function Header() {
   const { t } = useLanguage();
@@ -57,18 +58,27 @@ export function Header() {
                     {t('header.dashboard')}
                 </Link>
             </Button>
-            <Button variant="ghost" asChild className={buttonLinkClass}>
-                <Link href="/predict">
-                    <BrainCircuit className="mr-2 h-4 w-4"/>
-                    {t('header.predict')}
-                </Link>
-            </Button>
-            <Button variant="ghost" asChild className={buttonLinkClass}>
-                <Link href="/crop-advisor">
-                    <Sprout className="mr-2 h-4 w-4"/>
-                    {t('header.cropAdvisor')}
-                </Link>
-            </Button>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className={buttonLinkClass}>
+                        <BrainCircuit className="mr-2 h-4 w-4"/>
+                        {t('header.tools')}
+                        <ChevronDown className="ml-1 h-3 w-3 opacity-70"/>
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                    <DropdownMenuItem asChild>
+                        <Link href="/predict" className="flex items-center gap-2 cursor-pointer">
+                            <BrainCircuit className="h-4 w-4"/> {t('header.predict')}
+                        </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                        <Link href="/crop-advisor" className="flex items-center gap-2 cursor-pointer">
+                            <Sprout className="h-4 w-4"/> {t('header.cropAdvisor')}
+                        </Link>
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
             <Button variant="ghost" asChild className={buttonLinkClass}>
                 <Link href="/settings">
                     <Settings className="mr-2 h-4 w-4"/>
@@ -104,16 +114,21 @@ export function Header() {
                                     <LayoutDashboard className="h-5 w-5" /> {t('header.dashboard')}
                                 </Link>
                             </SheetClose>
-                            <SheetClose asChild>
-                                <Link href="/predict" className="flex items-center gap-2 text-lg font-medium">
-                                    <BrainCircuit className="h-5 w-5" /> {t('header.predict')}
-                                </Link>
-                            </SheetClose>
-                            <SheetClose asChild>
-                                <Link href="/crop-advisor" className="flex items-center gap-2 text-lg font-medium">
-                                    <Sprout className="h-5 w-5" /> {t('header.cropAdvisor')}
-                                </Link>
-                            </SheetClose>
+                            <div className="pt-2">
+                                <p className="text-xs font-semibold uppercase text-muted-foreground mb-2">{t('header.tools')}</p>
+                                <div className="flex flex-col gap-4 pl-1">
+                                    <SheetClose asChild>
+                                        <Link href="/predict" className="flex items-center gap-2 text-lg font-medium">
+                                            <BrainCircuit className="h-5 w-5" /> {t('header.predict')}
+                                        </Link>
+                                    </SheetClose>
+                                    <SheetClose asChild>
+                                        <Link href="/crop-advisor" className="flex items-center gap-2 text-lg font-medium">
+                                            <Sprout className="h-5 w-5" /> {t('header.cropAdvisor')}
+                                        </Link>
+                                    </SheetClose>
+                                </div>
+                            </div>
                             <SheetClose asChild>
                                 <Link href="/settings" className="flex items-center gap-2 text-lg font-medium">
                                     <Settings className="h-5 w-5" /> {t('header.settings')}

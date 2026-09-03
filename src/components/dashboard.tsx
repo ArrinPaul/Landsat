@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
+import Link from "next/link";
 import { addDays, format, formatISO } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { InputPanel } from "@/components/input-panel";
@@ -14,7 +15,8 @@ import { useToast } from "@/hooks/use-toast";
 import type { GroundTruthDataPoint, SatellitePassData, WeatherData, HistoryEntry, AnalysisResult } from "@/lib/types";
 import { appendUserHistoryAction, listUserHistoryAction, predictSatellitePassAction, getWeatherReportAction, startMetricsComputationAction, getMetricsResultAction } from "@/lib/actions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
-import { Map, AlertTriangle, Loader2 } from "lucide-react";
+import { Button } from "./ui/button";
+import { Map, AlertTriangle, Loader2, Sprout, BrainCircuit, ArrowRight } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
 import { Chatbot } from "./chatbot";
 import { MonitoringCard } from "./monitoring-card";
@@ -346,6 +348,27 @@ export function Dashboard() {
               />
 
               <GISDashboard analysisResult={analysisResult} locationLabel={locationDesc} />
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">{t('dashboard.nextSteps.title')}</CardTitle>
+                  <CardDescription>{t('dashboard.nextSteps.description')}</CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col sm:flex-row gap-3">
+                  <Button asChild variant="outline" className="flex-1 justify-between">
+                    <Link href={`/crop-advisor?lat=${lat}&lon=${lon}`}>
+                      <span className="flex items-center gap-2"><Sprout className="h-4 w-4" /> {t('dashboard.nextSteps.cropAdvisor')}</span>
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" className="flex-1 justify-between">
+                    <Link href={`/predict?lat=${lat}&lon=${lon}`}>
+                      <span className="flex items-center gap-2"><BrainCircuit className="h-4 w-4" /> {t('dashboard.nextSteps.predict')}</span>
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
             </>
           )
       }

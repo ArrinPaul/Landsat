@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
+import { CROP_OPTIONS, GOAL_OPTIONS, IRRIGATION_OPTIONS } from "@/lib/farm-options";
 
 type OnboardingData = {
   locationState: string;
@@ -35,16 +36,6 @@ const EMPTY: OnboardingData = {
   goals: [],
   preferredLanguage: "en",
 };
-
-const CROP_OPTIONS = ["Wheat", "Rice", "Cotton", "Sugarcane", "Maize", "Pulses", "Vegetables", "Fruits"];
-const GOAL_OPTIONS = [
-  "Increase yield",
-  "Reduce water usage",
-  "Detect crop stress early",
-  "Plan irrigation schedules",
-  "Track field health over time",
-];
-const IRRIGATION_OPTIONS = ["Rain-fed", "Canal", "Borewell / tube well", "Drip", "Sprinkler"];
 
 const STEPS = ["Location", "Farm details", "Experience & goals", "Review"];
 

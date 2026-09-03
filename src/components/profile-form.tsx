@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { CROP_OPTIONS, GOAL_OPTIONS, IRRIGATION_OPTIONS } from "@/lib/farm-options";
 
 type FormState = {
   phone: string;
@@ -31,15 +32,6 @@ const EMPTY: FormState = {
   irrigationType: "",
   goals: [],
 };
-
-const CROP_OPTIONS = ["Wheat", "Rice", "Cotton", "Sugarcane", "Maize", "Pulses", "Vegetables", "Fruits"];
-const GOAL_OPTIONS = [
-  "Increase yield",
-  "Reduce water usage",
-  "Detect crop stress early",
-  "Plan irrigation schedules",
-  "Track field health over time",
-];
 
 export function ProfileForm() {
   const { toast } = useToast();
@@ -179,6 +171,23 @@ export function ProfileForm() {
             </label>
           ))}
         </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="p-irrigation">Irrigation type</Label>
+        <select
+          id="p-irrigation"
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          value={form.irrigationType}
+          onChange={(e) => update("irrigationType", e.target.value)}
+        >
+          <option value="">Select...</option>
+          {IRRIGATION_OPTIONS.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="space-y-1.5">

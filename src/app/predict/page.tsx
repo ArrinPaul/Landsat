@@ -1,19 +1,20 @@
 
 "use client";
 
-import React, { useState } from "react";
-import Link from "next/link";
+import React, { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Header } from "@/components/header";
+import { Footer } from "@/components/footer";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Wand2, Loader2, Thermometer, Tractor, Droplets, LandPlot, BarChartBig, AlertTriangle, BrainCircuit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { 
-    suggestCoordinatesAction, 
-    getWeatherReportAction, 
-    planCropsAction, 
+import {
+    suggestCoordinatesAction,
+    getWeatherReportAction,
+    planCropsAction,
     scheduleIrrigationAction,
     predictSoilMoistureAction,
     predictCropYieldAction,
@@ -24,19 +25,27 @@ import type { WeatherData, CropPlan, IrrigationSchedule, SoilMoisturePrediction,
 import { useLanguage } from "@/hooks/use-language";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ContactSheet } from "@/components/contact-sheet";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { PredictResultDialogContent } from "@/components/predict-result-dialog-content";
+import { GENERIC_CROP_OPTIONS as cropOptions } from "@/lib/crop-catalog";
 
-const cropOptions = ["Corn", "Wheat", "Rice", "Soybeans", "Cotton", "Potatoes", "Tomatoes", "Barley", "Sorghum"];
-
-export default function PredictPage() {
+function PredictContent() {
     const { toast } = useToast();
     const { t } = useLanguage();
+    const searchParams = useSearchParams();
     const [lat, setLat] = useState("40.7128");
     const [lon, setLon] = useState("-74.0060");
     const [locationDesc, setLocationDesc] = useState("New York City");
+
+    // Lets a location analyzed on the Dashboard be sent straight here (e.g. "Run predictive
+    // tools for this location") instead of the user retyping coordinates.
+    useEffect(() => {
+        const latParam = searchParams.get('lat');
+        const lonParam = searchParams.get('lon');
+        if (latParam) setLat(latParam);
+        if (lonParam) setLon(lonParam);
+    }, [searchParams]);
     const [isSuggesting, setIsSuggesting] = useState(false);
     const [isLoading, setIsLoading] = useState<PredictionType | null>(null);
 
@@ -49,8 +58,7 @@ export default function PredictPage() {
     const [scenario, setScenario] = useState("a 2-degree temperature increase");
     const [scenarioResult, setScenarioResult] = useState<ScenarioAnalysis | null>(null);
     const [selectedCrop, setSelectedCrop] = useState("Corn");
-    const [isContactOpen, setContactOpen] = useState(false);
-    
+
     // Dialog state
     const [resultDialogOpen, setResultDialogOpen] = useState(false);
     const [currentResultType, setCurrentResultType] = useState<PredictionType | null>(null);
@@ -318,20 +326,16 @@ export default function PredictPage() {
                 </DialogContent>
             </Dialog>
 
-            <footer id="contact" className="py-6 w-full shrink-0 border-t">
-                <div className="container flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <nav className="flex gap-4 sm:gap-6">
-                        <Link href="/#about" className="text-xs hover:underline underline-offset-4 text-muted-foreground">{t('footer.about')}</Link>
-                        <Link href="#contact" className="text-xs hover:underline underline-offset-4 text-muted-foreground" onClick={(e) => { e.preventDefault(); setContactOpen(true)}}>{t('footer.contact')}</Link>
-                    </nav>
-                    <p className="text-xs text-muted-foreground text-center">
-                        {t('footer.copyright')}
-                    </p>
-                    <div className="w-24 hidden sm:block"></div> {/* Spacer to balance flexbox */}
-                </div>
-            </footer>
-            <ContactSheet open={isContactOpen} onOpenChange={setContactOpen} />
+            <Footer />
         </div>
+    );
+}
+
+export default function PredictPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <PredictContent />
+        </Suspense>
     );
 }
 
