@@ -1,10 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, Activity, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, Activity, ChevronLeft, ChevronRight, Download } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type EventRow = {
   id: string;
@@ -19,6 +26,7 @@ type EventRow = {
 
 export default function AdminActivityPage() {
   const [events, setEvents] = useState<EventRow[]>([]);
+  const [eventTypeFilter, setEventTypeFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -28,7 +36,10 @@ export default function AdminActivityPage() {
     const controller = new AbortController();
     setLoading(true);
 
-    fetch(`/api/admin/activity?page=${page}`, { signal: controller.signal })
+    const params = new URLSearchParams({ page: String(page) });
+    if (eventTypeFilter !== "all") params.set("type", eventTypeFilter);
+
+    fetch(`/api/admin/activity?${params.toString()}`, { signal: controller.signal })
       .then((res) => res.json())
       .then((json) => {
         setEvents(json.events ?? []);
@@ -39,13 +50,64 @@ export default function AdminActivityPage() {
       .finally(() => setLoading(false));
 
     return () => controller.abort();
-  }, [page]);
+  }, [page, eventTypeFilter]);
+
+  const handleExportCSV = () => {
+    if (events.length === 0) return;
+    
+    const headers = ["Timestamp", "Event Type", "User Name", "User Email", "Metadata"];
+    const rows = events.map(ev => [
+      new Date(ev.created_at).toISOString(),
+      ev.event_type,
+      `"${(ev.users?.name || 'Unknown').replace(/"/g, '""')}"`,
+      `"${(ev.users?.email || '').replace(/"/g, '""')}"`,
+      ev.metadata ? `"${JSON.stringify(ev.metadata).replace(/"/g, '""')}"` : ""
+    ]);
+    
+    const csvContent = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `activity_logs_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <div className="space-y-6 max-w-6xl">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Activity Logs</h1>
-        <p className="text-muted-foreground text-sm">{total} total system events.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Activity Logs</h1>
+          <p className="text-muted-foreground text-sm">{total} total system events.</p>
+        </div>
+        <Button variant="outline" onClick={handleExportCSV} disabled={events.length === 0}>
+          <Download className="mr-2 h-4 w-4" /> Export CSV
+        </Button>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-3">
+        <Select
+          value={eventTypeFilter}
+          onValueChange={(v) => {
+            setPage(1);
+            setEventTypeFilter(v);
+          }}
+        >
+          <SelectTrigger className="w-full sm:w-64">
+            <SelectValue placeholder="Event Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Events</SelectItem>
+            <SelectItem value="login">Login</SelectItem>
+            <SelectItem value="signup">Signup</SelectItem>
+            <SelectItem value="password_reset_requested">Password Reset Requested</SelectItem>
+            <SelectItem value="admin_updated_account">Admin Updated Account</SelectItem>
+            <SelectItem value="started_metrics_computation">Started Metrics Computation</SelectItem>
+            <SelectItem value="deleted_account">Deleted Account</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <Card>

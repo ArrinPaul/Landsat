@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Loader2, Search, ChevronLeft, ChevronRight, Settings2 } from "lucide-react";
+import { Loader2, Search, ChevronLeft, ChevronRight, Settings2, Download } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
@@ -169,11 +169,40 @@ export default function AdminUsersPage() {
     };
   }, [search, role, onboarding, page]);
 
+  const handleExportCSV = () => {
+    if (users.length === 0) return;
+    const headers = ["ID", "Name", "Email", "Role", "Disabled", "Onboarding Completed", "Created At", "Last Login At"];
+    const rows = users.map(u => [
+      u.id,
+      `"${u.name.replace(/"/g, '""')}"`,
+      `"${u.email.replace(/"/g, '""')}"`,
+      u.role,
+      u.disabled,
+      u.onboarding_completed,
+      u.created_at,
+      u.last_login_at || ""
+    ]);
+    const csvContent = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `users_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-6 max-w-6xl">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Users</h1>
-        <p className="text-muted-foreground text-sm">{total} accounts total.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Users</h1>
+          <p className="text-muted-foreground text-sm">{total} accounts total.</p>
+        </div>
+        <Button variant="outline" onClick={handleExportCSV} disabled={users.length === 0}>
+          <Download className="mr-2 h-4 w-4" /> Export CSV
+        </Button>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">

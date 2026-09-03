@@ -14,26 +14,26 @@ export async function GET(req: Request) {
   const supabase = getSupabase();
 
   let query = supabase
-    .from('account_events')
-    .select('id, event_type, metadata, created_at, users(name, email)', { count: 'exact' });
+    .from('analysis_jobs')
+    .select('*', { count: 'exact' });
 
-  const type = url.searchParams.get('type');
-  if (type && type !== 'all') {
-    query = query.eq('event_type', type);
+  const status = url.searchParams.get('status');
+  if (status && status !== 'all') {
+    query = query.eq('status', status);
   }
 
-  const { data: events, count, error } = await query
+  const { data: jobs, count, error } = await query
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 
   if (error) {
-    return NextResponse.json({ error: 'Failed to fetch activity logs' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to fetch analysis jobs' }, { status: 500 });
   }
 
   const totalPages = Math.ceil((count ?? 0) / limit);
 
   return NextResponse.json({
-    events: events ?? [],
+    jobs: jobs ?? [],
     total: count ?? 0,
     totalPages,
   });
