@@ -7,10 +7,12 @@ import { Header } from "@/components/header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/hooks/use-language";
 import { ContactSheet } from "@/components/contact-sheet";
+import { ProfileForm } from "@/components/profile-form";
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -57,41 +59,66 @@ export default function SettingsPage() {
     <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-1 p-4 md:p-6">
-            <Card className="max-w-2xl mx-auto">
-            <CardHeader>
-                <CardTitle>{t('settings.title')}</CardTitle>
-                <CardDescription>
-                {t('settings.description')}
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <div className="flex items-center justify-between">
-                <Label htmlFor="dark-mode">{t('settings.darkMode')}</Label>
-                <ThemeToggle />
-                </div>
-                <div className="flex items-center justify-between">
-                <div className="flex flex-col">
-                    <Label htmlFor="notifications">{t('settings.satelliteAlerts.label')}</Label>
-                    <p className="text-xs text-muted-foreground">{t('settings.satelliteAlerts.description')}</p>
-                </div>
-                <Switch 
-                    id="notifications" 
-                    checked={notificationsEnabled}
-                    onCheckedChange={handleNotificationToggle}
-                />
-                </div>
+            <div className="max-w-2xl mx-auto space-y-6">
+            <Tabs defaultValue="profile">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="profile">Profile</TabsTrigger>
+                <TabsTrigger value="preferences">{t('settings.title')}</TabsTrigger>
+              </TabsList>
 
-                <div className="space-y-2 pt-6">
-                <h3 className="text-lg font-semibold">{t('settings.about.title')}</h3>
-                <p className="text-sm text-muted-foreground">
-                    <strong>{t('header.title')}</strong>
-                </p>
-                <p className="text-xs text-muted-foreground whitespace-nowrap">
-                    {t('footer.copyright')}
-                </p>
-                </div>
-            </CardContent>
-            </Card>
+              <TabsContent value="profile" className="mt-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Your profile</CardTitle>
+                    <CardDescription>
+                      This is the same information you provided during onboarding. Update it any time.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ProfileForm />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="preferences" className="mt-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{t('settings.title')}</CardTitle>
+                    <CardDescription>
+                    {t('settings.description')}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                      <div className="flex items-center justify-between">
+                      <Label htmlFor="dark-mode">{t('settings.darkMode')}</Label>
+                      <ThemeToggle />
+                      </div>
+                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col">
+                          <Label htmlFor="notifications">{t('settings.satelliteAlerts.label')}</Label>
+                          <p className="text-xs text-muted-foreground">{t('settings.satelliteAlerts.description')}</p>
+                      </div>
+                      <Switch
+                          id="notifications"
+                          checked={notificationsEnabled}
+                          onCheckedChange={handleNotificationToggle}
+                      />
+                      </div>
+
+                      <div className="space-y-2 pt-6">
+                      <h3 className="text-lg font-semibold">{t('settings.about.title')}</h3>
+                      <p className="text-sm text-muted-foreground">
+                          <strong>{t('header.title')}</strong>
+                      </p>
+                      <p className="text-xs text-muted-foreground whitespace-nowrap">
+                          {t('footer.copyright')}
+                      </p>
+                      </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+            </div>
       </main>
       <footer id="contact" className="py-6 w-full shrink-0 border-t">
         <div className="container flex flex-col sm:flex-row items-center justify-between gap-4">
