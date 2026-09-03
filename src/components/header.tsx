@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Globe2, LayoutDashboard, Mail, Menu, BrainCircuit, Sprout, ChevronDown } from "lucide-react";
+import { Globe2, LayoutDashboard, Menu } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "./ui/button";
 import React, { useState, useEffect } from "react";
@@ -12,7 +12,6 @@ import { LanguageSwitcher } from "./language-switcher";
 import { useLanguage } from "@/hooks/use-language";
 import { AuthNav } from "@/components/auth-nav";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export function Header() {
   const { t } = useLanguage();

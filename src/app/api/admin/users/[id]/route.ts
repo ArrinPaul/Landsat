@@ -5,8 +5,10 @@ import { getSupabase } from '@/lib/supabase';
 import { getProfile, recordAccountEvent } from '@/lib/profile-store';
 
 const updateSchema = z.object({
+  name: z.string().min(1).optional(),
   role: z.enum(['viewer', 'analyst', 'admin']).optional(),
   disabled: z.boolean().optional(),
+  onboarding_completed: z.boolean().optional(),
 });
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {

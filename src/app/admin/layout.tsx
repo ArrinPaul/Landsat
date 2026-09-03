@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { LayoutDashboard, Users, Globe2, ArrowLeft } from "lucide-react";
+import { LayoutDashboard, Users, Globe2, ArrowLeft, Activity, Settings, BarChart3, ServerCog } from "lucide-react";
 import { getAuthContext } from "@/lib/auth";
 import { ThemeToggle } from "@/components/theme-toggle";
 
@@ -31,6 +31,30 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
           >
             <Users className="h-4 w-4" /> Users
+          </Link>
+          <Link
+            href="/admin/analytics"
+            className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
+          >
+            <BarChart3 className="h-4 w-4" /> Analytics
+          </Link>
+          <Link
+            href="/admin/analyses"
+            className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
+          >
+            <ServerCog className="h-4 w-4" /> Analysis Jobs
+          </Link>
+          <Link
+            href="/admin/activity"
+            className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
+          >
+            <Activity className="h-4 w-4" /> Activity Logs
+          </Link>
+          <Link
+            href="/admin/settings"
+            className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
+          >
+            <Settings className="h-4 w-4" /> Settings
           </Link>
         </nav>
         <div className="p-4 border-t space-y-2">

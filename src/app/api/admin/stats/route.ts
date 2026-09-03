@@ -8,13 +8,23 @@ export async function GET() {
 
   const supabase = getSupabase();
 
-  const [{ count: totalUsers }, { count: onboardedUsers }, { count: adminCount }, { data: recentUsers }] =
-    await Promise.all([
-      supabase.from('users').select('*', { count: 'exact', head: true }),
-      supabase.from('users').select('*', { count: 'exact', head: true }).eq('onboarding_completed', true),
-      supabase.from('users').select('*', { count: 'exact', head: true }).eq('role', 'admin'),
-      supabase.from('users').select('created_at').order('created_at', { ascending: false }).limit(500),
-    ]);
+  const [
+    { count: totalUsers },
+    { count: onboardedUsers },
+    { count: adminCount },
+    { data: recentUsers },
+    { data: recentEvents },
+  ] = await Promise.all([
+    supabase.from('users').select('*', { count: 'exact', head: true }),
+    supabase.from('users').select('*', { count: 'exact', head: true }).eq('onboarding_completed', true),
+    supabase.from('users').select('*', { count: 'exact', head: true }).eq('role', 'admin'),
+    supabase.from('users').select('created_at').order('created_at', { ascending: false }).limit(500),
+    supabase
+      .from('account_events')
+      .select('id, event_type, metadata, created_at, users(name)')
+      .order('created_at', { ascending: false })
+      .limit(5),
+  ]);
 
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -48,5 +58,6 @@ export async function GET() {
     adminCount: adminCount ?? 0,
     newLast7Days,
     registrationsByDay,
+    recentEvents: recentEvents ?? [],
   });
 }

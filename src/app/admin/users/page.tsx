@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Loader2, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, Search, ChevronLeft, ChevronRight, Settings2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,6 +16,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 type UserRow = {
   id: string;
@@ -27,6 +38,82 @@ type UserRow = {
   last_login_at: string | null;
 };
 
+const EditUserDialog = ({ user, onUpdate }: { user: UserRow, onUpdate: (u: Partial<UserRow>) => Promise<void> }) => {
+  const [name, setName] = useState(user.name);
+  const [role, setRole] = useState(user.role);
+  const [disabled, setDisabled] = useState(user.disabled);
+  const [onboarding, setOnboarding] = useState(user.onboarding_completed);
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // Sync state if user prop changes
+  useEffect(() => {
+    if (open) {
+      setName(user.name);
+      setRole(user.role);
+      setDisabled(user.disabled);
+      setOnboarding(user.onboarding_completed);
+    }
+  }, [open, user]);
+
+  const handleSave = async () => {
+    setLoading(true);
+    await onUpdate({ id: user.id, name, role, disabled, onboarding_completed: onboarding });
+    setLoading(false);
+    setOpen(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="icon">
+          <Settings2 className="h-4 w-4 text-muted-foreground" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit User</DialogTitle>
+          <DialogDescription>Make changes to the user&apos;s profile and permissions.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label>Name</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label>Role</Label>
+            <Select value={role} onValueChange={setRole}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="viewer">Viewer</SelectItem>
+                <SelectItem value="analyst">Analyst</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center justify-between">
+            <Label>Account Disabled</Label>
+            <Switch checked={disabled} onCheckedChange={setDisabled} />
+          </div>
+          <div className="flex items-center justify-between">
+            <Label>Onboarding Completed</Label>
+            <Switch checked={onboarding} onCheckedChange={setOnboarding} />
+          </div>
+        </div>
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+          <Button onClick={handleSave} disabled={loading}>
+            {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+            Save Changes
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserRow[]>([]);
   const [search, setSearch] = useState("");
@@ -36,6 +123,25 @@ export default function AdminUsersPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  const updateUser = async (updates: Partial<UserRow>) => {
+    try {
+      const res = await fetch(`/api/admin/users/${updates.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to update user");
+      }
+      setUsers((prev) => prev.map((u) => (u.id === updates.id ? { ...u, ...updates } : u)));
+      toast({ title: "Success", description: "User updated successfully." });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
 
   useEffect(() => {
     const controller = new AbortController();
@@ -139,11 +245,12 @@ export default function AdminUsersPage() {
                     <TableHead>Onboarding</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Joined</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {users.map((u) => (
-                    <TableRow key={u.id} className="cursor-pointer">
+                    <TableRow key={u.id}>
                       <TableCell className="font-medium">
                         <Link href={`/admin/users/${u.id}`} className="hover:underline">
                           {u.name}
@@ -169,6 +276,9 @@ export default function AdminUsersPage() {
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm">
                         {new Date(u.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <EditUserDialog user={u} onUpdate={updateUser} />
                       </TableCell>
                     </TableRow>
                   ))}
