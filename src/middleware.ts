@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SESSION_COOKIE, verifySession } from '@/lib/jwt';
 
-const PROTECTED_PREFIXES = ['/dashboard', '/settings', '/onboarding', '/admin'];
+// /dashboard, /predict, and /crop-advisor are intentionally public: the app's server
+// actions already accept the anonymous 'viewer' role for them (see requireRole calls
+// in lib/actions.ts), and the landing page's primary CTA sends visitors straight to
+// /dashboard without requiring an account first.
+const PROTECTED_PREFIXES = ['/settings', '/onboarding', '/admin'];
 const ADMIN_PREFIXES = ['/admin'];
 const AUTH_PAGES = ['/login', '/register'];
 

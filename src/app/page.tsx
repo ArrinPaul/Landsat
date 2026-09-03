@@ -44,29 +44,29 @@ export default function LandingPage() {
             </div>
         </section>
 
-        {/* Global Impact Metrics Banner */}
+        {/* Impact Metrics Banner */}
         <section className="w-full py-12 border-y border-border/50 bg-muted/20 relative z-10">
           <div className="container px-4 md:px-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center divide-x divide-border/50">
               <div className="flex flex-col items-center justify-center space-y-2">
                 <Globe2 className="h-6 w-6 text-primary mb-2 opacity-80" />
-                <h4 className="text-3xl font-bold tracking-tighter">50+</h4>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Global Nodes</p>
+                <h4 className="text-3xl font-bold tracking-tighter">Global</h4>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Any Coordinates on Earth</p>
               </div>
               <div className="flex flex-col items-center justify-center space-y-2">
                 <Activity className="h-6 w-6 text-primary mb-2 opacity-80" />
-                <h4 className="text-3xl font-bold tracking-tighter">&lt; 1s</h4>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Real-Time Sync</p>
+                <h4 className="text-3xl font-bold tracking-tighter">NDVI · NDWI · NDBI</h4>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Key Spectral Indices</p>
               </div>
               <div className="flex flex-col items-center justify-center space-y-2">
                 <ShieldCheck className="h-6 w-6 text-primary mb-2 opacity-80" />
-                <h4 className="text-3xl font-bold tracking-tighter">100%</h4>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Zero-Trust Security</p>
+                <h4 className="text-3xl font-bold tracking-tighter">Earth Engine</h4>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Built on Google Earth Engine</p>
               </div>
               <div className="flex flex-col items-center justify-center space-y-2">
                 <BrainCircuit className="h-6 w-6 text-primary mb-2 opacity-80" />
                 <h4 className="text-3xl font-bold tracking-tighter">AI</h4>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Neural Engine</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Crop & Risk Predictions</p>
               </div>
             </div>
           </div>
@@ -118,37 +118,37 @@ export default function LandingPage() {
               <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-sm font-medium text-primary mb-4">
                 Workflow
               </div>
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">Intelligence Workflow</h2>
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">From Raw Imagery to Decisions</h2>
               <p className="mt-4 text-muted-foreground md:text-lg/relaxed max-w-[800px] mx-auto">
-                How Landsat bridges the gap between ground-level intelligence and institutional medical response.
+                How Earth Insights turns satellite data into recommendations you can act on.
               </p>
             </div>
-            
+
             <div className="grid md:grid-cols-3 gap-8 relative mt-12">
               {/* Connecting line for desktop */}
               <div className="hidden md:block absolute top-12 left-[10%] w-[80%] h-0.5 bg-gradient-to-r from-transparent via-primary/20 to-transparent -z-10"></div>
-              
+
               <TiltCard>
                 <div className="flex flex-col items-center text-center space-y-4 relative bg-background p-6 rounded-2xl border border-border/50 shadow-sm h-full [transform:translateZ(40px)]">
                   <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-2xl shadow-lg ring-8 ring-muted mb-2 [transform:translateZ(20px)]">1</div>
                   <h3 className="text-2xl font-semibold">Collect</h3>
-                  <p className="text-muted-foreground leading-relaxed px-4">Community nodes report anomalies, symptoms, and water quality metrics in real-time securely.</p>
+                  <p className="text-muted-foreground leading-relaxed px-4">Enter coordinates and a date range, or upload your own ground-truth CSV alongside the satellite imagery.</p>
                 </div>
               </TiltCard>
-              
+
               <TiltCard>
                 <div className="flex flex-col items-center text-center space-y-4 relative bg-background p-6 rounded-2xl border border-border/50 shadow-sm h-full [transform:translateZ(40px)]">
                   <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-2xl shadow-lg ring-8 ring-muted mb-2 [transform:translateZ(20px)]">2</div>
                   <h3 className="text-2xl font-semibold">Analyze</h3>
-                  <p className="text-muted-foreground leading-relaxed px-4">The AI Neural Engine processes the data, identifying trends, outbreaks, and risk factors instantly.</p>
+                  <p className="text-muted-foreground leading-relaxed px-4">We compute spectral indices and land-cover change, then the AI engine flags the trends worth your attention.</p>
                 </div>
               </TiltCard>
-              
+
               <TiltCard>
                 <div className="flex flex-col items-center text-center space-y-4 relative bg-background p-6 rounded-2xl border border-border/50 shadow-sm h-full [transform:translateZ(40px)]">
                   <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-2xl shadow-lg ring-8 ring-muted mb-2 [transform:translateZ(20px)]">3</div>
                   <h3 className="text-2xl font-semibold">Act</h3>
-                  <p className="text-muted-foreground leading-relaxed px-4">Verified intelligence is broadcasted to institutional responders to orchestrate a proactive defense.</p>
+                  <p className="text-muted-foreground leading-relaxed px-4">Export metrics and reports, or get AI-driven crop, irrigation, and risk recommendations for your fields.</p>
                 </div>
               </TiltCard>
             </div>

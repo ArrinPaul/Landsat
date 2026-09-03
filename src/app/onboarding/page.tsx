@@ -146,7 +146,7 @@ export default function OnboardingPage() {
   async function handleComplete() {
     const ok = await persist(true);
     if (!ok) return;
-    toast({ title: "You're all set", description: "Welcome to EarthInsights AgriSense." });
+    toast({ title: "You're all set", description: "Welcome to Earth Insights." });
     router.push("/dashboard");
     router.refresh();
   }
@@ -168,7 +168,7 @@ export default function OnboardingPage() {
       <div className="w-full max-w-xl space-y-6">
         <div className="flex items-center gap-2 justify-center text-primary">
           <Sprout className="h-6 w-6" />
-          <span className="font-bold text-lg">EarthInsights AgriSense</span>
+          <span className="font-bold text-lg">Earth Insights</span>
         </div>
 
         <div className="space-y-2">

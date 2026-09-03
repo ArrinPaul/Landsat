@@ -8,8 +8,8 @@ import { Toaster } from "@/components/ui/toaster";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "Earth Insights ",
-  description: "Analyze environmental data with cutting-edge insights.",
+  title: "Earth Insights",
+  description: "Turn satellite data into actionable environmental and agricultural insights.",
 };
 
 export default function RootLayout({

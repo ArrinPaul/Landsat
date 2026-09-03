@@ -74,7 +74,7 @@ export default function RegisterPage() {
     <div className="min-h-screen flex flex-col bg-slate-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))] text-white items-center justify-center p-4 py-12">
       <Link href="/" className="absolute top-8 left-8 flex items-center gap-2 text-white/80 hover:text-white transition-colors">
         <Globe2 className="h-6 w-6" />
-        <span className="font-bold text-lg tracking-tight">Landsat</span>
+        <span className="font-bold text-lg tracking-tight">Earth Insights</span>
       </Link>
       
       <div className="w-full max-w-md animate-in fade-in zoom-in-95 duration-700">
@@ -110,7 +110,7 @@ export default function RegisterPage() {
                         <FormItem>
                           <FormLabel className="text-gray-300">Email Address</FormLabel>
                           <FormControl>
-                            <Input type="email" placeholder="agent@landsat.org" className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 h-12" {...field} />
+                            <Input type="email" placeholder="you@example.com" className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 h-12" {...field} />
                           </FormControl>
                           <FormMessage className="text-red-400" />
                         </FormItem>
