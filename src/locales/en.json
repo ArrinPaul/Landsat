@@ -5,6 +5,8 @@
     "header.about": "About",
     "header.contact": "Contact",
     "header.dashboard": "Dashboard",
+    "header.predict": "Predict",
+    "header.cropAdvisor": "Crop Advisor",
     "header.pricing": "Pricing",
     "header.settings": "Settings",
     "header.getStarted": "Get Started",

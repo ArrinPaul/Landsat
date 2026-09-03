@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { Globe2, LayoutDashboard, Settings, Mail, Menu, DollarSign } from "lucide-react";
+import { Globe2, LayoutDashboard, Settings, Mail, Menu, BrainCircuit, Sprout } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "./ui/button";
 import React, { useState, useEffect } from "react";
@@ -58,9 +58,15 @@ export function Header() {
                 </Link>
             </Button>
             <Button variant="ghost" asChild className={buttonLinkClass}>
-                <Link href="/pricing">
-                    <DollarSign className="mr-2 h-4 w-4"/>
-                    {t('header.pricing')}
+                <Link href="/predict">
+                    <BrainCircuit className="mr-2 h-4 w-4"/>
+                    {t('header.predict')}
+                </Link>
+            </Button>
+            <Button variant="ghost" asChild className={buttonLinkClass}>
+                <Link href="/crop-advisor">
+                    <Sprout className="mr-2 h-4 w-4"/>
+                    {t('header.cropAdvisor')}
                 </Link>
             </Button>
             <Button variant="ghost" asChild className={buttonLinkClass}>
@@ -99,8 +105,13 @@ export function Header() {
                                 </Link>
                             </SheetClose>
                             <SheetClose asChild>
-                                <Link href="/pricing" className="flex items-center gap-2 text-lg font-medium">
-                                    <DollarSign className="h-5 w-5" /> {t('header.pricing')}
+                                <Link href="/predict" className="flex items-center gap-2 text-lg font-medium">
+                                    <BrainCircuit className="h-5 w-5" /> {t('header.predict')}
+                                </Link>
+                            </SheetClose>
+                            <SheetClose asChild>
+                                <Link href="/crop-advisor" className="flex items-center gap-2 text-lg font-medium">
+                                    <Sprout className="h-5 w-5" /> {t('header.cropAdvisor')}
                                 </Link>
                             </SheetClose>
                             <SheetClose asChild>
