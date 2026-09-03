@@ -186,6 +186,11 @@ export interface AnalysisResult {
       configHash: string;
     };
   };
+  changeHeatmap?: {
+    grid: number[];
+    width: number;
+    height: number;
+  };
 }
 
 // New type for Drought & Flood Risk Analysis

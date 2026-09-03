@@ -34,40 +34,21 @@ function makeSegmentationOverlay(mask: number[], width: number, height: number, 
   return `data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${safeWidth} ${safeHeight}" preserveAspectRatio="none">${cells}</svg>`)}`;
 }
 
-function makeAnomalyHeatmapData(changeMagnitude: number, temporalIndex: number): number[] {
-  const sizeX = 4;
-  const sizeY = 2;
-  const data: number[] = [];
-
-  for (let y = 0; y < sizeY; y++) {
-    for (let x = 0; x < sizeX; x++) {
-      const distFromCenter = Math.sqrt(Math.pow(x - sizeX / 2, 2) + Math.pow(y - sizeY / 2, 2));
-      const baseAnomaly = Math.max(0, 1 - distFromCenter / (Math.max(sizeX, sizeY) / 1.5));
-      
-      const temporalFactor = Math.sin(temporalIndex * 0.5) * 0.3 + 0.7;
-      const noise = Math.random() * 0.2;
-      
-      data.push(Math.min(1, (baseAnomaly * changeMagnitude * temporalFactor) + noise));
-    }
-  }
-  return data;
-}
-
 export function GISDashboard({ analysisResult, locationLabel }: GISDashboardProps) {
   const [overlayLayer, setOverlayLayer] = useState<OverlayLayer>('base');
   const [comparePosition, setComparePosition] = useState(50);
   const temporalIndex = 0;
 
   const segmentation = analysisResult.segmentationInference;
+  const changeHeatmap = analysisResult.changeHeatmap;
 
   const segmentationOverlay = useMemo(() => {
     if (!segmentation?.mask || !segmentation?.width || !segmentation?.height) return null;
     return makeSegmentationOverlay(segmentation.mask, segmentation.width, segmentation.height);
   }, [segmentation]);
 
-  const anomalyGrid = useMemo(() => {
-    return makeAnomalyHeatmapData(analysisResult.landCover.vegetation.percentageChange / 100, temporalIndex);
-  }, [analysisResult.landCover.vegetation.percentageChange, temporalIndex]);
+  const anomalyGrid = changeHeatmap?.grid ?? [];
+  const anomalyGridWidth = changeHeatmap?.width ?? 0;
 
   const temporalSteps = 12;
   
@@ -166,7 +147,7 @@ export function GISDashboard({ analysisResult, locationLabel }: GISDashboardProp
               disabled={!segmentationOverlay}
               className="rounded-full"
             >
-              AI Segmentation
+              Land Classification
             </Button>
             <Button 
               variant={overlayLayer === 'anomaly' ? 'default' : 'outline'} 
@@ -190,8 +171,12 @@ export function GISDashboard({ analysisResult, locationLabel }: GISDashboardProp
                 Before / After Comparison
               </h3>
               {segmentation && (
-                <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-200">
-                  AI Confidence: {(segmentation.meanConfidence * 100).toFixed(1)}%
+                <Badge
+                  variant="outline"
+                  className="bg-blue-500/10 text-blue-600 border-blue-200"
+                  title="Share of the imagery used for this analysis that was cloud-free"
+                >
+                  Imagery confidence: {(segmentation.meanConfidence * 100).toFixed(1)}%
                 </Badge>
               )}
             </div>
@@ -255,23 +240,34 @@ export function GISDashboard({ analysisResult, locationLabel }: GISDashboardProp
           <div className="space-y-4">
              <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                Temporal Change Inspector
+                Change Intensity Map
               </h3>
             </div>
 
             <div className="bg-muted/10 p-4 rounded-xl border">
-                <div className="grid grid-cols-4 gap-1.5 p-1.5 bg-background rounded-lg border shadow-sm" role="img" aria-label="Anomaly heatmap grid">
+              {anomalyGrid.length > 0 && anomalyGridWidth > 0 ? (
+                <div
+                  className="grid gap-1 p-1.5 bg-background rounded-lg border shadow-sm"
+                  style={{ gridTemplateColumns: `repeat(${anomalyGridWidth}, minmax(0, 1fr))` }}
+                  role="img"
+                  aria-label="Spectral change intensity grid between the start and end images"
+                >
                   {anomalyGrid.map((value, index) => (
                     <div
                       key={`cell-${index}`}
-                      className="aspect-square rounded-[4px] transition-colors duration-300 border border-black/5"
-                      style={{ 
-                        backgroundColor: value > 0.1 ? `rgba(239, 68, 68, ${value})` : '#f3f4f6' 
+                      className="aspect-square rounded-[2px] transition-colors duration-300"
+                      style={{
+                        backgroundColor: value > 0.1 ? `rgba(239, 68, 68, ${value})` : '#f3f4f6'
                       }}
-                      title={`Anomaly intensity ${(value * 100).toFixed(1)}%`}
+                      title={`Relative change intensity ${(value * 100).toFixed(1)}%`}
                     />
                   ))}
                 </div>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-6">
+                  Not enough imagery in this date range to compute a change grid.
+                </p>
+              )}
             </div>
           </div>
         </div>

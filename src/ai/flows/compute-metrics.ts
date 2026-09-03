@@ -16,22 +16,9 @@ import { getHistoricalWeather } from '@/services/open-meteo';
 import type { HistoricalDataPoint } from '@/lib/types';
 import { analyzeChange, AnalyzeChangeOutput } from '@/ai/flows/analyze-change';
 import { getHistoricalBaseline } from '@/ai/tools/get-historical-baseline';
-function packageModelArtifact(run: any, version: string) { return {}; }
-function runSegmentationInference(inputs: any, artifact: any) {
-    return {
-        mask: [],
-        width: 64,
-        height: 64,
-        meanConfidence: 0.9,
-        classConfidence: { 'vegetation': 0.9 },
-        postProcessing: { smoothingKernel: 3, isolatedPixelFixes: 0 },
-        model: { modelId: 'unet-landcover-v1', version: 'v1', configHash: 'hash' }
-    };
-}
-function trainUNetModel(split: any, config: any, params: any) { return { run: {} }; }
 import { logger } from '@/lib/logger';
 import { redactSensitive } from '@/lib/security';
-import { buildSyntheticSplitFromLandCover, getPercentageChange, latestMetricValue } from '@/ai/flows/compute-metrics-helpers';
+import { getPercentageChange } from '@/ai/flows/compute-metrics-helpers';
 import { enqueueJob, queueDepth } from '@/lib/job-queue';
 import { getSupabase } from '@/lib/supabase';
 
@@ -123,6 +110,13 @@ const ComputeMetricsOutputSchema = z.object({
                     version: z.string(),
                     configHash: z.string(),
                 }),
+            })
+            .optional(),
+        changeHeatmap: z
+            .object({
+                grid: z.array(z.number()),
+                width: z.number().int(),
+                height: z.number().int(),
             })
             .optional(),
 });
@@ -267,7 +261,9 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
                         reducer: ee.Reducer.mean(),
                         geometry: point,
                         scale: 10,
-                        maxPixels: 1e9
+                        maxPixels: 1e9,
+                        bestEffort: true,
+                        tileScale: 4
                     });
                     const featureProps: any = {
                         'system:time_start': image.get('system:time_start'),
@@ -285,11 +281,31 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
                 const firstImage = withMetrics.first();
                 const lastImage = withMetrics.sort('system:time_start', false).first();
 
+                // Real per-pixel land-cover classification grid for the end date, built from the
+                // same NDVI/NDWI/NDBI thresholds used for the area stats below (0=other, 1=vegetation,
+                // 2=built-up, 3=water) - sampled at a coarse scale so it stays a small, fast payload.
+                const classImage = classifyLandCover(lastImage)
+                    .reproject({ crs: 'EPSG:4326', scale: 200 });
+                const classGridSample = classImage.sampleRectangle({ region: areaOfInterest, defaultValue: 0 });
+
+                // Real per-pixel change magnitude between the start and end images (mean absolute
+                // difference across NDVI/NDWI/NDBI), sampled at the same grid - not a synthetic pattern.
+                const changeImage = lastImage.select(['NDVI', 'NDWI', 'NDBI'])
+                    .subtract(firstImage.select(['NDVI', 'NDWI', 'NDBI']))
+                    .abs()
+                    .reduce(ee.Reducer.mean())
+                    .rename('changeMag')
+                    .reproject({ crs: 'EPSG:4326', scale: 200 });
+                const changeGridSample = changeImage.sampleRectangle({ region: areaOfInterest, defaultValue: 0 });
+
                 const evaluateAll = ee.Dictionary({
                     timeSeries: chartData.toList(chartData.size()),
                     landCoverStart: calculateLandCoverStats(firstImage, areaOfInterest),
                     landCoverEnd: calculateLandCoverStats(lastImage, areaOfInterest),
                     regionGeoJSON: areaOfInterest,
+                    classGrid: classGridSample.get('classId'),
+                    changeGrid: changeGridSample.get('changeMag'),
+                    avgCloudyPct: collection.aggregate_mean('CLOUDY_PIXEL_PERCENTAGE'),
                 });
 
                 evaluateAll.evaluate((result: any, error: any) => {
@@ -326,6 +342,26 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
     });
 }
 
+// Shared NDVI/NDWI/NDBI thresholds: single source of truth for what counts as
+// vegetation/water/built-up/other, used both for the area stats and the pixel-grid classification.
+const classifyLandCover = (image: any) => {
+    const ndvi = image.select('NDVI');
+    const ndwi = image.select('NDWI');
+    const ndbi = image.select('NDBI');
+
+    const water = ndwi.gt(0.0);
+    const vegetation = ndvi.gt(0.2).and(water.not());
+    const builtUp = ndbi.gt(0.0).and(vegetation.not()).and(water.not());
+
+    // classId: 0 = other, 1 = vegetation, 2 = built-up, 3 = water
+    return ee.Image(0)
+        .where(vegetation, 1)
+        .where(builtUp, 2)
+        .where(water, 3)
+        .rename('classId')
+        .toInt();
+};
+
 const calculateLandCoverStats = (image: any, areaOfInterest: any) => {
     const ndvi = image.select('NDVI');
     const ndwi = image.select('NDWI');
@@ -342,7 +378,9 @@ const calculateLandCoverStats = (image: any, areaOfInterest: any) => {
         reducer: ee.Reducer.sum(),
         geometry: areaOfInterest,
         scale: 30,
-        maxPixels: 1e10
+        maxPixels: 1e10,
+        bestEffort: true,
+        tileScale: 4
     }).get(cover.bandNames().get(0));
 
     return ee.Dictionary({
@@ -447,65 +485,62 @@ const computeMetricsFlow = async (input: ComputeMetricsInput, jobId: string) => 
         // We continue without the analysis result, rather than failing the whole job.
     }
 
-    const ndviLatest = latestMetricValue(timeSeriesResult.NDVI);
-    const ndwiLatest = latestMetricValue(timeSeriesResult.NDWI);
-    const ndbiLatest = latestMetricValue(timeSeriesResult.NDBI);
-    const nbrLatest = latestMetricValue(timeSeriesResult.NBR);
+    // Real classification grid sampled directly from the same NDVI/NDWI/NDBI thresholds used for
+    // landCoverAnalysis above (see classifyLandCover in this file) - no model, no synthetic data.
+    const classGrid: number[][] = Array.isArray(eeData.classGrid) ? eeData.classGrid : [];
+    const gridHeight = classGrid.length;
+    const gridWidth = gridHeight > 0 ? classGrid[0].length : 0;
+    const mask = classGrid.flat();
 
-    const syntheticSplit = buildSyntheticSplitFromLandCover(
-        landCoverAnalysis,
-        ndviLatest,
-        ndwiLatest,
-        ndbiLatest,
-        nbrLatest
+    const CLASS_NAMES = ['other', 'vegetation', 'builtUp', 'water'] as const;
+    const classCounts = [0, 0, 0, 0];
+    mask.forEach((classId) => {
+        if (classId >= 0 && classId < classCounts.length) classCounts[classId]++;
+    });
+    const totalCells = mask.length || 1;
+    const classConfidence = Object.fromEntries(
+        CLASS_NAMES.map((name, idx) => [name, classCounts[idx] / totalCells])
     );
 
-    const trained = trainUNetModel(
-        syntheticSplit,
-        {
-            modelId: 'unet-landcover-v1',
-            encoderDepth: 4,
-            inputChannels: 8,
-            numClasses: 4,
-            baseFilters: 32,
-            dropoutRate: 0.1,
+    // Confidence here is a real data-quality signal (fraction of the imagery that was cloud-free),
+    // not a model score - there is no trained model in this pipeline.
+    const avgCloudyPct = typeof eeData.avgCloudyPct === 'number' ? eeData.avgCloudyPct : 100;
+    const meanConfidence = Math.min(1, Math.max(0, 1 - avgCloudyPct / 100));
+
+    const segmentationInference = gridWidth > 0 && gridHeight > 0 ? {
+        mask,
+        width: gridWidth,
+        height: gridHeight,
+        meanConfidence,
+        classConfidence,
+        postProcessing: { smoothingKernel: 0, isolatedPixelFixes: 0 },
+        model: {
+            modelId: 'spectral-threshold-classifier',
+            version: 'v1',
+            configHash: 'ndvi-gt-0.2_ndwi-gt-0_ndbi-gt-0',
         },
-        {
-            datasetVersion: 'inline-landcover-v1',
-            seed: 20260310,
-            epochs: 8,
-            batchSize: 8,
-            learningRate: 0.001,
-            lossStrategy: 'focal',
-            augmentationPolicyVersion: 'phase1-aug-v1',
-        }
-    );
+    } : undefined;
 
-    const artifact = packageModelArtifact(trained.run, 'v1');
-    const segmentationInference = runSegmentationInference(
-        {
-            width: 64,
-            height: 64,
-            features: {
-                vegetationRatio: landCoverAnalysis.vegetation.endArea,
-                waterRatio: landCoverAnalysis.water.endArea,
-                builtUpRatio: landCoverAnalysis.builtUp.endArea,
-                otherRatio: landCoverAnalysis.other.endArea,
-                ndvi: ndviLatest,
-                ndwi: ndwiLatest,
-                ndbi: ndbiLatest,
-                nbr: nbrLatest,
-            },
-        },
-        artifact
-    );
+    // Real per-pixel change-magnitude grid (mean |NDVI/NDWI/NDBI difference| between the start and
+    // end images), normalized 0-1 against its own max so the heatmap has visual contrast.
+    const rawChangeGrid: number[][] = Array.isArray(eeData.changeGrid) ? eeData.changeGrid : [];
+    const changeHeight = rawChangeGrid.length;
+    const changeWidth = changeHeight > 0 ? rawChangeGrid[0].length : 0;
+    const flatChange = rawChangeGrid.flat();
+    const maxChange = flatChange.reduce((max, v) => Math.max(max, v), 0);
+    const changeHeatmap = changeWidth > 0 && changeHeight > 0 ? {
+        grid: maxChange > 0 ? flatChange.map((v) => v / maxChange) : flatChange.map(() => 0),
+        width: changeWidth,
+        height: changeHeight,
+    } : undefined;
 
-    const finalResult = { 
+    const finalResult = {
         timeSeries: timeSeriesResult,
         landCover: landCoverAnalysis,
         historicalWeather: historicalWeatherResult,
         changeAnalysis: changeAnalysisResult,
         segmentationInference,
+        changeHeatmap,
     };
     
     if (memoryJobs.has(jobId)) {
