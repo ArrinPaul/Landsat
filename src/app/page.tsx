@@ -50,22 +50,22 @@ export default function LandingPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center divide-x divide-border/50">
               <div className="flex flex-col items-center justify-center space-y-2">
                 <Globe2 className="h-6 w-6 text-primary mb-2 opacity-80" />
-                <h4 className="text-3xl font-bold tracking-tighter">Global</h4>
+                <p className="text-3xl font-bold tracking-tighter">Global</p>
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Any Coordinates on Earth</p>
               </div>
               <div className="flex flex-col items-center justify-center space-y-2">
                 <Activity className="h-6 w-6 text-primary mb-2 opacity-80" />
-                <h4 className="text-3xl font-bold tracking-tighter">NDVI · NDWI · NDBI</h4>
+                <p className="text-3xl font-bold tracking-tighter">NDVI · NDWI · NDBI</p>
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Key Spectral Indices</p>
               </div>
               <div className="flex flex-col items-center justify-center space-y-2">
                 <ShieldCheck className="h-6 w-6 text-primary mb-2 opacity-80" />
-                <h4 className="text-3xl font-bold tracking-tighter">Earth Engine</h4>
+                <p className="text-3xl font-bold tracking-tighter">Earth Engine</p>
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Built on Google Earth Engine</p>
               </div>
               <div className="flex flex-col items-center justify-center space-y-2">
                 <BrainCircuit className="h-6 w-6 text-primary mb-2 opacity-80" />
-                <h4 className="text-3xl font-bold tracking-tighter">AI</h4>
+                <p className="text-3xl font-bold tracking-tighter">AI</p>
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Crop & Risk Predictions</p>
               </div>
             </div>
