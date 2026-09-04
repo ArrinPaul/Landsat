@@ -311,18 +311,30 @@ const SATELLITE_CONFIGS: Record<SatelliteSource, SatelliteConfig> = {
     },
 };
 
+// Picks a thumbnail resolution that roughly matches the source's native pixel size instead of
+// always requesting a fixed 512x512 image. Requesting far more output pixels than the sensor
+// actually has (e.g. a 512px thumbnail over a 100m-wide, 30m-native-resolution Landsat scene)
+// just blows each real pixel up into a giant, blocky square - this keeps ~2x oversampling
+// (for smoothing headroom) instead, clamped to a sane min/max for the UI.
+function pickThumbDimension(areaDiameterMeters: number, nativeResolutionMeters: number): number {
+    const idealPixels = (areaDiameterMeters * 2) / nativeResolutionMeters;
+    return Math.round(Math.min(1024, Math.max(256, idealPixels)));
+}
+
 // Sub-meter true-color aerial imagery (USDA NAIP), US coverage only. Purely additive: when the
 // area of interest falls outside NAIP coverage or no scene is available, this resolves to null
 // instead of failing the whole analysis.
-async function tryGetNaipThumbnail(areaOfInterest: any): Promise<string | null> {
+async function tryGetNaipThumbnail(areaOfInterest: any, radiusMeters: number): Promise<string | null> {
     try {
         const naip = ee.ImageCollection('USDA/NAIP/DOQQ').filterBounds(areaOfInterest);
         const size = await evaluateWithRetry(naip.size(), 'NAIP availability check', 1);
         if (!size) return null;
 
         const mostRecent = naip.sort('system:time_start', false).first();
-        const vis = mostRecent.visualize({ bands: ['R', 'G', 'B'], min: 0, max: 255 });
-        const url = vis.getThumbURL({ dimensions: '512x512', region: areaOfInterest, format: 'png' });
+        // NAIP is natively ~0.6-1m/pixel - bilinear resample smooths the upsampling for small AOIs.
+        const vis = mostRecent.resample('bilinear').visualize({ bands: ['R', 'G', 'B'], min: 0, max: 255 });
+        const dim = pickThumbDimension(radiusMeters * 2, 1);
+        const url = vis.getThumbURL({ dimensions: `${dim}x${dim}`, region: areaOfInterest, format: 'png' });
         return url || null;
     } catch (err) {
         logger.error('naip_thumbnail_failed', { scope: 'ai.flows.compute-metrics', error: redactSensitive(err instanceof Error ? err.message : String(err)) });
@@ -442,7 +454,7 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
         config.cloudProperty
             ? evaluateWithRetry(collection.aggregate_mean(config.cloudProperty), 'cloud percentage evaluation')
             : Promise.resolve(null),
-        tryGetNaipThumbnail(areaOfInterest),
+        tryGetNaipThumbnail(areaOfInterest, radiusMeters),
     ]);
 
     if (!timeSeries || !Array.isArray(timeSeries)) throw new Error("No time-series data returned from Earth Engine.");
@@ -453,7 +465,10 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
     if (highResMapUrl) result.highResMapUrl = highResMapUrl;
 
     const createTrueColorImage = (image: any) => {
-        return image.visualize({
+        // Bilinear resample instead of GEE's default nearest-neighbor: nearest-neighbor blows
+        // each native sensor pixel up into a hard, blocky square once the thumbnail resolution
+        // exceeds native resolution (always true for a tight, few-hundred-meter radius).
+        return image.resample('bilinear').visualize({
             bands: config.trueColor.bands,
             min: config.trueColor.min,
             max: config.trueColor.max,
@@ -464,8 +479,14 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
     const beforeVis = createTrueColorImage(firstImage);
     const afterVis = createTrueColorImage(lastImage);
 
-    result.beforeMapUrl = beforeVis.getThumbURL({ dimensions: '512x512', region: result.regionGeoJSON, format: 'png' });
-    result.afterMapUrl = afterVis.getThumbURL({ dimensions: '512x512', region: result.regionGeoJSON, format: 'png' });
+    // Match the requested thumbnail resolution to the source's native pixel size (~2x
+    // oversampled for smoothing headroom) instead of always asking for 512x512 - see
+    // pickThumbDimension for why that mismatch is what caused the pixelation.
+    const mapDim = pickThumbDimension(radiusMeters * 2, config.scale);
+    const mapDimensions = `${mapDim}x${mapDim}`;
+
+    result.beforeMapUrl = beforeVis.getThumbURL({ dimensions: mapDimensions, region: result.regionGeoJSON, format: 'png' });
+    result.afterMapUrl = afterVis.getThumbURL({ dimensions: mapDimensions, region: result.regionGeoJSON, format: 'png' });
 
     if (!result.beforeMapUrl || !result.afterMapUrl) throw new Error("Could not generate land cover map URLs.");
 
