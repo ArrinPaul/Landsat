@@ -44,15 +44,22 @@ const LandCoverChangeStatSchema = z.object({
 const SatelliteSourceSchema = z.enum(['sentinel2', 'landsat', 'modis']);
 export type SatelliteSource = z.infer<typeof SatelliteSourceSchema>;
 
+// [longitude, latitude], matching GeoJSON coordinate order.
+const LngLatSchema = z.tuple([z.number(), z.number()]);
+const PolygonRingSchema = z.array(LngLatSchema).min(4);
+
 const ComputeMetricsInputSchema = z.object({
   latitude: z.number().describe('The latitude of the location.'),
   longitude: z.number().describe('The longitude of the location.'),
   startDate: z.string().describe('The start date of the date range (YYYY-MM-DD).'),
   endDate: z.string().describe('The end date of the date range (YYYY-MM-DD).'),
   // Radius (meters) of the area of interest around the point. Defaults to a tight, field-scale
-  // footprint rather than an entire city.
+  // footprint rather than an entire city. Ignored when `polygon` is provided.
   radiusMeters: z.number().min(10).max(2000).default(100),
   satelliteSource: SatelliteSourceSchema.default('sentinel2'),
+  // A user-drawn boundary (closed ring of [lng, lat] pairs). When present, this replaces the
+  // radius-based circle as the area of interest.
+  polygon: PolygonRingSchema.optional(),
 });
 export type ComputeMetricsInput = z.infer<typeof ComputeMetricsInputSchema>;
 
@@ -92,6 +99,7 @@ const ChangeAnalysisSchema = z.object({
 const ComputeMetricsOutputSchema = z.object({
     satelliteSource: SatelliteSourceSchema.optional(),
     radiusMeters: z.number().optional(),
+    polygon: PolygonRingSchema.optional(),
     timeSeries: timeSeriesSchema,
     landCover: z.object({
         vegetation: LandCoverChangeStatSchema,
@@ -342,6 +350,56 @@ async function tryGetNaipThumbnail(areaOfInterest: any, radiusMeters: number): P
     }
 }
 
+const EARTH_RADIUS_METERS = 6371000;
+
+function haversineMeters(a: [number, number], b: [number, number]): number {
+    const [lon1, lat1] = a;
+    const [lon2, lat2] = b;
+    const toRad = (deg: number) => (deg * Math.PI) / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const sinLat = Math.sin(dLat / 2);
+    const sinLon = Math.sin(dLon / 2);
+    const h = sinLat * sinLat + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * sinLon * sinLon;
+    return 2 * EARTH_RADIUS_METERS * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+// A single "effective radius" for a hand-drawn polygon, reused everywhere the circle-based
+// radiusMeters currently drives thumbnail resolution and classification-grid density: half the
+// haversine distance across the polygon's lng/lat bounding box diagonal.
+function polygonBoundingRadiusMeters(coords: [number, number][]): number {
+    const lons = coords.map((c) => c[0]);
+    const lats = coords.map((c) => c[1]);
+    const sw: [number, number] = [Math.min(...lons), Math.min(...lats)];
+    const ne: [number, number] = [Math.max(...lons), Math.max(...lats)];
+    return haversineMeters(sw, ne) / 2;
+}
+
+// Planar shoelace-formula area approximation (fine at city/parcel scale) used only to reject
+// absurdly large hand-drawn polygons before they ever reach Earth Engine.
+function polygonAreaSqKm(coords: [number, number][]): number {
+    const avgLat = coords.reduce((sum, c) => sum + c[1], 0) / coords.length;
+    const metersPerDegLon = 111320 * Math.cos((avgLat * Math.PI) / 180);
+    const metersPerDegLat = 110540;
+    const projected = coords.map(([lon, lat]) => [lon * metersPerDegLon, lat * metersPerDegLat]);
+
+    let area = 0;
+    for (let i = 0; i < projected.length; i++) {
+        const [x1, y1] = projected[i];
+        const [x2, y2] = projected[(i + 1) % projected.length];
+        area += x1 * y2 - x2 * y1;
+    }
+    return Math.abs(area / 2) / 1e6;
+}
+
+const MAX_POLYGON_AREA_SQ_KM = 100;
+
+function centroidOf(coords: [number, number][]): [number, number] {
+    const lon = coords.reduce((sum, c) => sum + c[0], 0) / coords.length;
+    const lat = coords.reduce((sum, c) => sum + c[1], 0) / coords.length;
+    return [lon, lat];
+}
+
 async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
     const creds = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
     if (!creds) {
@@ -358,10 +416,25 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
 
     const source = input.satelliteSource ?? 'sentinel2';
     const config = SATELLITE_CONFIGS[source];
-    const radiusMeters = input.radiusMeters ?? 100;
 
-    const point = ee.Geometry.Point([input.longitude, input.latitude]);
-    const areaOfInterest = point.buffer(radiusMeters); // Tight, field-scale area of interest.
+    let point: any;
+    let areaOfInterest: any;
+    let radiusMeters: number;
+
+    if (input.polygon) {
+        const areaSqKm = polygonAreaSqKm(input.polygon);
+        if (areaSqKm > MAX_POLYGON_AREA_SQ_KM) {
+            throw new Error(`The drawn boundary is too large (~${areaSqKm.toFixed(1)} km²). Please draw a smaller area (up to ${MAX_POLYGON_AREA_SQ_KM} km²).`);
+        }
+        const [centroidLon, centroidLat] = centroidOf(input.polygon);
+        point = ee.Geometry.Point([centroidLon, centroidLat]);
+        areaOfInterest = ee.Geometry.Polygon([input.polygon]);
+        radiusMeters = polygonBoundingRadiusMeters(input.polygon);
+    } else {
+        radiusMeters = input.radiusMeters ?? 100;
+        point = ee.Geometry.Point([input.longitude, input.latitude]);
+        areaOfInterest = point.buffer(radiusMeters); // Tight, field-scale area of interest.
+    }
 
     let collection = config.getCollection(areaOfInterest, input.startDate, input.endDate);
     if (config.cloudProperty) {
@@ -396,10 +469,14 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
         return image.addBands([ndvi, ndwi, ndbi, nbr]).copyProperties(rawImage, ['system:time_start']);
     });
 
+    // For a drawn polygon, average over the whole shape (a real area signal); for a circle,
+    // sampling the center pixel is representative enough and cheaper.
+    const timeSeriesGeometry = input.polygon ? areaOfInterest : point;
+
     const chartData = withMetrics.select(['NDVI', 'NDWI', 'NDBI', 'NBR', ...nativeBands]).map((image: any) => {
         const mean = image.reduceRegion({
             reducer: ee.Reducer.mean(),
-            geometry: point,
+            geometry: timeSeriesGeometry,
             scale: config.scale,
             maxPixels: 1e9,
             bestEffort: true,
@@ -461,7 +538,7 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
     if (!landCoverStart || !landCoverEnd) throw new Error("Could not compute land cover analysis. The area might be too small or lack valid imagery at the start/end dates.");
     if (!regionGeoJSON) throw new Error("Could not evaluate the region geometry for map generation.");
 
-    const result: any = { timeSeries, landCoverStart, landCoverEnd, regionGeoJSON, classGrid, changeGrid, avgCloudyPct, satelliteSource: source, radiusMeters };
+    const result: any = { timeSeries, landCoverStart, landCoverEnd, regionGeoJSON, classGrid, changeGrid, avgCloudyPct, satelliteSource: source, radiusMeters, polygon: input.polygon };
     if (highResMapUrl) result.highResMapUrl = highResMapUrl;
 
     const createTrueColorImage = (image: any) => {
@@ -694,6 +771,7 @@ const computeMetricsFlow = async (input: ComputeMetricsInput, jobId: string) => 
     const finalResult = {
         satelliteSource: eeData.satelliteSource,
         radiusMeters: eeData.radiusMeters,
+        polygon: eeData.polygon,
         timeSeries: timeSeriesResult,
         landCover: landCoverAnalysis,
         historicalWeather: historicalWeatherResult,

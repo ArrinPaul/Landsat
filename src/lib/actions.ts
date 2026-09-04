@@ -19,6 +19,7 @@ import { analyzeDroughtAndFloodRisk } from "@/ai/flows/analyze-drought-flood-ris
 import { getAdvancedCropAdvice, type AdvancedCropAdviceInput } from "@/ai/flows/get-advanced-crop-advice";
 import { generateTimelapseVideo } from "@/ai/flows/generate-timelapse-video";
 import { runScenarioAnalysis } from "@/ai/tools/run-scenario-analysis";
+import { geocodePlace, type GeocodeResult } from "@/services/nominatim";
 import { logger } from '@/lib/logger';
 import { redactSensitive, sanitizePromptPayload } from '@/lib/security';
 import { getAuthContext, requireRole } from '@/lib/auth';
@@ -30,6 +31,7 @@ import {
     ComputeMetricsInputActionSchema,
     CoordinatesSchema,
     GenerateReportActionSchema,
+    GeocodeActionSchema,
     PredictCropYieldActionSchema,
     ScenarioAnalysisActionSchema,
     SuggestCoordinatesActionSchema,
@@ -167,6 +169,28 @@ export async function getMetricsResultAction(jobId: string, _latitude: number, _
 
 export async function suggestCoordinatesAction(locationDescription: string) {
     return handleAction(suggestCoordinates, SuggestCoordinatesActionSchema.parse({ locationDescription }));
+}
+
+// Deliberately bypasses handleAction: geocoding is a plain OpenStreetMap lookup that needs no
+// AI/Earth Engine credentials, so it shouldn't be blocked by handleAction's "no API keys
+// configured" gate. Still rate-limited per-user/IP like every other action.
+export async function geocodeCityAction(query: string): Promise<{ data: GeocodeResult[] | null; error: string | null }> {
+    const parsed = GeocodeActionSchema.parse({ query });
+    const auth = await getAuthContext();
+    const requestId = createRequestId();
+
+    return withTraceContext({ requestId, userId: auth.userId, ip: auth.ip, route: 'action:geocodeCityAction' }, async () => {
+        if (isRateLimited(auth.userId, { ip: auth.ip, endpoint: 'geocodeCityAction' })) {
+            return { data: null, error: "Too Many Requests: You have exceeded the rate limit. Please try again in a moment." };
+        }
+        try {
+            const results = await geocodePlace(parsed.query);
+            return { data: results, error: null };
+        } catch (error) {
+            logger.error('geocode_action_failed', { scope: 'lib.actions', error: getErrorMessage(error) });
+            return { data: null, error: getErrorMessage(error) };
+        }
+    });
 }
 
 export async function generateInsightAction(input: GenerateDataInsightsInput) {

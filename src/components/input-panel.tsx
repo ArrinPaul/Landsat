@@ -3,6 +3,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { format } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { Button } from "@/components/ui/button";
@@ -12,14 +13,22 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar as CalendarIcon, Upload, Wand2, Cpu, Loader2, History, Wheat, Satellite } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar as CalendarIcon, Upload, Wand2, Cpu, Loader2, History, Wheat, Satellite, Search, MapPinned, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { parseCsv } from "@/lib/csv";
-import { suggestCoordinatesAction } from "@/lib/actions";
-import type { GroundTruthDataPoint, HistoryEntry, SatelliteSource } from "@/lib/types";
+import { suggestCoordinatesAction, geocodeCityAction } from "@/lib/actions";
+import type { GroundTruthDataPoint, HistoryEntry, SatelliteSource, LocationMode } from "@/lib/types";
+import type { GeocodeResult } from "@/services/nominatim";
+import type { FlyToTarget } from "@/components/boundary-map";
 import { ScrollArea } from "./ui/scroll-area";
 import { useLanguage } from "@/hooks/use-language";
+
+const BoundaryMap = dynamic(() => import("@/components/boundary-map"), {
+  ssr: false,
+  loading: () => <div className="h-[400px] w-full rounded-lg border flex items-center justify-center text-sm text-muted-foreground">Loading map...</div>,
+});
 
 const SATELLITE_OPTIONS: { value: SatelliteSource; label: string; hint: string }[] = [
   { value: "sentinel2", label: "Sentinel-2 (10m)", hint: "Best default: 10m resolution, ~5-day revisit" },
@@ -43,6 +52,10 @@ interface InputPanelProps {
   setRadiusMeters: (val: number) => void;
   satelliteSource: SatelliteSource;
   setSatelliteSource: (val: SatelliteSource) => void;
+  mode: LocationMode;
+  setMode: (val: LocationMode) => void;
+  polygon: [number, number][] | null;
+  setPolygon: (val: [number, number][] | null) => void;
   onCompute: () => void;
   isComputing: boolean;
   onFileUpload: (data: GroundTruthDataPoint[] | null) => void;
@@ -53,13 +66,19 @@ interface InputPanelProps {
 export function InputPanel({
   lat, setLat, lon, setLon, locationDesc, setLocationDesc,
   dateRange, setDateRange, radiusMeters, setRadiusMeters,
-  satelliteSource, setSatelliteSource, onCompute, isComputing, onFileUpload,
+  satelliteSource, setSatelliteSource, mode, setMode, polygon, setPolygon,
+  onCompute, isComputing, onFileUpload,
   history, onHistorySelect
 }: InputPanelProps) {
   const { t } = useLanguage();
   const { toast } = useToast();
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [fileName, setFileName] =useState<string>("");
+  const [citySearch, setCitySearch] = useState("");
+  const [isGeocoding, setIsGeocoding] = useState(false);
+  const [geocodeResults, setGeocodeResults] = useState<GeocodeResult[]>([]);
+  const [flyTo, setFlyTo] = useState<FlyToTarget | null>(null);
+  const [mapCenter, setMapCenter] = useState<[number, number]>([40.7128, -74.006]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -101,6 +120,35 @@ export function InputPanel({
     setIsSuggesting(false);
   };
 
+  const handleCitySearch = async () => {
+    if (!citySearch || citySearch.trim().length < 2) return;
+    setIsGeocoding(true);
+    setGeocodeResults([]);
+    const result = await geocodeCityAction(citySearch);
+    if (result.error) {
+      toast({ title: "Search failed", description: result.error, variant: "destructive" });
+    } else if (result.data && result.data.length > 0) {
+      setGeocodeResults(result.data);
+    } else {
+      toast({ title: "No results", description: `Nothing found for "${citySearch}".` });
+    }
+    setIsGeocoding(false);
+  };
+
+  const handleSelectGeocodeResult = (place: GeocodeResult) => {
+    setMapCenter([place.latitude, place.longitude]);
+    setFlyTo({
+      latitude: place.latitude,
+      longitude: place.longitude,
+      boundingBox: place.boundingBox,
+      token: Date.now(),
+    });
+    setGeocodeResults([]);
+    setCitySearch(place.displayName);
+  };
+
+  const polygonAreaLabel = polygon && polygon.length >= 4 ? `${polygon.length - 1} points drawn` : "No boundary drawn yet";
+
   return (
     <Card>
       <CardHeader>
@@ -110,51 +158,118 @@ export function InputPanel({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-           <div className="space-y-2 col-span-1 md:col-span-2">
-            <Label htmlFor="location-desc">{t('dashboard.input.locationDesc')}</Label>
-            <div className="flex gap-2">
-              <Input
-                id="location-desc"
-                className="flex-1"
-                placeholder={t('dashboard.input.locationDescPlaceholder')}
-                value={locationDesc}
-                onChange={(e) => setLocationDesc(e.target.value)}
-                disabled={isSuggesting}
-              />
-              <Button onClick={handleSuggestCoordinates} disabled={isSuggesting || !locationDesc} size="icon">
-                {isSuggesting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-                <span className="sr-only">{t('predict.suggestCoordinates')}</span>
-              </Button>
+        <Tabs value={mode} onValueChange={(v) => setMode(v as LocationMode)}>
+          <TabsList className="grid grid-cols-2 w-full sm:w-[400px]">
+            <TabsTrigger value="radius">Point + Radius</TabsTrigger>
+            <TabsTrigger value="polygon">Draw Boundary</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="radius" className="pt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2 col-span-1 md:col-span-2">
+                <Label htmlFor="location-desc">{t('dashboard.input.locationDesc')}</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="location-desc"
+                    className="flex-1"
+                    placeholder={t('dashboard.input.locationDescPlaceholder')}
+                    value={locationDesc}
+                    onChange={(e) => setLocationDesc(e.target.value)}
+                    disabled={isSuggesting}
+                  />
+                  <Button onClick={handleSuggestCoordinates} disabled={isSuggesting || !locationDesc} size="icon">
+                    {isSuggesting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+                    <span className="sr-only">{t('predict.suggestCoordinates')}</span>
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="latitude">{t('predict.latitude')}</Label>
+                <Input id="latitude" placeholder="e.g., 40.7128" value={lat} onChange={(e) => setLat(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="longitude">{t('predict.longitude')}</Label>
+                <Input id="longitude" placeholder="e.g., -74.0060" value={lon} onChange={(e) => setLon(e.target.value)} />
+              </div>
+              <div className="space-y-2 col-span-1 md:col-span-2">
+                <Label htmlFor="radius">Analysis radius (meters)</Label>
+                <Input
+                  id="radius"
+                  type="number"
+                  min={MIN_RADIUS_M}
+                  max={MAX_RADIUS_M}
+                  value={radiusMeters}
+                  onChange={(e) => {
+                    const parsed = parseInt(e.target.value, 10);
+                    if (!Number.isNaN(parsed)) {
+                      setRadiusMeters(Math.min(MAX_RADIUS_M, Math.max(MIN_RADIUS_M, parsed)));
+                    }
+                  }}
+                />
+                <p className="text-xs text-muted-foreground">
+                  How far around the pin to analyze - small values ({MIN_RADIUS_M}-200m) target a specific field or lot; larger values cover more ground.
+                </p>
+              </div>
             </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="latitude">{t('predict.latitude')}</Label>
-            <Input id="latitude" placeholder="e.g., 40.7128" value={lat} onChange={(e) => setLat(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="longitude">{t('predict.longitude')}</Label>
-            <Input id="longitude" placeholder="e.g., -74.0060" value={lon} onChange={(e) => setLon(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="radius">Analysis radius (meters)</Label>
-            <Input
-              id="radius"
-              type="number"
-              min={MIN_RADIUS_M}
-              max={MAX_RADIUS_M}
-              value={radiusMeters}
-              onChange={(e) => {
-                const parsed = parseInt(e.target.value, 10);
-                if (!Number.isNaN(parsed)) {
-                  setRadiusMeters(Math.min(MAX_RADIUS_M, Math.max(MIN_RADIUS_M, parsed)));
-                }
-              }}
+          </TabsContent>
+
+          <TabsContent value="polygon" className="pt-4 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="city-search">Search a city or place</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="city-search"
+                  className="flex-1"
+                  placeholder="e.g., Austin, Texas"
+                  value={citySearch}
+                  onChange={(e) => setCitySearch(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleCitySearch(); } }}
+                  disabled={isGeocoding}
+                />
+                <Button onClick={handleCitySearch} disabled={isGeocoding || citySearch.trim().length < 2} size="icon">
+                  {isGeocoding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                  <span className="sr-only">Search</span>
+                </Button>
+              </div>
+              {geocodeResults.length > 0 && (
+                <div className="rounded-md border divide-y">
+                  {geocodeResults.map((place, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => handleSelectGeocodeResult(place)}
+                      className="w-full text-left text-sm p-2 hover:bg-muted flex items-start gap-2"
+                    >
+                      <MapPinned className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
+                      <span className="truncate">{place.displayName}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <BoundaryMap
+              center={mapCenter}
+              initialPolygon={polygon ?? undefined}
+              onPolygonChange={setPolygon}
+              flyTo={flyTo}
             />
+
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">{polygonAreaLabel}</span>
+              {polygon && (
+                <Button variant="ghost" size="sm" onClick={() => setPolygon(null)}>
+                  <X className="mr-1 h-3.5 w-3.5" /> Clear boundary
+                </Button>
+              )}
+            </div>
             <p className="text-xs text-muted-foreground">
-              How far around the pin to analyze - small values ({MIN_RADIUS_M}-200m) target a specific field or lot; larger values cover more ground.
+              Use the polygon tool on the map to draw your plot&apos;s boundary. The analysis will run against exactly that shape instead of a circle.
             </p>
-          </div>
+          </TabsContent>
+        </Tabs>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
             <Label htmlFor="satellite-source">Satellite source</Label>
             <Select value={satelliteSource} onValueChange={(v) => setSatelliteSource(v as SatelliteSource)}>

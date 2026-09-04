@@ -6,6 +6,7 @@ import {
   CoordinatesSchema,
   DateStringSchema,
   GenerateReportActionSchema,
+  GeocodeActionSchema,
   PredictCropYieldActionSchema,
   ScenarioAnalysisActionSchema,
   SuggestCoordinatesActionSchema,
@@ -75,5 +76,42 @@ describe('action contract schemas', () => {
       ScenarioAnalysisActionSchema.parse({ latitude: 4, longitude: 5, scenarioDescription: 'warming by 2C' })
     ).toBeTruthy();
     expect(TextToSpeechActionSchema.parse({ text: 'hello' })).toBeTruthy();
+  });
+
+  it('parses geocode query input', () => {
+    expect(GeocodeActionSchema.parse({ query: 'Austin, Texas' })).toBeTruthy();
+    expect(() => GeocodeActionSchema.parse({ query: 'a' })).toThrow();
+  });
+
+  it('parses compute metrics input with a drawn polygon boundary', () => {
+    const closedRing = [
+      [72.0, 11.0],
+      [72.01, 11.0],
+      [72.01, 11.01],
+      [72.0, 11.0],
+    ];
+    const parsed = ComputeMetricsInputActionSchema.parse({
+      latitude: 11.0,
+      longitude: 72.0,
+      startDate: '2026-01-01',
+      endDate: '2026-02-01',
+      polygon: closedRing,
+    });
+    expect(parsed.polygon).toEqual(closedRing);
+  });
+
+  it('rejects a polygon with fewer than 4 points', () => {
+    expect(() =>
+      ComputeMetricsInputActionSchema.parse({
+        latitude: 11.0,
+        longitude: 72.0,
+        startDate: '2026-01-01',
+        endDate: '2026-02-01',
+        polygon: [
+          [72.0, 11.0],
+          [72.01, 11.0],
+        ],
+      })
+    ).toThrow();
   });
 });

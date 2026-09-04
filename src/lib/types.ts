@@ -57,6 +57,8 @@ export interface WeatherData {
     summary: string;
 }
 
+export type LocationMode = "radius" | "polygon";
+
 export interface HistoryEntry {
   id: string;
   lat: string;
@@ -66,6 +68,9 @@ export interface HistoryEntry {
   timestamp: Date;
   radiusMeters?: number;
   satelliteSource?: SatelliteSource;
+  mode?: LocationMode;
+  /** A user-drawn boundary: closed ring of [lng, lat] pairs. */
+  polygon?: [number, number][];
 }
 
 export interface Crop {
@@ -174,6 +179,7 @@ export interface HistoricalDataPoint {
 export interface AnalysisResult {
     satelliteSource?: SatelliteSource;
     radiusMeters?: number;
+    polygon?: [number, number][];
     timeSeries: TimeSeriesData;
     landCover: LandCoverAnalysis;
     historicalWeather: HistoricalDataPoint[];

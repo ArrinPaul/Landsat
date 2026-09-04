@@ -12,7 +12,7 @@ import { Visualizations } from "@/components/visualizations";
 import { WeatherReport } from "@/components/weather-report";
 import { LandCoverAnalysis } from "@/components/land-cover-analysis";
 import { useToast } from "@/hooks/use-toast";
-import type { GroundTruthDataPoint, SatellitePassData, WeatherData, HistoryEntry, AnalysisResult, SatelliteSource } from "@/lib/types";
+import type { GroundTruthDataPoint, SatellitePassData, WeatherData, HistoryEntry, AnalysisResult, SatelliteSource, LocationMode } from "@/lib/types";
 import { appendUserHistoryAction, listUserHistoryAction, predictSatellitePassAction, getWeatherReportAction, startMetricsComputationAction, getMetricsResultAction } from "@/lib/actions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
 import { Map, Loader2, AlertTriangle } from "lucide-react";
@@ -39,6 +39,8 @@ type StoredHistoryEntry = {
   dateTo?: string;
   radiusMeters?: number;
   satelliteSource?: SatelliteSource;
+  mode?: LocationMode;
+  polygon?: [number, number][];
 };
 
 export function Dashboard() {
@@ -49,6 +51,8 @@ export function Dashboard() {
   const [locationDesc, setLocationDesc] = useState("New York City");
   const [radiusMeters, setRadiusMeters] = useState(100);
   const [satelliteSource, setSatelliteSource] = useState<SatelliteSource>("sentinel2");
+  const [mode, setMode] = useState<LocationMode>("radius");
+  const [polygon, setPolygon] = useState<[number, number][] | null>(null);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: addDays(new Date(), -365),
     to: new Date(),
@@ -85,6 +89,8 @@ export function Dashboard() {
               },
               radiusMeters: payload.radiusMeters ? Number(payload.radiusMeters) : undefined,
               satelliteSource: payload.satelliteSource as SatelliteSource | undefined,
+              mode: payload.mode as LocationMode | undefined,
+              polygon: Array.isArray((item.payload as any).polygon) ? (item.payload as any).polygon : undefined,
             } as HistoryEntry;
           })
           .filter((entry) => !!entry.dateRange?.from && !!entry.dateRange?.to);
@@ -111,6 +117,8 @@ export function Dashboard() {
           },
           radiusMeters: entry.radiusMeters,
           satelliteSource: entry.satelliteSource,
+          mode: entry.mode,
+          polygon: entry.polygon,
         }));
         setHistory(restored.filter((entry) => !!entry.dateRange?.from && !!entry.dateRange?.to));
       } catch {
@@ -130,6 +138,8 @@ export function Dashboard() {
       dateTo: entry.dateRange?.to?.toISOString(),
       radiusMeters: entry.radiusMeters,
       satelliteSource: entry.satelliteSource,
+      mode: entry.mode,
+      polygon: entry.polygon,
     }));
     window.localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(serializable));
   }, [history]);
@@ -197,7 +207,11 @@ export function Dashboard() {
 
 
   const handleCompute = useCallback(async () => {
-    if (!lat || !lon) {
+    if (mode === 'polygon' && (!polygon || polygon.length < 4)) {
+      toast({ title: "No boundary drawn", description: "Draw a boundary on the map before computing metrics.", variant: "destructive" });
+      return;
+    }
+    if (mode === 'radius' && (!lat || !lon)) {
       toast({ title: t('dashboard.error.invalidCoords.title'), description: t('dashboard.error.invalidCoords.description'), variant: "destructive" });
       return;
     }
@@ -206,47 +220,62 @@ export function Dashboard() {
       return;
     }
 
+    // Point-based calls (weather, satellite pass, crop advisor) always need a single lat/lon -
+    // when drawing a boundary, use the polygon's centroid.
+    const effectiveLat = mode === 'polygon' && polygon
+      ? (polygon.reduce((sum, [, plat]) => sum + plat, 0) / polygon.length).toFixed(6)
+      : lat;
+    const effectiveLon = mode === 'polygon' && polygon
+      ? (polygon.reduce((sum, [plon]) => sum + plon, 0) / polygon.length).toFixed(6)
+      : lon;
+
     setComputationStatus('computing');
     setProgress(5);
     setAnalysisResult(null);
     setErrorState(null);
     setNextPass(null);
     setWeather(null);
-    
-    const newHistoryEntry: HistoryEntry = { id: new Date().toISOString(), lat, lon, locationDesc, dateRange, timestamp: new Date(), radiusMeters, satelliteSource };
+
+    const newHistoryEntry: HistoryEntry = {
+      id: new Date().toISOString(), lat: effectiveLat, lon: effectiveLon, locationDesc, dateRange, timestamp: new Date(),
+      radiusMeters, satelliteSource, mode, polygon: mode === 'polygon' ? (polygon ?? undefined) : undefined,
+    };
     setHistory(prev => [newHistoryEntry, ...prev.slice(0, 9)]);
     void appendUserHistoryAction('dashboard', {
-      lat,
-      lon,
+      lat: effectiveLat,
+      lon: effectiveLon,
       locationDesc,
       dateFrom: dateRange.from?.toISOString(),
       dateTo: dateRange.to?.toISOString(),
       radiusMeters,
       satelliteSource,
+      mode,
+      polygon: mode === 'polygon' ? polygon : undefined,
     });
 
     // Don't await ancillary data, let it fetch in the background
     setIsFetchingPass(true);
-    predictSatellitePassAction({ latitude: parseFloat(lat), longitude: parseFloat(lon) })
+    predictSatellitePassAction({ latitude: parseFloat(effectiveLat), longitude: parseFloat(effectiveLon) })
       .then(res => setNextPass(res.data))
       .catch(err => console.error("Failed to fetch satellite pass:", err))
       .finally(() => setIsFetchingPass(false));
 
     setIsFetchingWeather(true);
-    getWeatherReportAction({ latitude: parseFloat(lat), longitude: parseFloat(lon) })
+    getWeatherReportAction({ latitude: parseFloat(effectiveLat), longitude: parseFloat(effectiveLon) })
       .then(res => setWeather(res.data))
       .catch(err => console.error("Failed to fetch weather report:", err))
       .finally(() => setIsFetchingWeather(false));
-    
+
     setProgress(15);
 
     const result = await startMetricsComputationAction({
-        latitude: parseFloat(lat),
-        longitude: parseFloat(lon),
+        latitude: parseFloat(effectiveLat),
+        longitude: parseFloat(effectiveLon),
         startDate: formatISO(dateRange.from, { representation: 'date' }),
         endDate: formatISO(dateRange.to, { representation: 'date' }),
         radiusMeters,
         satelliteSource,
+        ...(mode === 'polygon' && polygon ? { polygon } : {}),
     });
 
     if (result.error || !result.data) {
@@ -256,10 +285,10 @@ export function Dashboard() {
     } else {
         setComputationStatus('polling');
         setProgress(25);
-        pollForResults(result.data.jobId, lat, lon, locationDesc, dateRange.from, dateRange.to);
+        pollForResults(result.data.jobId, effectiveLat, effectiveLon, locationDesc, dateRange.from, dateRange.to);
     }
 
-  }, [lat, lon, locationDesc, dateRange, radiusMeters, satelliteSource, toast, t, pollForResults]);
+  }, [lat, lon, locationDesc, dateRange, radiusMeters, satelliteSource, mode, polygon, toast, t, pollForResults]);
   
   const handleHistorySelect = (entry: HistoryEntry) => {
     setLat(entry.lat);
@@ -268,6 +297,8 @@ export function Dashboard() {
     setDateRange(entry.dateRange);
     if (entry.radiusMeters) setRadiusMeters(entry.radiusMeters);
     if (entry.satelliteSource) setSatelliteSource(entry.satelliteSource);
+    setMode(entry.mode ?? 'radius');
+    setPolygon(entry.polygon ?? null);
     toast({ title: t('dashboard.history.toast.title'), description: t('dashboard.history.toast.description', { location: entry.locationDesc })});
   };
   
@@ -406,6 +437,10 @@ export function Dashboard() {
         setRadiusMeters={setRadiusMeters}
         satelliteSource={satelliteSource}
         setSatelliteSource={setSatelliteSource}
+        mode={mode}
+        setMode={setMode}
+        polygon={polygon}
+        setPolygon={setPolygon}
         onCompute={handleCompute}
         isComputing={isProcessing}
         onFileUpload={setGroundTruthData}
