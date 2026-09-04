@@ -52,7 +52,7 @@ export function Header() {
 
   return (
     <header className={navClass}>
-      <div className="w-full px-4 md:px-6 flex h-16 items-center">
+      <div className="container px-4 md:px-6 flex h-16 items-center">
         <div className="mr-auto flex items-center">
           <Link href="/" className="flex items-center gap-2">
             <Globe2 className="h-6 w-6" />

@@ -319,14 +319,17 @@ const SATELLITE_CONFIGS: Record<SatelliteSource, SatelliteConfig> = {
     },
 };
 
-// Picks a thumbnail resolution that roughly matches the source's native pixel size instead of
-// always requesting a fixed 512x512 image. Requesting far more output pixels than the sensor
-// actually has (e.g. a 512px thumbnail over a 100m-wide, 30m-native-resolution Landsat scene)
-// just blows each real pixel up into a giant, blocky square - this keeps ~2x oversampling
-// (for smoothing headroom) instead, clamped to a sane min/max for the UI.
+// Picks a thumbnail resolution scaled to the source's native pixel size, with a floor high
+// enough to stay sharp in the UI's largest map cards (the before/after comparison slider in
+// gis-dashboard.tsx renders at up to ~660px wide) and a ceiling to keep thumbnail payloads
+// reasonable. The true-color image is bilinear-resampled (see createTrueColorImage) before this
+// thumbnail is generated, so requesting more pixels than the sensor natively has still produces
+// a smoothly interpolated image rather than blocky nearest-neighbor squares - the floor exists
+// to avoid the browser upscaling a too-small image and looking soft/pixelated, not to avoid
+// oversampling itself.
 function pickThumbDimension(areaDiameterMeters: number, nativeResolutionMeters: number): number {
     const idealPixels = (areaDiameterMeters * 2) / nativeResolutionMeters;
-    return Math.round(Math.min(1024, Math.max(256, idealPixels)));
+    return Math.round(Math.min(1024, Math.max(640, idealPixels)));
 }
 
 // Sub-meter true-color aerial imagery (USDA NAIP), US coverage only. Purely additive: when the

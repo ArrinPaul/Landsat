@@ -423,7 +423,7 @@ export function Dashboard() {
   }
 
   return (
-    <div className="w-full max-w-full overflow-x-hidden px-4 md:px-6 space-y-6">
+    <div className="container overflow-x-hidden px-4 md:px-6 py-6 space-y-6">
       <InputPanel
         lat={lat}
         setLat={setLat}
