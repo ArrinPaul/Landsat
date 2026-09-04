@@ -8,6 +8,7 @@
 import { ai, MODELS } from '@/ai/genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 import { generateWithFallback as generateWithMultiProvider } from '@/ai/providers';
+import { logSystemMetric } from '@/lib/metrics';
 import { sanitizePromptPayload } from '@/lib/security';
 import { monitorPromptQuality, resolvePromptVersion } from '@/ai/prompt-governance';
 import {
@@ -399,10 +400,23 @@ Now provide the JSON:`;
       const response = await promptFn(sanitizedInput);
       console.log(`[AI] ✓ Success with Gemini`);
       monitorPromptQuality(promptVersion.flow, 0.9, 1);
+      await logSystemMetric({
+        metric_type: 'ai_generation',
+        provider: 'gemini',
+        is_success: true,
+        metadata: { flow: promptVersion.flow },
+      });
       return response;
     } catch (error: any) {
       lastError = error;
       console.warn(`[AI] Gemini failed: ${error.message}. Falling back to HuggingFace...`);
+      await logSystemMetric({
+        metric_type: 'ai_generation',
+        provider: 'gemini',
+        is_success: false,
+        error_message: error.message,
+        metadata: { flow: promptVersion.flow },
+      });
     }
 
     // Provider 3: Try HuggingFace
@@ -411,10 +425,22 @@ Now provide the JSON:`;
       const hfResponse = await generateWithMultiProvider({ prompt: promptText, providers: ['huggingface' as any] });
       console.log(`[AI] ✓ Success with HuggingFace: ${hfResponse.model}`);
       monitorPromptQuality(promptVersion.flow, 0.85, 1);
+      await logSystemMetric({
+        metric_type: 'ai_generation',
+        provider: 'huggingface',
+        is_success: true,
+        metadata: { model: hfResponse.model },
+      });
       return { text: hfResponse.text };
     } catch (error: any) {
       lastError = error;
       console.warn(`[AI] HuggingFace failed: ${error.message}. All providers exhausted.`);
+      await logSystemMetric({
+        metric_type: 'ai_generation',
+        provider: 'huggingface',
+        is_success: false,
+        error_message: error.message,
+      });
     }
     
     throw lastError || new Error('All AI providers (Groq, Gemini, HuggingFace) failed.');

@@ -70,7 +70,7 @@ export async function generateWithGroq(
 
       const text = response.choices[0]?.message?.content || '';
       if (text) {
-        logSystemMetric({
+        await logSystemMetric({
           metric_type: 'ai_generation',
           provider: 'groq',
           tokens_used: response.usage?.total_tokens || 0,
@@ -82,7 +82,7 @@ export async function generateWithGroq(
     } catch (err: any) {
       lastErr = err;
       logger.warn('groq_model_attempt_failed', { scope: 'ai.providers', model, error: err.message });
-      logSystemMetric({
+      await logSystemMetric({
         metric_type: 'ai_generation',
         provider: 'groq',
         is_success: false,
