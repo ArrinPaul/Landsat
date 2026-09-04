@@ -64,6 +64,8 @@ export interface HistoryEntry {
   locationDesc: string;
   dateRange?: DateRange;
   timestamp: Date;
+  radiusMeters?: number;
+  satelliteSource?: SatelliteSource;
 }
 
 export interface Crop {
@@ -138,7 +140,11 @@ export interface LandCoverAnalysis {
   other: LandCoverChangeStat;
   beforeMapUrl: string;
   afterMapUrl: string;
+  /** Optional sub-meter true-color NAIP thumbnail (US coverage only). */
+  highResMapUrl?: string;
 }
+
+export type SatelliteSource = 'sentinel2' | 'landsat' | 'modis';
 
 export interface TimeSeriesData {
     NDVI: DataPoint[];
@@ -166,6 +172,8 @@ export interface HistoricalDataPoint {
 }
 
 export interface AnalysisResult {
+    satelliteSource?: SatelliteSource;
+    radiusMeters?: number;
     timeSeries: TimeSeriesData;
     landCover: LandCoverAnalysis;
     historicalWeather: HistoricalDataPoint[];

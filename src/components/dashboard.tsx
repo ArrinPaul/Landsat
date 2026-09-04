@@ -12,7 +12,7 @@ import { Visualizations } from "@/components/visualizations";
 import { WeatherReport } from "@/components/weather-report";
 import { LandCoverAnalysis } from "@/components/land-cover-analysis";
 import { useToast } from "@/hooks/use-toast";
-import type { GroundTruthDataPoint, SatellitePassData, WeatherData, HistoryEntry, AnalysisResult } from "@/lib/types";
+import type { GroundTruthDataPoint, SatellitePassData, WeatherData, HistoryEntry, AnalysisResult, SatelliteSource } from "@/lib/types";
 import { appendUserHistoryAction, listUserHistoryAction, predictSatellitePassAction, getWeatherReportAction, startMetricsComputationAction, getMetricsResultAction } from "@/lib/actions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
 import { Map, Loader2, AlertTriangle } from "lucide-react";
@@ -37,6 +37,8 @@ type StoredHistoryEntry = {
   timestamp: string;
   dateFrom?: string;
   dateTo?: string;
+  radiusMeters?: number;
+  satelliteSource?: SatelliteSource;
 };
 
 export function Dashboard() {
@@ -45,6 +47,8 @@ export function Dashboard() {
   const [lat, setLat] = useState("40.7128");
   const [lon, setLon] = useState("-74.0060");
   const [locationDesc, setLocationDesc] = useState("New York City");
+  const [radiusMeters, setRadiusMeters] = useState(100);
+  const [satelliteSource, setSatelliteSource] = useState<SatelliteSource>("sentinel2");
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: addDays(new Date(), -365),
     to: new Date(),
@@ -79,6 +83,8 @@ export function Dashboard() {
                 from: payload.dateFrom ? new Date(payload.dateFrom) : undefined,
                 to: payload.dateTo ? new Date(payload.dateTo) : undefined,
               },
+              radiusMeters: payload.radiusMeters ? Number(payload.radiusMeters) : undefined,
+              satelliteSource: payload.satelliteSource as SatelliteSource | undefined,
             } as HistoryEntry;
           })
           .filter((entry) => !!entry.dateRange?.from && !!entry.dateRange?.to);
@@ -103,6 +109,8 @@ export function Dashboard() {
             from: entry.dateFrom ? new Date(entry.dateFrom) : undefined,
             to: entry.dateTo ? new Date(entry.dateTo) : undefined,
           },
+          radiusMeters: entry.radiusMeters,
+          satelliteSource: entry.satelliteSource,
         }));
         setHistory(restored.filter((entry) => !!entry.dateRange?.from && !!entry.dateRange?.to));
       } catch {
@@ -120,6 +128,8 @@ export function Dashboard() {
       timestamp: entry.timestamp.toISOString(),
       dateFrom: entry.dateRange?.from?.toISOString(),
       dateTo: entry.dateRange?.to?.toISOString(),
+      radiusMeters: entry.radiusMeters,
+      satelliteSource: entry.satelliteSource,
     }));
     window.localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(serializable));
   }, [history]);
@@ -203,7 +213,7 @@ export function Dashboard() {
     setNextPass(null);
     setWeather(null);
     
-    const newHistoryEntry: HistoryEntry = { id: new Date().toISOString(), lat, lon, locationDesc, dateRange, timestamp: new Date() };
+    const newHistoryEntry: HistoryEntry = { id: new Date().toISOString(), lat, lon, locationDesc, dateRange, timestamp: new Date(), radiusMeters, satelliteSource };
     setHistory(prev => [newHistoryEntry, ...prev.slice(0, 9)]);
     void appendUserHistoryAction('dashboard', {
       lat,
@@ -211,6 +221,8 @@ export function Dashboard() {
       locationDesc,
       dateFrom: dateRange.from?.toISOString(),
       dateTo: dateRange.to?.toISOString(),
+      radiusMeters,
+      satelliteSource,
     });
 
     // Don't await ancillary data, let it fetch in the background
@@ -233,6 +245,8 @@ export function Dashboard() {
         longitude: parseFloat(lon),
         startDate: formatISO(dateRange.from, { representation: 'date' }),
         endDate: formatISO(dateRange.to, { representation: 'date' }),
+        radiusMeters,
+        satelliteSource,
     });
 
     if (result.error || !result.data) {
@@ -245,13 +259,15 @@ export function Dashboard() {
         pollForResults(result.data.jobId, lat, lon, locationDesc, dateRange.from, dateRange.to);
     }
 
-  }, [lat, lon, locationDesc, dateRange, toast, t, pollForResults]);
+  }, [lat, lon, locationDesc, dateRange, radiusMeters, satelliteSource, toast, t, pollForResults]);
   
   const handleHistorySelect = (entry: HistoryEntry) => {
     setLat(entry.lat);
     setLon(entry.lon);
     setLocationDesc(entry.locationDesc);
     setDateRange(entry.dateRange);
+    if (entry.radiusMeters) setRadiusMeters(entry.radiusMeters);
+    if (entry.satelliteSource) setSatelliteSource(entry.satelliteSource);
     toast({ title: t('dashboard.history.toast.title'), description: t('dashboard.history.toast.description', { location: entry.locationDesc })});
   };
   
@@ -386,6 +402,10 @@ export function Dashboard() {
         setLocationDesc={setLocationDesc}
         dateRange={dateRange}
         setDateRange={setDateRange}
+        radiusMeters={radiusMeters}
+        setRadiusMeters={setRadiusMeters}
+        satelliteSource={satelliteSource}
+        setSatelliteSource={setSatelliteSource}
         onCompute={handleCompute}
         isComputing={isProcessing}
         onFileUpload={setGroundTruthData}

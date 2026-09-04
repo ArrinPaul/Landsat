@@ -7,9 +7,17 @@ export const CoordinatesSchema = z.object({
 
 export const DateStringSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
+export const SatelliteSourceSchema = z.enum(['sentinel2', 'landsat', 'modis']);
+export type SatelliteSource = z.infer<typeof SatelliteSourceSchema>;
+
 export const ComputeMetricsInputActionSchema = CoordinatesSchema.extend({
   startDate: DateStringSchema,
   endDate: DateStringSchema,
+  // Radius of the area of interest around the point, in meters. Small values (tens to a few
+  // hundred meters) keep the analysis and map imagery scoped to a specific field/parcel instead
+  // of an entire city.
+  radiusMeters: z.number().finite().min(10).max(2000).default(100),
+  satelliteSource: SatelliteSourceSchema.default('sentinel2'),
 });
 
 export const ChatbotMessageSchema = z.object({

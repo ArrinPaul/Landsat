@@ -11,14 +11,24 @@ import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Calendar as CalendarIcon, Upload, Wand2, Cpu, Loader2, History, Wheat } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar as CalendarIcon, Upload, Wand2, Cpu, Loader2, History, Wheat, Satellite } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { parseCsv } from "@/lib/csv";
 import { suggestCoordinatesAction } from "@/lib/actions";
-import type { GroundTruthDataPoint, HistoryEntry } from "@/lib/types";
+import type { GroundTruthDataPoint, HistoryEntry, SatelliteSource } from "@/lib/types";
 import { ScrollArea } from "./ui/scroll-area";
 import { useLanguage } from "@/hooks/use-language";
+
+const SATELLITE_OPTIONS: { value: SatelliteSource; label: string; hint: string }[] = [
+  { value: "sentinel2", label: "Sentinel-2 (10m)", hint: "Best default: 10m resolution, ~5-day revisit" },
+  { value: "landsat", label: "Landsat 8/9 (30m)", hint: "30m resolution, adds long historical heritage" },
+  { value: "modis", label: "MODIS (500m)", hint: "500m resolution, daily revisit for trend context" },
+];
+
+const MIN_RADIUS_M = 10;
+const MAX_RADIUS_M = 2000;
 
 interface InputPanelProps {
   lat: string;
@@ -29,6 +39,10 @@ interface InputPanelProps {
   setLocationDesc: (val: string) => void;
   dateRange?: DateRange;
   setDateRange: (range?: DateRange) => void;
+  radiusMeters: number;
+  setRadiusMeters: (val: number) => void;
+  satelliteSource: SatelliteSource;
+  setSatelliteSource: (val: SatelliteSource) => void;
   onCompute: () => void;
   isComputing: boolean;
   onFileUpload: (data: GroundTruthDataPoint[] | null) => void;
@@ -38,7 +52,8 @@ interface InputPanelProps {
 
 export function InputPanel({
   lat, setLat, lon, setLon, locationDesc, setLocationDesc,
-  dateRange, setDateRange, onCompute, isComputing, onFileUpload,
+  dateRange, setDateRange, radiusMeters, setRadiusMeters,
+  satelliteSource, setSatelliteSource, onCompute, isComputing, onFileUpload,
   history, onHistorySelect
 }: InputPanelProps) {
   const { t } = useLanguage();
@@ -120,6 +135,44 @@ export function InputPanel({
           <div className="space-y-2">
             <Label htmlFor="longitude">{t('predict.longitude')}</Label>
             <Input id="longitude" placeholder="e.g., -74.0060" value={lon} onChange={(e) => setLon(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="radius">Analysis radius (meters)</Label>
+            <Input
+              id="radius"
+              type="number"
+              min={MIN_RADIUS_M}
+              max={MAX_RADIUS_M}
+              value={radiusMeters}
+              onChange={(e) => {
+                const parsed = parseInt(e.target.value, 10);
+                if (!Number.isNaN(parsed)) {
+                  setRadiusMeters(Math.min(MAX_RADIUS_M, Math.max(MIN_RADIUS_M, parsed)));
+                }
+              }}
+            />
+            <p className="text-xs text-muted-foreground">
+              How far around the pin to analyze - small values ({MIN_RADIUS_M}-200m) target a specific field or lot; larger values cover more ground.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="satellite-source">Satellite source</Label>
+            <Select value={satelliteSource} onValueChange={(v) => setSatelliteSource(v as SatelliteSource)}>
+              <SelectTrigger id="satellite-source">
+                <Satellite className="mr-2 h-4 w-4 shrink-0" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SATELLITE_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              {SATELLITE_OPTIONS.find((o) => o.value === satelliteSource)?.hint}
+            </p>
           </div>
           <div className="space-y-2">
             <Label>{t('dashboard.input.dateRange')}</Label>

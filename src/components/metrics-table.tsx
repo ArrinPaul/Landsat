@@ -87,7 +87,7 @@ export function MetricsTable({ analysisResult, location, dateRange }: MetricsTab
       { name: 'Other', key: 'other' },
     ].map(item => {
         const data = analysisResult.landCover[item.key as keyof typeof analysisResult.landCover];
-        if (typeof data === 'string') {
+        if (!data || typeof data === 'string') {
             return {
                 name: item.name,
                 type: 'landcover',

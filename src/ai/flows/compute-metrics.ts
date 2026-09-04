@@ -41,11 +41,18 @@ const LandCoverChangeStatSchema = z.object({
     percentageChange: z.number(),
 });
 
+const SatelliteSourceSchema = z.enum(['sentinel2', 'landsat', 'modis']);
+export type SatelliteSource = z.infer<typeof SatelliteSourceSchema>;
+
 const ComputeMetricsInputSchema = z.object({
   latitude: z.number().describe('The latitude of the location.'),
   longitude: z.number().describe('The longitude of the location.'),
   startDate: z.string().describe('The start date of the date range (YYYY-MM-DD).'),
   endDate: z.string().describe('The end date of the date range (YYYY-MM-DD).'),
+  // Radius (meters) of the area of interest around the point. Defaults to a tight, field-scale
+  // footprint rather than an entire city.
+  radiusMeters: z.number().min(10).max(2000).default(100),
+  satelliteSource: SatelliteSourceSchema.default('sentinel2'),
 });
 export type ComputeMetricsInput = z.infer<typeof ComputeMetricsInputSchema>;
 
@@ -83,6 +90,8 @@ const ChangeAnalysisSchema = z.object({
 });
 
 const ComputeMetricsOutputSchema = z.object({
+    satelliteSource: SatelliteSourceSchema.optional(),
+    radiusMeters: z.number().optional(),
     timeSeries: timeSeriesSchema,
     landCover: z.object({
         vegetation: LandCoverChangeStatSchema,
@@ -91,6 +100,7 @@ const ComputeMetricsOutputSchema = z.object({
         other: LandCoverChangeStatSchema,
         beforeMapUrl: z.string().url().describe('A data URI of the land cover map at the start date.'),
         afterMapUrl: z.string().url().describe('A data URI of the land cover map at the end date.'),
+        highResMapUrl: z.string().url().optional().describe('An optional sub-meter true-color NAIP thumbnail (US coverage only) of the area of interest.'),
     }),
     historicalWeather: z.array(HistoricalDataPointSchema),
     changeAnalysis: ChangeAnalysisSchema.optional(),
@@ -236,6 +246,90 @@ function evaluateWithRetry(eeObject: any, description: string, retries = 3): Pro
     });
 }
 
+// Canonical output band slots (B1..B12, matching the original Sentinel-2 band names). Each
+// satellite source maps whichever of its own native bands are the closest optical match into
+// these slots; slots a source has no equivalent for are simply left empty for that run.
+const CANONICAL_BANDS = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B9', 'B11', 'B12'];
+
+interface SatelliteConfig {
+    scale: number;
+    getCollection: (areaOfInterest: any, startDate: string, endDate: string) => any;
+    // Native band name for each canonical slot this source supports.
+    bandMap: Partial<Record<string, string>>;
+    // Native band names used for the NDVI/NDWI/NDBI/NBR normalized-difference indices.
+    indexBands: { ndvi: [string, string]; ndwi: [string, string]; ndbi: [string, string]; nbr: [string, string] };
+    trueColor: { bands: [string, string, string]; min: number; max: number };
+    cloudProperty?: string;
+    cloudThreshold?: number;
+    // Optional Landsat-style scale/offset applied to raw DN before use (reflectance = DN * scale + offset).
+    reflectanceScale?: { scale: number; offset: number };
+}
+
+const SATELLITE_CONFIGS: Record<SatelliteSource, SatelliteConfig> = {
+    // 10m/pixel, revisit ~5 days. Best default balance of resolution and revisit frequency.
+    sentinel2: {
+        scale: 10,
+        cloudProperty: 'CLOUDY_PIXEL_PERCENTAGE',
+        cloudThreshold: 75,
+        getCollection: (areaOfInterest, startDate, endDate) =>
+            ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
+                .filterBounds(areaOfInterest)
+                .filterDate(startDate, endDate),
+        bandMap: { B1: 'B1', B2: 'B2', B3: 'B3', B4: 'B4', B5: 'B5', B6: 'B6', B7: 'B7', B8: 'B8', B8A: 'B8A', B9: 'B9', B11: 'B11', B12: 'B12' },
+        indexBands: { ndvi: ['B8', 'B4'], ndwi: ['B3', 'B8'], ndbi: ['B11', 'B8'], nbr: ['B8A', 'B12'] },
+        trueColor: { bands: ['B4', 'B3', 'B2'], min: 0, max: 3000 },
+    },
+    // 30m/pixel, revisit ~8 days combining Landsat 8 + 9. Longest historical heritage of any
+    // free optical archive, and adds a shortwave-infrared perspective Sentinel-2 also has but at
+    // coarser native resolution.
+    landsat: {
+        scale: 30,
+        cloudProperty: 'CLOUD_COVER',
+        cloudThreshold: 75,
+        reflectanceScale: { scale: 0.0000275, offset: -0.2 },
+        getCollection: (areaOfInterest, startDate, endDate) =>
+            ee.ImageCollection('LANDSAT/LC09/C02/T1_L2')
+                .merge(ee.ImageCollection('LANDSAT/LC08/C02/T1_L2'))
+                .filterBounds(areaOfInterest)
+                .filterDate(startDate, endDate),
+        bandMap: { B1: 'SR_B1', B2: 'SR_B2', B3: 'SR_B3', B4: 'SR_B4', B5: 'SR_B5', B6: 'SR_B6', B7: 'SR_B7' },
+        indexBands: { ndvi: ['SR_B5', 'SR_B4'], ndwi: ['SR_B3', 'SR_B5'], ndbi: ['SR_B6', 'SR_B5'], nbr: ['SR_B5', 'SR_B7'] },
+        trueColor: { bands: ['SR_B4', 'SR_B3', 'SR_B2'], min: 0, max: 0.3 },
+    },
+    // ~500m/pixel, daily revisit. Coarse resolution but a real second/independent sensor with
+    // the densest historical time-series of the three, useful for long-baseline trend context.
+    modis: {
+        scale: 500,
+        getCollection: (areaOfInterest, startDate, endDate) =>
+            ee.ImageCollection('MODIS/061/MOD09GA')
+                .filterBounds(areaOfInterest)
+                .filterDate(startDate, endDate),
+        bandMap: { B2: 'sur_refl_b04', B3: 'sur_refl_b03', B4: 'sur_refl_b01', B5: 'sur_refl_b02', B6: 'sur_refl_b06', B7: 'sur_refl_b07' },
+        indexBands: { ndvi: ['sur_refl_b02', 'sur_refl_b01'], ndwi: ['sur_refl_b04', 'sur_refl_b02'], ndbi: ['sur_refl_b06', 'sur_refl_b02'], nbr: ['sur_refl_b02', 'sur_refl_b07'] },
+        trueColor: { bands: ['sur_refl_b01', 'sur_refl_b04', 'sur_refl_b03'], min: 0, max: 3000 },
+        reflectanceScale: { scale: 0.0001, offset: 0 },
+    },
+};
+
+// Sub-meter true-color aerial imagery (USDA NAIP), US coverage only. Purely additive: when the
+// area of interest falls outside NAIP coverage or no scene is available, this resolves to null
+// instead of failing the whole analysis.
+async function tryGetNaipThumbnail(areaOfInterest: any): Promise<string | null> {
+    try {
+        const naip = ee.ImageCollection('USDA/NAIP/DOQQ').filterBounds(areaOfInterest);
+        const size = await evaluateWithRetry(naip.size(), 'NAIP availability check', 1);
+        if (!size) return null;
+
+        const mostRecent = naip.sort('system:time_start', false).first();
+        const vis = mostRecent.visualize({ bands: ['R', 'G', 'B'], min: 0, max: 255 });
+        const url = vis.getThumbURL({ dimensions: '512x512', region: areaOfInterest, format: 'png' });
+        return url || null;
+    } catch (err) {
+        logger.error('naip_thumbnail_failed', { scope: 'ai.flows.compute-metrics', error: redactSensitive(err instanceof Error ? err.message : String(err)) });
+        return null;
+    }
+}
+
 async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
     const creds = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
     if (!creds) {
@@ -250,34 +344,51 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
     await authenticate(privateKey);
     await initialize();
 
-    const point = ee.Geometry.Point([input.longitude, input.latitude]);
-    const areaOfInterest = point.buffer(5000); // 5km buffer around the point
+    const source = input.satelliteSource ?? 'sentinel2';
+    const config = SATELLITE_CONFIGS[source];
+    const radiusMeters = input.radiusMeters ?? 100;
 
-    const collection = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
-        .filterBounds(areaOfInterest)
-        .filterDate(input.startDate, input.endDate)
-        .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 75));
+    const point = ee.Geometry.Point([input.longitude, input.latitude]);
+    const areaOfInterest = point.buffer(radiusMeters); // Tight, field-scale area of interest.
+
+    let collection = config.getCollection(areaOfInterest, input.startDate, input.endDate);
+    if (config.cloudProperty) {
+        collection = collection.filter(ee.Filter.lt(config.cloudProperty, config.cloudThreshold));
+    }
 
     const size = await evaluateWithRetry(collection.size(), 'size evaluation');
     if (size === 0) {
-        throw new Error("No valid satellite imagery found for the selected location, date range, and cloud cover settings. Try expanding the date range or choosing a different area.");
+        throw new Error("No valid satellite imagery found for the selected location, date range, and cloud cover settings. Try expanding the date range, choosing a different satellite source, or increasing the radius.");
     }
 
-    const allBands = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B9', 'B11', 'B12'];
+    // Map each canonical slot to its native band for this source; slots without a match are skipped.
+    const nativeToCanonical: Record<string, string> = {};
+    Object.entries(config.bandMap).forEach(([canonical, native]) => {
+        if (native) nativeToCanonical[native] = canonical;
+    });
+    const nativeBands = Object.values(config.bandMap).filter((b): b is string => !!b);
 
-    const withMetrics = collection.map((image: any) => {
-        const ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI');
-        const ndwi = image.normalizedDifference(['B3', 'B8']).rename('NDWI');
-        const ndbi = image.normalizedDifference(['B11', 'B8']).rename('NDBI');
-        const nbr = image.normalizedDifference(['B8A', 'B12']).rename('NBR');
-        return image.addBands([ndvi, ndwi, ndbi, nbr]);
+    const applyScale = (image: any) => {
+        if (!config.reflectanceScale) return image;
+        const { scale, offset } = config.reflectanceScale;
+        const optical = image.select(nativeBands).multiply(scale).add(offset);
+        return image.addBands(optical, undefined, true);
+    };
+
+    const withMetrics = collection.map((rawImage: any) => {
+        const image = applyScale(rawImage);
+        const ndvi = image.normalizedDifference(config.indexBands.ndvi).rename('NDVI');
+        const ndwi = image.normalizedDifference(config.indexBands.ndwi).rename('NDWI');
+        const ndbi = image.normalizedDifference(config.indexBands.ndbi).rename('NDBI');
+        const nbr = image.normalizedDifference(config.indexBands.nbr).rename('NBR');
+        return image.addBands([ndvi, ndwi, ndbi, nbr]).copyProperties(rawImage, ['system:time_start']);
     });
 
-    const chartData = withMetrics.select(['NDVI', 'NDWI', 'NDBI', 'NBR', ...allBands]).map((image: any) => {
+    const chartData = withMetrics.select(['NDVI', 'NDWI', 'NDBI', 'NBR', ...nativeBands]).map((image: any) => {
         const mean = image.reduceRegion({
             reducer: ee.Reducer.mean(),
             geometry: point,
-            scale: 10,
+            scale: config.scale,
             maxPixels: 1e9,
             bestEffort: true,
             tileScale: 4
@@ -289,8 +400,8 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
             'NDBI': mean.get('NDBI'),
             'NBR': mean.get('NBR'),
         };
-        allBands.forEach(band => {
-            featureProps[band] = mean.get(band);
+        nativeBands.forEach(native => {
+            featureProps[nativeToCanonical[native]] = mean.get(native);
         });
         return ee.Feature(null, featureProps);
     });
@@ -298,11 +409,15 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
     const firstImage = withMetrics.first();
     const lastImage = withMetrics.sort('system:time_start', false).first();
 
+    // Grid scale for the classification/change-magnitude sample grids: aim for roughly a 20x20
+    // grid across the area of interest, but never finer than the source's native pixel size.
+    const gridScale = Math.max(config.scale, (radiusMeters * 2) / 20);
+
     // Real per-pixel land-cover classification grid for the end date, built from the
     // same NDVI/NDWI/NDBI thresholds used for the area stats below (0=other, 1=vegetation,
     // 2=built-up, 3=water) - sampled at a coarse scale so it stays a small, fast payload.
     const classImage = classifyLandCover(lastImage)
-        .reproject({ crs: 'EPSG:4326', scale: 200 });
+        .reproject({ crs: 'EPSG:4326', scale: gridScale });
     const classGridSample = classImage.sampleRectangle({ region: areaOfInterest, defaultValue: 0 });
 
     // Real per-pixel change magnitude between the start and end images (mean absolute
@@ -312,32 +427,36 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
         .abs()
         .reduce(ee.Reducer.mean())
         .rename('changeMag')
-        .reproject({ crs: 'EPSG:4326', scale: 200 });
+        .reproject({ crs: 'EPSG:4326', scale: gridScale });
     const changeGridSample = changeImage.sampleRectangle({ region: areaOfInterest, defaultValue: 0 });
 
     // Split into separate evaluate() calls (rather than one combined ee.Dictionary) so a single
     // heavy computation timing out doesn't sink the whole job, and each piece can retry on its own.
-    const [timeSeries, landCoverStart, landCoverEnd, regionGeoJSON, classGrid, changeGrid, avgCloudyPct] = await Promise.all([
+    const [timeSeries, landCoverStart, landCoverEnd, regionGeoJSON, classGrid, changeGrid, avgCloudyPct, highResMapUrl] = await Promise.all([
         evaluateWithRetry(chartData.toList(chartData.size()), 'time series evaluation'),
-        evaluateWithRetry(calculateLandCoverStats(firstImage, areaOfInterest), 'start land cover evaluation'),
-        evaluateWithRetry(calculateLandCoverStats(lastImage, areaOfInterest), 'end land cover evaluation'),
+        evaluateWithRetry(calculateLandCoverStats(firstImage, areaOfInterest, config.scale), 'start land cover evaluation'),
+        evaluateWithRetry(calculateLandCoverStats(lastImage, areaOfInterest, config.scale), 'end land cover evaluation'),
         evaluateWithRetry(areaOfInterest, 'region geometry evaluation'),
         evaluateWithRetry(classGridSample.get('classId'), 'class grid evaluation'),
         evaluateWithRetry(changeGridSample.get('changeMag'), 'change grid evaluation'),
-        evaluateWithRetry(collection.aggregate_mean('CLOUDY_PIXEL_PERCENTAGE'), 'cloud percentage evaluation'),
+        config.cloudProperty
+            ? evaluateWithRetry(collection.aggregate_mean(config.cloudProperty), 'cloud percentage evaluation')
+            : Promise.resolve(null),
+        tryGetNaipThumbnail(areaOfInterest),
     ]);
 
     if (!timeSeries || !Array.isArray(timeSeries)) throw new Error("No time-series data returned from Earth Engine.");
     if (!landCoverStart || !landCoverEnd) throw new Error("Could not compute land cover analysis. The area might be too small or lack valid imagery at the start/end dates.");
     if (!regionGeoJSON) throw new Error("Could not evaluate the region geometry for map generation.");
 
-    const result: any = { timeSeries, landCoverStart, landCoverEnd, regionGeoJSON, classGrid, changeGrid, avgCloudyPct };
+    const result: any = { timeSeries, landCoverStart, landCoverEnd, regionGeoJSON, classGrid, changeGrid, avgCloudyPct, satelliteSource: source, radiusMeters };
+    if (highResMapUrl) result.highResMapUrl = highResMapUrl;
 
     const createTrueColorImage = (image: any) => {
         return image.visualize({
-            bands: ['B4', 'B3', 'B2'],
-            min: 0,
-            max: 3000,
+            bands: config.trueColor.bands,
+            min: config.trueColor.min,
+            max: config.trueColor.max,
             gamma: 1.4
         });
     };
@@ -373,7 +492,7 @@ const classifyLandCover = (image: any) => {
         .toInt();
 };
 
-const calculateLandCoverStats = (image: any, areaOfInterest: any) => {
+const calculateLandCoverStats = (image: any, areaOfInterest: any, scale: number) => {
     const ndvi = image.select('NDVI');
     const ndwi = image.select('NDWI');
     const ndbi = image.select('NDBI');
@@ -388,7 +507,7 @@ const calculateLandCoverStats = (image: any, areaOfInterest: any) => {
     const calculateArea = (cover: any) => cover.multiply(areaImage).reduceRegion({
         reducer: ee.Reducer.sum(),
         geometry: areaOfInterest,
-        scale: 30,
+        scale,
         maxPixels: 1e10,
         bestEffort: true,
         tileScale: 4
@@ -425,12 +544,17 @@ const computeMetricsFlow = async (input: ComputeMetricsInput, jobId: string) => 
 
     eeData.timeSeries.forEach((feature: any) => {
       const date = new Date(feature.properties['system:time_start']).toISOString();
-      timeSeriesResult.NDVI.push({ date, value: feature.properties.NDVI });
-      timeSeriesResult.NDWI.push({ date, value: feature.properties.NDWI });
-      timeSeriesResult.NDBI.push({ date, value: feature.properties.NDBI });
-      timeSeriesResult.NBR.push({ date, value: feature.properties.NBR });
+      timeSeriesResult.NDVI.push({ date, value: feature.properties.NDVI ?? null });
+      timeSeriesResult.NDWI.push({ date, value: feature.properties.NDWI ?? null });
+      timeSeriesResult.NDBI.push({ date, value: feature.properties.NDBI ?? null });
+      timeSeriesResult.NBR.push({ date, value: feature.properties.NBR ?? null });
       allBands.forEach(band => {
-        timeSeriesResult[band].push({ date, value: feature.properties[band] });
+        // Bands the current satellite source has no native equivalent for simply never appear
+        // as feature properties (see nativeToCanonical in runEeAnalysis) - skip them entirely
+        // rather than pushing synthetic null points.
+        if (band in feature.properties) {
+          timeSeriesResult[band].push({ date, value: feature.properties[band] ?? null });
+        }
       });
     });
 
@@ -451,7 +575,8 @@ const computeMetricsFlow = async (input: ComputeMetricsInput, jobId: string) => 
         builtUp: { startArea: start.builtUp, endArea: end.builtUp, absoluteChange: end.builtUp - start.builtUp, percentageChange: getPercentageChange(start.builtUp, end.builtUp) },
         other: { startArea: start.other, endArea: end.other, absoluteChange: end.other - start.other, percentageChange: getPercentageChange(start.other, end.other) },
         beforeMapUrl: eeData.beforeMapUrl,
-        afterMapUrl: eeData.afterMapUrl
+        afterMapUrl: eeData.afterMapUrl,
+        ...(eeData.highResMapUrl ? { highResMapUrl: eeData.highResMapUrl } : {}),
     };
 
     // Prepare data for AI Change Analysis
@@ -546,6 +671,8 @@ const computeMetricsFlow = async (input: ComputeMetricsInput, jobId: string) => 
     } : undefined;
 
     const finalResult = {
+        satelliteSource: eeData.satelliteSource,
+        radiusMeters: eeData.radiusMeters,
         timeSeries: timeSeriesResult,
         landCover: landCoverAnalysis,
         historicalWeather: historicalWeatherResult,

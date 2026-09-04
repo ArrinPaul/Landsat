@@ -109,6 +109,14 @@ export function LandCoverAnalysis({ landCover }: LandCoverAnalysisProps) {
                 </div>
             </div>
         </div>
+        {landCover.highResMapUrl && (
+            <div className="space-y-2">
+                <h3 className="text-center font-semibold">Sub-meter aerial reference (NAIP, US only)</h3>
+                <div className="aspect-square max-w-md mx-auto rounded-lg overflow-hidden border">
+                    <ImageWithLoader src={landCover.highResMapUrl} alt="Sub-meter resolution aerial imagery of the area of interest." />
+                </div>
+            </div>
+        )}
          <div className="min-h-[300px] pt-8">
             <ChartContainer config={chartConfig} className="h-full w-full">
                 <BarChart data={chartData} accessibilityLayer>

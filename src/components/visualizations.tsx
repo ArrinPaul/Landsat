@@ -124,7 +124,9 @@ export function Visualizations({ analysisResult, groundTruthData, selectedMetric
   const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
-  const metricNames = Object.keys(analysisResult.timeSeries).sort((a,b) => {
+  const metricNames = Object.keys(analysisResult.timeSeries)
+    .filter((name) => (analysisResult.timeSeries[name as keyof typeof analysisResult.timeSeries]?.length ?? 0) > 0)
+    .sort((a,b) => {
       const indexA = metricOrder.indexOf(a);
       const indexB = metricOrder.indexOf(b);
       if(indexA === -1) return 1;
