@@ -34,23 +34,46 @@ const EARTH_OBSERVATION_SATELLITES = [
   { noradId: 40697, name: 'Sentinel-2A', speed: 7.4 },
 ];
 
+const TLE_FETCH_TIMEOUT_MS = 4000;
+const TLE_FAILURE_COOLDOWN_MS = 2 * 60 * 1000; // don't retry a dead endpoint on every request
+
+// Tracks recent fetch failures per satellite so a down CelesTrak doesn't add
+// a multi-second stall to every dashboard load.
+const lastTLEFailure = new Map<number, number>();
+
 // Fetch satellite TLE data from CelesTrak
 async function fetchSatelliteTLE(noradId: number): Promise<string[] | null> {
+  const lastFailure = lastTLEFailure.get(noradId);
+  if (lastFailure && Date.now() - lastFailure < TLE_FAILURE_COOLDOWN_MS) {
+    return null;
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), TLE_FETCH_TIMEOUT_MS);
+
   try {
     const response = await fetch(
       `https://celestrak.org/NORAD/elements/gp.php?CATNR=${noradId}&FORMAT=TLE`,
-      { cache: 'no-store' }
+      { cache: 'no-store', signal: controller.signal }
     );
-    if (!response.ok) return null;
+    if (!response.ok) {
+      lastTLEFailure.set(noradId, Date.now());
+      return null;
+    }
     const text = await response.text();
     const lines = text.trim().split('\n');
     if (lines.length >= 3) {
+      lastTLEFailure.delete(noradId);
       return [lines[0].trim(), lines[1].trim(), lines[2].trim()];
     }
+    lastTLEFailure.set(noradId, Date.now());
     return null;
   } catch (error) {
+    lastTLEFailure.set(noradId, Date.now());
     console.error(`Error fetching TLE for ${noradId}:`, error);
     return null;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
@@ -99,28 +122,31 @@ export async function predictSatellitePass(input: PredictSatellitePassInput): Pr
       return cacheResult.data;
     }
     
-    // Try to fetch real TLE data for earth observation satellites
+    // Try to fetch real TLE data for earth observation satellites (in parallel -
+    // sequential awaits meant a dead CelesTrak endpoint stalled the request by
+    // up to 4x the per-request timeout).
     let bestPass: PredictSatellitePassOutput | null = null;
     let earliestTime = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
-    
-    for (const sat of EARTH_OBSERVATION_SATELLITES) {
-      try {
+
+    const results = await Promise.allSettled(
+      EARTH_OBSERVATION_SATELLITES.map(async (sat) => {
         const tle = await fetchSatelliteTLE(sat.noradId);
-        if (tle) {
-          const passTime = calculateNextPass(tle, input.latitude, input.longitude);
-          
-          if (passTime < earliestTime) {
-            earliestTime = passTime;
-            bestPass = {
-              passTime: passTime.toISOString(),
-              satelliteName: sat.name,
-              status: 'Active',
-              speed: sat.speed
-            };
-          }
-        }
-      } catch (error) {
-        console.error(`Error calculating pass for ${sat.name}:`, error);
+        if (!tle) return null;
+        return { sat, passTime: calculateNextPass(tle, input.latitude, input.longitude) };
+      })
+    );
+
+    for (const result of results) {
+      if (result.status !== 'fulfilled' || !result.value) continue;
+      const { sat, passTime } = result.value;
+      if (passTime < earliestTime) {
+        earliestTime = passTime;
+        bestPass = {
+          passTime: passTime.toISOString(),
+          satelliteName: sat.name,
+          status: 'Active',
+          speed: sat.speed
+        };
       }
     }
     

@@ -38,6 +38,16 @@ const DEFAULT_RETRY_CONFIG: RetryConfig = {
   exponentialBackoff: true,
 };
 
+// Flows whose expected output is a long, multi-section report/plan need a
+// higher token budget than the 2048-token provider default, or the JSON
+// response gets truncated mid-string and fails to parse.
+const LONG_OUTPUT_MAX_TOKENS: Record<string, number> = {
+  'report-summary': 4096,
+  'crop-advice': 4096,
+  'crop-plan': 4096,
+  'analyze-change': 3072,
+};
+
 const DEFAULT_MODELS = [
   MODELS.fast,      // gemini-2.0-flash (fastest, cheapest)
   MODELS.primary,   // gemini-2.0-flash
@@ -385,7 +395,11 @@ Now provide the JSON:`;
     // Provider 1: Try Groq first
     try {
       console.log('[AI] Attempting Groq (primary provider)...');
-      const groqResponse = await generateWithMultiProvider({ prompt: promptText, providers: ['groq' as any] });
+      const groqResponse = await generateWithMultiProvider({
+        prompt: promptText,
+        providers: ['groq' as any],
+        config: { maxTokens: LONG_OUTPUT_MAX_TOKENS[promptVersion.flow] },
+      });
       console.log(`[AI] ✓ Success with Groq: ${groqResponse.model}`);
       monitorPromptQuality(promptVersion.flow, 0.85, 1);
       return { text: groqResponse.text };
