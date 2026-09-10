@@ -198,12 +198,20 @@ export function InputPanel({
                   type="number"
                   min={MIN_RADIUS_M}
                   max={MAX_RADIUS_M}
-                  value={radiusMeters}
+                  value={radiusMeters || ""}
                   onChange={(e) => {
-                    const parsed = parseInt(e.target.value, 10);
-                    if (!Number.isNaN(parsed)) {
-                      setRadiusMeters(Math.min(MAX_RADIUS_M, Math.max(MIN_RADIUS_M, parsed)));
+                    const val = e.target.value;
+                    if (val === "") {
+                      setRadiusMeters(0);
+                    } else {
+                      const parsed = parseInt(val, 10);
+                      if (!Number.isNaN(parsed)) {
+                        setRadiusMeters(parsed);
+                      }
                     }
+                  }}
+                  onBlur={() => {
+                    setRadiusMeters(Math.min(MAX_RADIUS_M, Math.max(MIN_RADIUS_M, radiusMeters || MIN_RADIUS_M)));
                   }}
                 />
                 <p className="text-xs text-muted-foreground">
