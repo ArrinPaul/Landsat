@@ -12,7 +12,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { executePromptWithFallback, safeParseAIJson } from '@/ai/ai-utils';
-import { getSoilAndWeatherData, getMoistureLevel, getSoilTypeName } from '@/services/open-meteo';
+import { getSoilAndWeatherData, getMoistureLevel, getSoilTypeName, formatVwcPercent, MOISTURE_DRY_BELOW, MOISTURE_WET_ABOVE } from '@/services/open-meteo';
 
 // Fetch real weather forecast
 async function fetchWeatherForecast(lat: number, lon: number) {
@@ -58,9 +58,9 @@ const scheduleIrrigationPrompt = ai.definePrompt({
   1. Use ONLY the actual soil moisture and forecast values provided
   2. DO NOT make up weather predictions or soil conditions
   3. Decision logic using REAL data:
-     - Soil moisture < 0.20 (Dry) + No rain in forecast → Irrigate immediately
-     - Soil moisture 0.20-0.40 (Optimal) + Rain expected → Delay irrigation
-     - Soil moisture > 0.40 (Wet) → No irrigation needed
+     - Soil moisture < ${MOISTURE_DRY_BELOW} (Dry) + No rain in forecast → Irrigate immediately
+     - Soil moisture ${MOISTURE_DRY_BELOW}-${MOISTURE_WET_ABOVE} (Optimal) + Rain expected → Delay irrigation
+     - Soil moisture > ${MOISTURE_WET_ABOVE} (Wet) → No irrigation needed
   4. Water depth: 0.5-1 inch for vegetables, 1-2 inches for field crops
 
   Your response MUST be a valid JSON object ONLY that conforms to the ScheduleIrrigationOutput schema. Do not add any other text or formatting.
@@ -92,7 +92,7 @@ export async function scheduleIrrigation(input: ScheduleIrrigationInput): Promis
     
     const promptInput = {
       ...input,
-      realSoilData: `Soil Moisture: ${soilData.current.soil_moisture_0_to_1cm.toFixed(1)}% VWC (${moistureLevel}), Soil Type: ${soilType}`,
+      realSoilData: `Soil Moisture: ${formatVwcPercent(soilData.current.soil_moisture_0_to_1cm)} VWC (${moistureLevel}), Soil Type: ${soilType}`,
       realForecast: JSON.stringify(forecastSummary, null, 2)
     };
     

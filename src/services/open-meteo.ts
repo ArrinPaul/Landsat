@@ -319,15 +319,25 @@ export function getSoilTypeName(typeIndex: number | undefined): string {
     return soilTypes[typeIndex] || "Unknown";
 }
 
+/** Volumetric water content (m³/m³) below which topsoil is considered dry. */
+export const MOISTURE_DRY_BELOW = 0.2;
+/** Volumetric water content (m³/m³) above which topsoil is considered wet. */
+export const MOISTURE_WET_ABOVE = 0.4;
+
 /**
  * Categorizes the volumetric water content into a moisture level.
- * Typical values for VWC range from <10% (very dry) to >40% (saturated).
- * @param vwc The volumetric water content percentage (e.g., 25.5).
+ * Open-Meteo reports soil moisture as a fraction in m³/m³ (about 0.05 to 0.5).
+ * @param vwc The volumetric water content in m³/m³ (e.g., 0.255).
  * @returns 'Dry', 'Optimal', or 'Wet'.
  */
 export function getMoistureLevel(vwc: number | undefined): 'Dry' | 'Optimal' | 'Wet' {
-    if (vwc === undefined) return "Optimal"; // Default fallback
-    if (vwc < 15) return 'Dry';
-    if (vwc > 35) return 'Wet';
+    if (vwc === undefined || Number.isNaN(vwc)) return "Optimal"; // Default fallback
+    if (vwc < MOISTURE_DRY_BELOW) return 'Dry';
+    if (vwc > MOISTURE_WET_ABOVE) return 'Wet';
     return 'Optimal';
+}
+
+/** Formats a m³/m³ volumetric water content fraction as a percent string. */
+export function formatVwcPercent(vwc: number): string {
+    return `${(vwc * 100).toFixed(1)}%`;
 }

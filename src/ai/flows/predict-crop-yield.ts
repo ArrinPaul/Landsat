@@ -12,7 +12,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { executePromptWithFallback, safeParseAIJson } from '@/ai/ai-utils';
-import { getHistoricalWeather, getSoilAndWeatherData, getSoilTypeName, getMoistureLevel } from '@/services/open-meteo';
+import { getHistoricalWeather, getSoilAndWeatherData, getSoilTypeName, getMoistureLevel, formatVwcPercent } from '@/services/open-meteo';
 function predictYieldClassical(params: any) {
   return { predictedYield: 4.5, confidence: 0.8, signals: ['Favorable'] };
 }
@@ -60,7 +60,7 @@ async function fetchRealClimateData(lat: number, lon: number) {
     return {
       avgTemperature: avgTemp.toFixed(1),
       totalPrecipitationMm: totalPrecip.toFixed(0),
-      soilMoisture: soilData.current.soil_moisture_0_to_1cm.toFixed(1),
+      soilMoisture: soilData.current.soil_moisture_0_to_1cm.toFixed(3),
       moistureLevel: getMoistureLevel(soilData.current.soil_moisture_0_to_1cm),
       soilType: getSoilTypeName(soilData.hourly?.soil_type_0_to_10cm?.[0])
     };
@@ -124,7 +124,7 @@ export async function predictCropYield(input: PredictCropYieldInput): Promise<Pr
     const promptInput = {
       ...input,
       realClimateData: `Average Temperature: ${realData.avgTemperature}°C, Total Precipitation (6 months): ${realData.totalPrecipitationMm}mm, Model signals: ${modelPrediction.signals.join(', ')}`,
-      realSoilData: `Soil Moisture: ${realData.soilMoisture}% VWC (${realData.moistureLevel}), Soil Type: ${realData.soilType}`
+      realSoilData: `Soil Moisture: ${formatVwcPercent(Number(realData.soilMoisture))} VWC (${realData.moistureLevel}), Soil Type: ${realData.soilType}`
     };
     
     const response = await executePromptWithFallback(predictCropYieldPrompt, promptInput, undefined, 'crop-yield');
