@@ -170,6 +170,7 @@
     "dashboard.weather.wind": "বায়ু",
     "dashboard.weather.hourly": "ঘণ্টার পূর্বাভাস",
     "dashboard.weather.precipitation": "বৃষ্টিপাত",
+    "dashboard.weather.unavailable": "Weather data was unavailable for this period, so temperature and rainfall are not shown.",
     "dashboard.weather.temperature": "তাপমাত্রা",
     "dashboard.landCover.title": "ভূমি কভার পরিবর্তন বিশ্লেষণ",
     "dashboard.landCover.description": "নির্বাচিত সময়ের শুরুতে এবং শেষে বিভিন্ন ভূমি কভার প্রকারের জন্য এলাকা পরিসংখ্যান এবং ভিজ্যুয়ালাইজেশন।",

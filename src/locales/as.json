@@ -170,6 +170,7 @@
     "dashboard.weather.wind": "বতাহ",
     "dashboard.weather.hourly": "ঘণ্টাৰ হিচাপত ভৱিষ্যদ্বাণী",
     "dashboard.weather.precipitation": "বৃষ্টিপাত",
+    "dashboard.weather.unavailable": "Weather data was unavailable for this period, so temperature and rainfall are not shown.",
     "dashboard.weather.temperature": "তাপমাত্রা",
     "dashboard.landCover.title": "ভূমি आवरण परिवर्तन বিশ্লেষণ",
     "dashboard.landCover.description": "বাছাই কৰা সময়ছোৱাৰ আৰম্ভণি আৰু শেষত বিভিন্ন ভূমি आवरण प्रकारৰ বাবে এলেকা পৰিসংখ্যা আৰু ദൃശ്യവൽക്കരണം।",

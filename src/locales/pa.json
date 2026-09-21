@@ -170,6 +170,7 @@
     "dashboard.weather.wind": "ਹਵਾ",
     "dashboard.weather.hourly": "ਘੰਟੇ ਦੀ ਭਵਿੱਖਬਾਣੀ",
     "dashboard.weather.precipitation": "ਵਰਖਾ",
+    "dashboard.weather.unavailable": "Weather data was unavailable for this period, so temperature and rainfall are not shown.",
     "dashboard.weather.temperature": "ਤਾਪਮਾਨ",
     "dashboard.landCover.title": "ਜ਼ਮੀਨੀ ਕਵਰ ਤਬਦੀਲੀ ਵਿਸ਼ਲੇਸ਼ਣ",
     "dashboard.landCover.description": "ਚੁਣੀ ਗਈ ਮਿਆਦ ਦੇ ਸ਼ੁਰੂ ਅਤੇ ਅੰਤ ਵਿੱਚ ਵੱਖ-ਵੱਖ ਜ਼ਮੀਨੀ ਕਵਰ ਕਿਸਮਾਂ ਲਈ ਖੇਤਰ ਦੇ ਅੰਕੜੇ ਅਤੇ ਵਿਜ਼ੂਅਲਾਈਜ਼ੇਸ਼ਨ।",

@@ -170,6 +170,7 @@
     "dashboard.weather.wind": "காற்று",
     "dashboard.weather.hourly": "மணிநேர முன்னறிவிப்பு",
     "dashboard.weather.precipitation": "மழைப்பொழிவு",
+    "dashboard.weather.unavailable": "Weather data was unavailable for this period, so temperature and rainfall are not shown.",
     "dashboard.weather.temperature": "வெப்பநிலை",
     "dashboard.landCover.title": "நிலப்பரப்பு மாற்றப் பகுப்பாய்வு",
     "dashboard.landCover.description": "தேர்ந்தெடுக்கப்பட்ட காலத்தின் தொடக்கத்திலும் முடிவிலும் வெவ்வேறு நிலப்பரப்பு வகைகளுக்கான பகுதி புள்ளிவிவரங்கள் மற்றும் காட்சிப்படுத்தல்.",

@@ -170,6 +170,7 @@
     "dashboard.weather.wind": "ପବନ",
     "dashboard.weather.hourly": "ଘଣ୍ଟିକିଆ ਪੂਰ੍ਵਾਨੁਮਾਨ",
     "dashboard.weather.precipitation": "ବର୍ଷା",
+    "dashboard.weather.unavailable": "Weather data was unavailable for this period, so temperature and rainfall are not shown.",
     "dashboard.weather.temperature": "ତାପମାତ୍ରା",
     "dashboard.landCover.title": "ଭୂମି ଆଚ୍ଛਾਦନ ପରିବର୍ତ୍ତନ ବିଶ୍ଳେଷଣ",
     "dashboard.landCover.description": "ਚୟନିତ ସମୟସୀਮାର ଆରମ୍ଭ ଏବଂ ଶେଷରେ ବିଭିନ୍ନ ଭୂମି ଆଚ୍ଛਾਦନ ਪ੍ਰਕਾਰ ପାଇଁ କ୍ଷେତ୍ର ਪରିସଂଖ୍ୟាន ଏବଂ ଭିਜୁଆਲାଇଜେସନ୍।",

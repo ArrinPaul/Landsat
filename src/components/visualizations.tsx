@@ -219,6 +219,9 @@ export function Visualizations({ analysisResult, groundTruthData, selectedMetric
                     </SelectContent>
                 </Select>
             </div>
+            {analysisResult.historicalWeather.length === 0 && (
+              <p className="text-sm text-muted-foreground">{t('dashboard.weather.unavailable')}</p>
+            )}
             {combinedChartData && (
               <div className="h-[400px] w-full">
                 <ResponsiveContainer width="100%" height="100%">

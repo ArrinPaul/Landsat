@@ -170,6 +170,7 @@
     "dashboard.weather.wind": "Wind",
     "dashboard.weather.hourly": "Hourly Forecast",
     "dashboard.weather.precipitation": "Precipitation",
+    "dashboard.weather.unavailable": "Weather data was unavailable for this period, so temperature and rainfall are not shown.",
     "dashboard.weather.temperature": "Temperature",
     "dashboard.landCover.title": "Land Cover Change Analysis",
     "dashboard.landCover.description": "Area statistics and visualization for different land cover types at the start and end of the selected period.",

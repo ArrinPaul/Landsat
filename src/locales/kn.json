@@ -170,6 +170,7 @@
     "dashboard.weather.wind": "ಗಾಳಿ",
     "dashboard.weather.hourly": "ಗಂಟೆಯ ಮುನ್ಸೂಚನೆ",
     "dashboard.weather.precipitation": "ಮಳೆ",
+    "dashboard.weather.unavailable": "Weather data was unavailable for this period, so temperature and rainfall are not shown.",
     "dashboard.weather.temperature": "ತಾಪಮಾನ",
     "dashboard.landCover.title": "ಭೂ ఆవరణ ಬದಲಾವಣೆ ವಿಶ್ಲೇಷಣೆ",
     "dashboard.landCover.description": "ಆಯ್ದ ಅವಧಿಯ ಆರಂಭದಲ್ಲಿ ಮತ್ತು ಕೊನೆಯಲ್ಲಿ ವಿವಿಧ ಭೂ ఆవరణ ಪ್ರಕಾರಗಳಿಗೆ ಪ್ರದೇಶ ಅಂಕಿಅಂಶಗಳು మరియు ദൃശ്യೀಕರಣ.",
