@@ -8,7 +8,7 @@
 
 **Tech Stack:** Next.js server actions, TypeScript, Vitest (fetch stubbed with `vi.stubGlobal`), Open-Meteo archive API.
 
-**Spec:** `docs/superpowers/plans/../../../C:\Users\Arrin Paul\.claude\plans\hey-so-i-was-inherited-sundae.md` (Phase 1 of the overhaul plan; the summary section "Phase 1. Data trust layer"). This plan is the "remove fabricated data" slice of it. The `Measured<T>` provenance type, shared data clients and the Supabase cache are deferred to a follow-up plan (Phase 1b), because nothing consumes them until a second data source (SoilGrids / NASA POWER) is added, and adding them now would be unused code.
+**Spec:** Phase 1 ("Data trust layer") of the overhaul plan, which lives outside the repo at `C:\Users\Arrin Paul\.claude\plans\hey-so-i-was-inherited-sundae.md`. This plan is the "remove fabricated data" slice of it. The `Measured<T>` provenance type, shared data clients and the Supabase cache are deferred to a follow-up plan (Phase 1b), because nothing consumes them until a second data source (SoilGrids / NASA POWER) is added, and adding them now would be unused code.
 
 ## Global Constraints
 
