@@ -8,6 +8,7 @@ import { getTraceContext } from '@/lib/trace';
 import { logSystemMetric } from '@/lib/metrics';
 
 const ARCHIVE_API_URL = "https://archive-api.open-meteo.com/v1/archive";
+const FORECAST_API_URL = "https://api.open-meteo.com/v1/forecast";
 
 
 export interface SoilAndWeatherData {
@@ -28,11 +29,11 @@ export interface SoilAndWeatherData {
         interval: number;
         soil_moisture_0_to_1cm: number;
     };
-    hourly_units: {
+    hourly_units?: {
         time: string;
         soil_type_0_to_10cm: string;
     };
-    hourly: {
+    hourly?: {
         time: string[];
         soil_type_0_to_10cm: number[];
     };
@@ -78,75 +79,44 @@ export interface HistoricalPrecipitationData {
 
 
 /**
- * Fetches the latest soil type and moisture data for a given location.
+ * Fetches the latest topsoil moisture for a given location from the Open-Meteo forecast API.
+ * Open-Meteo does not provide soil texture, so `hourly.soil_type_0_to_10cm` is left undefined
+ * (getSoilTypeName reports "Unknown") rather than being guessed.
  * @param latitude The latitude of the location.
  * @param longitude The longitude of the location.
- * @returns A promise that resolves to the soil and weather data.
+ * @returns A promise that resolves to the soil moisture data.
+ * @throws If the API is unreachable or returns no soil moisture value. No mock data is returned.
  */
 export async function getSoilAndWeatherData(latitude: number, longitude: number): Promise<SoilAndWeatherData> {
     const traceId = getTraceContext()?.requestId;
-    // Try primary URL first, then fallback
-    const urls = [
-        `https://soil-api.open-meteo.com/v1/soil?latitude=${latitude}&longitude=${longitude}&current=soil_moisture_0_to_1cm&hourly=soil_type_0_to_10cm`,
-        `https://archive-api.open-meteo.com/v1/archive?latitude=${latitude}&longitude=${longitude}&start_date=2024-01-01&end_date=2024-01-01&hourly=soil_moisture_0_to_1cm` // Fallback
-    ];
+    const url = `${FORECAST_API_URL}?latitude=${latitude}&longitude=${longitude}&current=soil_moisture_0_to_1cm`;
 
-    for (const url of urls) {
-        try {
-            const response = await fetch(url, {
-                cache: 'no-store',
-                headers: traceId ? { 'x-request-id': traceId } : undefined,
-            });
-            if (!response.ok) {
-                throw new Error(`Open-Meteo Soil API returned an error: ${response.status} ${response.statusText}`);
-            }
-            const data = await response.json();
-            
-            logSystemMetric({ metric_type: 'api_call', provider: 'open-meteo', is_success: true, metadata: { endpoint: 'soil' } });
-            
-            // Normalize fallback data structure
-            if (!data.current) {
-                data.current = {
-                    time: new Date().toISOString(),
-                    interval: 3600,
-                    soil_moisture_0_to_1cm: 0.25 // Default optimal moisture
-                };
-            }
-            if (!data.hourly) {
-                data.hourly = {
-                    time: [new Date().toISOString()],
-                    soil_type_0_to_10cm: [4] // Default: Loam
-                };
-            }
-            
-            return data as SoilAndWeatherData;
-        } catch (error: unknown) {
-            const message = error instanceof Error ? error.message : String(error);
-            logger.warn('soil_fetch_failed', {
-                scope: 'services.open-meteo',
-                endpoint: url.split('?')[0],
-                error: redactSensitive(message),
-            });
-            logSystemMetric({ metric_type: 'api_call', provider: 'open-meteo', is_success: false, error_message: message, metadata: { endpoint: 'soil' } });
-            continue;
+    try {
+        const response = await fetch(url, {
+            cache: 'no-store',
+            headers: traceId ? { 'x-request-id': traceId } : undefined,
+        });
+        if (!response.ok) {
+            throw new Error(`Open-Meteo API returned an error: ${response.status} ${response.statusText}`);
         }
+        const data = await response.json();
+        const moisture = data?.current?.soil_moisture_0_to_1cm;
+        if (typeof moisture !== 'number' || Number.isNaN(moisture)) {
+            throw new Error('Open-Meteo response contained no soil moisture value');
+        }
+
+        logSystemMetric({ metric_type: 'api_call', provider: 'open-meteo', is_success: true, metadata: { endpoint: 'soil' } });
+        return data as SoilAndWeatherData;
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        logger.error('soil_fetch_failed', {
+            scope: 'services.open-meteo',
+            endpoint: FORECAST_API_URL,
+            error: redactSensitive(message),
+        });
+        logSystemMetric({ metric_type: 'api_call', provider: 'open-meteo', is_success: false, error_message: message, metadata: { endpoint: 'soil' } });
+        throw new Error(`Failed to fetch soil moisture data: ${message}`);
     }
-    
-    // If all URLs fail, return mock data as last resort
-    logger.error('soil_all_endpoints_failed', { scope: 'services.open-meteo' });
-    return {
-        latitude,
-        longitude,
-        generationtime_ms: 0,
-        utc_offset_seconds: 0,
-        timezone: 'UTC',
-        timezone_abbreviation: 'UTC',
-        elevation: 0,
-        current_units: { time: 'iso8601', interval: 'seconds', soil_moisture_0_to_1cm: 'm³/m³' },
-        current: { time: new Date().toISOString(), interval: 3600, soil_moisture_0_to_1cm: 0.25 },
-        hourly_units: { time: 'iso8601', soil_type_0_to_10cm: 'code' },
-        hourly: { time: [new Date().toISOString()], soil_type_0_to_10cm: [4] }
-    };
 }
 
 /**
