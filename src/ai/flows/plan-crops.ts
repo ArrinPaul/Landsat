@@ -30,9 +30,12 @@ async function fetchClimateDataForCropPlanning(lat: number, lon: number) {
     const temps = historicalWeather.daily.temperature_2m_mean.filter(t => t !== null) as number[];
     const precip = historicalWeather.daily.precipitation_sum.filter(p => p !== null) as number[];
     
-    const avgTemp = temps.length > 0 ? temps.reduce((a, b) => a + b, 0) / temps.length : 20;
-    const minTemp = temps.length > 0 ? Math.min(...temps) : 0;
-    const maxTemp = temps.length > 0 ? Math.max(...temps) : 35;
+    if (temps.length === 0) {
+      throw new Error('No temperature observations were returned for this location');
+    }
+    const avgTemp = temps.reduce((a, b) => a + b, 0) / temps.length;
+    const minTemp = Math.min(...temps);
+    const maxTemp = Math.max(...temps);
     const totalPrecip = precip.reduce((a, b) => a + b, 0);
     
     return {
@@ -44,16 +47,7 @@ async function fetchClimateDataForCropPlanning(lat: number, lon: number) {
       currentMoisture: getMoistureLevel(soilData.current.soil_moisture_0_to_1cm)
     };
   } catch (error) {
-    console.warn('Using mock climate data for crop planning', error);
-    const tempAdjustment = Math.abs(lat) / 90 * 15;
-    return {
-      avgAnnualTemp: (20 - tempAdjustment).toFixed(1),
-      minTemp: (5 - tempAdjustment).toFixed(1),
-      maxTemp: (30 - tempAdjustment / 2).toFixed(1),
-      annualPrecipitation: '500',
-      soilType: 'Loam',
-      currentMoisture: 'Optimal' as const
-    };
+    throw new Error(`Climate data for crop planning is unavailable: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 

@@ -112,15 +112,6 @@ export async function scheduleIrrigation(input: ScheduleIrrigationInput): Promis
         throw new Error("AI returned invalid JSON format. Please try again.");
     }
   } catch (error) {
-    console.warn('Network error, using mock irrigation recommendation', error);
-    // Return reasonable mock recommendation
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    return {
-      recommendation: 'Irrigate within 24 hours',
-      nextIrrigationDate: tomorrow.toISOString().split('T')[0],
-      wateringDepthInches: 1.5,
-      notes: 'Based on typical soil moisture requirements for this region. Real-time data unavailable.'
-    };
+    throw error instanceof Error ? error : new Error(String(error));
   }
 }
