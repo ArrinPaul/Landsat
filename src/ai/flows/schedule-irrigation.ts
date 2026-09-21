@@ -28,6 +28,7 @@ const ScheduleIrrigationInputSchema = z.object({
   longitude: z.number().describe('The longitude of the location.'),
   realSoilData: z.string().optional().describe('Real soil moisture data from Open-Meteo.'),
   realForecast: z.string().optional().describe('Real 7-day weather forecast from Open-Meteo.'),
+  currentDate: z.string().optional().describe('ISO timestamp of the request, supplied server-side.'),
 });
 export type ScheduleIrrigationInput = z.infer<typeof ScheduleIrrigationInputSchema>;
 
@@ -46,7 +47,7 @@ const scheduleIrrigationPrompt = ai.definePrompt({
   input: { schema: ScheduleIrrigationInputSchema },
   prompt: `You are an agricultural water management specialist. You will receive REAL soil moisture data and a REAL 7-day weather forecast from Open-Meteo API. Use this actual data to provide irrigation recommendations.
 
-  The current date is ${new Date().toISOString()}.
+  The current date is {{{currentDate}}}.
 
   **REAL SOIL DATA (from Open-Meteo API):**
   {{{realSoilData}}}
@@ -92,6 +93,7 @@ export async function scheduleIrrigation(input: ScheduleIrrigationInput): Promis
     
     const promptInput = {
       ...input,
+      currentDate: new Date().toISOString(),
       realSoilData: `Soil Moisture: ${formatVwcPercent(soilData.current.soil_moisture_0_to_1cm)} VWC (${moistureLevel}), Soil Type: ${soilType}`,
       realForecast: JSON.stringify(forecastSummary, null, 2)
     };

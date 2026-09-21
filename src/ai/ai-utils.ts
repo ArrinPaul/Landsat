@@ -106,7 +106,6 @@ export async function executePromptWithFallback<TInput, TOutput>(
         else if ('climateDescription' in inputData && 'latitude' in inputData) detectedFlow = 'suggest-crop';
         else if ('cropType' in inputData && 'latitude' in inputData) detectedFlow = 'crop-yield';
         else if ('scenarioDescription' in inputData) detectedFlow = 'scenario';
-        else if ('latitude' in inputData && 'longitude' in inputData) detectedFlow = 'satellite';
         else detectedFlow = 'generic';
       }
       
@@ -142,23 +141,6 @@ Your response must be exactly in this format:
 {"insight": "<one clear sentence about the trend or what it means>"}
 
 Example: {"insight": "The 42% increase in NDVI indicates significant vegetation growth in the region."}
-
-Now provide the JSON:`;
-          break;
-          
-        case 'satellite':
-          const futureTime = new Date(Date.now() + (2 + Math.random() * 10) * 60 * 60 * 1000).toISOString();
-          promptText = `You are a satellite tracking expert. Predict the next satellite pass for these coordinates.
-
-Current date: ${currentDate}
-Latitude: ${lat}
-Longitude: ${lon}
-
-IMPORTANT: You MUST respond with ONLY a valid JSON object. No other text, no explanations, no markdown.
-Your response must be exactly in this format:
-{"passTime": "<ISO 8601 UTC timestamp>", "satelliteName": "<satellite name>", "status": "Active", "speed": <7.5-7.8>}
-
-Example: {"passTime": "${futureTime}", "satelliteName": "Landsat 9", "status": "Active", "speed": 7.59}
 
 Now provide the JSON:`;
           break;

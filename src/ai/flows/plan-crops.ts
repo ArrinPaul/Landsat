@@ -61,6 +61,7 @@ const PlanCropsInputSchema = z.object({
   latitude: z.number().describe('The latitude of the location.'),
   longitude: z.number().describe('The longitude of the location.'),
   realClimateData: z.string().optional().describe('Real climate data from Open-Meteo API.'),
+  currentDate: z.string().optional().describe('ISO timestamp of the request, supplied server-side.'),
 });
 export type PlanCropsInput = z.infer<typeof PlanCropsInputSchema>;
 
@@ -84,7 +85,7 @@ const planCropsPrompt = ai.definePrompt({
   input: { schema: PlanCropsInputSchema },
   prompt: `You are an expert agronomist providing advice to farmers. You will receive REAL climate and soil data from Open-Meteo API - use these actual values to recommend crops that will thrive in these conditions.
 
-  The current date is ${new Date().toISOString()}. Your recommendations must be seasonally appropriate.
+  The current date is {{{currentDate}}}. Your recommendations must be seasonally appropriate.
 
   **REAL CLIMATE DATA (from Open-Meteo API - Last 12 Months):**
   {{{realClimateData}}}
@@ -109,6 +110,7 @@ export async function planCrops(input: PlanCropsInput): Promise<PlanCropsOutput>
     
     const promptInput = {
       ...input,
+      currentDate: new Date().toISOString(),
       realClimateData: `Average Temperature: ${realData.avgAnnualTemp}°C, Min Temp: ${realData.minTemp}°C, Max Temp: ${realData.maxTemp}°C, Annual Precipitation: ${realData.annualPrecipitation}mm, Soil Type: ${realData.soilType}, Current Moisture: ${realData.currentMoisture}`
     };
     
