@@ -160,43 +160,7 @@ export async function getHistoricalWeather(latitude: number, longitude: number, 
             error: redactSensitive(message),
         });
         logSystemMetric({ metric_type: 'api_call', provider: 'open-meteo', is_success: false, error_message: message, metadata: { endpoint: 'historical_weather' } });
-        logger.warn('historical_weather_mock_fallback', { scope: 'services.open-meteo' });
-        
-        // Return mock historical data as fallback
-        const days = Math.floor((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
-        const mockTemps: number[] = [];
-        const mockPrecip: number[] = [];
-        const mockTimes: string[] = [];
-        
-        for (let i = 0; i < days; i++) {
-            const date = new Date(startDate);
-            date.setDate(date.getDate() + i);
-            mockTimes.push(date.toISOString().split('T')[0]);
-            // Generate realistic seasonal temperatures (15-25°C avg)
-            mockTemps.push(15 + Math.random() * 10);
-            // Random precipitation (0-20mm)
-            mockPrecip.push(Math.random() * 20);
-        }
-        
-        return {
-            latitude,
-            longitude,
-            generationtime_ms: 0,
-            utc_offset_seconds: 0,
-            timezone: 'UTC',
-            timezone_abbreviation: 'UTC',
-            elevation: 0,
-            daily_units: {
-                time: 'iso8601',
-                temperature_2m_mean: '°C',
-                precipitation_sum: 'mm'
-            },
-            daily: {
-                time: mockTimes,
-                temperature_2m_mean: mockTemps,
-                precipitation_sum: mockPrecip
-            }
-        };
+        throw new Error(`Failed to fetch historical weather: ${message}`);
     }
 }
 

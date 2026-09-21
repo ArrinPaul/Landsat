@@ -627,15 +627,23 @@ const computeMetricsFlow = async (input: ComputeMetricsInput, jobId: string) => 
   try {
     const [eeData, weatherData, historicalBaseline] = await Promise.all([
         runEeAnalysis(input),
-        getHistoricalWeather(input.latitude, input.longitude, input.startDate, input.endDate),
+        getHistoricalWeather(input.latitude, input.longitude, input.startDate, input.endDate).catch((error: unknown) => {
+            logger.warn('historical_weather_unavailable', {
+                scope: 'ai.flows.compute-metrics',
+                error: redactSensitive(error instanceof Error ? error.message : String(error)),
+            });
+            return null;
+        }),
         getHistoricalBaseline(input.latitude, input.longitude)
     ]);
     
-    const historicalWeatherResult: HistoricalDataPoint[] = weatherData.daily.time.map((date, index) => ({
-        date: date,
-        temperature: weatherData.daily.temperature_2m_mean[index],
-        precipitation: weatherData.daily.precipitation_sum[index],
-    }));
+    const historicalWeatherResult: HistoricalDataPoint[] = weatherData
+        ? weatherData.daily.time.map((date, index) => ({
+            date: date,
+            temperature: weatherData.daily.temperature_2m_mean[index],
+            precipitation: weatherData.daily.precipitation_sum[index],
+        }))
+        : [];
 
     const allBands = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B9', 'B11', 'B12'];
     const timeSeriesResult: any = {
