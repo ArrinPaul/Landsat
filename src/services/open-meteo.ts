@@ -200,28 +200,51 @@ export async function getHistoricalWeather(latitude: number, longitude: number, 
     }
 }
 
+/** A year needs at least this many non-null daily values to count towards the normal. */
+const MIN_DAYS_PER_NORMAL_YEAR = 330;
+
 /**
- * Fetches the 30-year average annual precipitation for a given location.
+ * Averages annual precipitation totals from a daily series.
+ * Only years with enough non-null days are used, so a gap-filled year does not drag the mean down.
+ * @returns The mean yearly total in mm, or null when no year has enough data.
+ */
+export function averageAnnualPrecipitationMm(times: string[], values: (number | null)[]): number | null {
+    const perYear = new Map<string, { sum: number; days: number }>();
+    for (let i = 0; i < times.length; i++) {
+        const value = values[i];
+        if (value === null || value === undefined || Number.isNaN(value)) continue;
+        const year = times[i].slice(0, 4);
+        const entry = perYear.get(year) ?? { sum: 0, days: 0 };
+        entry.sum += value;
+        entry.days += 1;
+        perYear.set(year, entry);
+    }
+    const totals = [...perYear.values()].filter(y => y.days >= MIN_DAYS_PER_NORMAL_YEAR).map(y => y.sum);
+    if (totals.length === 0) return null;
+    return totals.reduce((a, b) => a + b, 0) / totals.length;
+}
+
+/**
+ * Fetches the 1991-2020 average annual precipitation for a given location.
+ * The archive API has no yearly aggregation, so this requests daily ERA5 data and aggregates it.
  * @param latitude The latitude of the location.
  * @param longitude The longitude of the location.
- * @returns A promise that resolves to the historical precipitation data.
+ * @returns A promise that resolves to the precipitation normal (`yearly.precipitation_sum[0]`, mm/year).
+ * @throws If the API is unreachable or returns too little data. No mock data is returned.
  */
 export async function getHistoricalPrecipitation(latitude: number, longitude: number): Promise<HistoricalPrecipitationData> {
     const traceId = getTraceContext()?.requestId;
-    // Fetches data for the climate normal period (1991-2020) to get a 30-year average.
     const params = new URLSearchParams({
         latitude: latitude.toString(),
         longitude: longitude.toString(),
         start_date: '1991-01-01',
-        end_date: '2020-12-31', 
-        yearly: "precipitation_sum",
-        models: "ERA5_seamless", // Use climate reanalysis data
+        end_date: '2020-12-31',
+        daily: 'precipitation_sum',
+        models: 'era5_seamless',
     });
 
-    const url = `${ARCHIVE_API_URL}?${params.toString()}`;
-
     try {
-        const response = await fetch(url, {
+        const response = await fetch(`${ARCHIVE_API_URL}?${params.toString()}`, {
             cache: 'no-store',
             headers: traceId ? { 'x-request-id': traceId } : undefined,
         });
@@ -229,19 +252,24 @@ export async function getHistoricalPrecipitation(latitude: number, longitude: nu
             throw new Error(`Open-Meteo Archive API returned an error: ${response.status} ${response.statusText}`);
         }
         const data = await response.json();
-        
-        logSystemMetric({ metric_type: 'api_call', provider: 'open-meteo', is_success: true, metadata: { endpoint: 'historical_precipitation' } });
-        
-        // The API returns yearly data for the whole range. We need to average it.
-        if (data.yearly && data.yearly.precipitation_sum && data.yearly.precipitation_sum.length > 0) {
-            const validValues = data.yearly.precipitation_sum.filter((p: number | null) => p !== null);
-            const average = validValues.reduce((a: number, b: number) => a + b, 0) / validValues.length;
-            // We'll return the average as if it were a single yearly value for simplicity.
-            data.yearly.precipitation_sum = [average];
-            data.yearly.time = [ '1991-2020 Average' ];
+        const average = averageAnnualPrecipitationMm(data?.daily?.time ?? [], data?.daily?.precipitation_sum ?? []);
+        if (average === null) {
+            throw new Error('Open-Meteo response had too little data to compute a precipitation normal');
         }
-        
-        return data as HistoricalPrecipitationData;
+
+        logSystemMetric({ metric_type: 'api_call', provider: 'open-meteo', is_success: true, metadata: { endpoint: 'historical_precipitation' } });
+
+        return {
+            latitude: data.latitude ?? latitude,
+            longitude: data.longitude ?? longitude,
+            generationtime_ms: data.generationtime_ms ?? 0,
+            utc_offset_seconds: data.utc_offset_seconds ?? 0,
+            timezone: data.timezone ?? 'UTC',
+            timezone_abbreviation: data.timezone_abbreviation ?? 'UTC',
+            elevation: data.elevation ?? 0,
+            yearly_units: { time: 'string', precipitation_sum: 'mm' },
+            yearly: { time: ['1991-2020 Average'], precipitation_sum: [average] },
+        };
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
         logger.error('historical_precipitation_fetch_failed', {
@@ -249,26 +277,7 @@ export async function getHistoricalPrecipitation(latitude: number, longitude: nu
             error: redactSensitive(message),
         });
         logSystemMetric({ metric_type: 'api_call', provider: 'open-meteo', is_success: false, error_message: message, metadata: { endpoint: 'historical_precipitation' } });
-        logger.warn('historical_precipitation_mock_fallback', { scope: 'services.open-meteo' });
-        
-        // Return mock 30-year average (global average ~500mm/year)
-        return {
-            latitude,
-            longitude,
-            generationtime_ms: 0,
-            utc_offset_seconds: 0,
-            timezone: 'UTC',
-            timezone_abbreviation: 'UTC',
-            elevation: 0,
-            yearly_units: {
-                time: 'string',
-                precipitation_sum: 'mm'
-            },
-            yearly: {
-                time: ['1991-2020 Average'],
-                precipitation_sum: [500 + (Math.random() - 0.5) * 200] // 400-600mm range
-            }
-        };
+        throw new Error(`Failed to fetch precipitation normal: ${message}`);
     }
 }
 
