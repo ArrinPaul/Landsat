@@ -284,7 +284,7 @@ const SATELLITE_CONFIGS: Record<SatelliteSource, SatelliteConfig> = {
                 .filterBounds(areaOfInterest)
                 .filterDate(startDate, endDate),
         bandMap: { B1: 'B1', B2: 'B2', B3: 'B3', B4: 'B4', B5: 'B5', B6: 'B6', B7: 'B7', B8: 'B8', B8A: 'B8A', B9: 'B9', B11: 'B11', B12: 'B12' },
-        indexBands: { ndvi: ['B8', 'B4'], ndwi: ['B3', 'B8'], ndbi: ['B11', 'B8'], nbr: ['B8A', 'B12'] },
+        indexBands: { ndvi: ['B8', 'B4'], ndwi: ['B3', 'B8'], ndbi: ['B11', 'B8'], nbr: ['B8', 'B12'] },
         trueColor: { bands: ['B4', 'B3', 'B2'], min: 0, max: 3000 },
     },
     // 30m/pixel, revisit ~8 days combining Landsat 8 + 9. Longest historical heritage of any
@@ -498,7 +498,7 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
         return ee.Feature(null, featureProps);
     });
 
-    const firstImage = withMetrics.first();
+    const firstImage = withMetrics.sort('system:time_start', true).first();
     const lastImage = withMetrics.sort('system:time_start', false).first();
 
     // Grid scale for the classification/change-magnitude sample grids: aim for roughly a 20x20
