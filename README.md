@@ -20,7 +20,7 @@ _Pick a place on Earth, see how it changed, and get advice you can act on._
 ![Vitest](https://img.shields.io/badge/Vitest-4-6E9F18?logo=vitest&logoColor=white)
 ![Playwright](https://img.shields.io/badge/Playwright-E2E-2EAD33?logo=playwright&logoColor=white)
 
-[Quickstart](#quickstart) · [Features](#features) · [How it works](#how-the-analysis-works) · [AI engine](#ai-engine) · [Security](#security) · [Project status](#project-status) · [Report an issue](https://github.com/ArrinPaul/LandSat/issues)
+[Quickstart](#quickstart) · [Features](#features) · [How it works](#how-the-analysis-works) · [Methodology](./METHODOLOGY.md) · [AI engine](#ai-engine) · [Security](#security) · [Project status](#project-status) · [Report an issue](https://github.com/ArrinPaul/LandSat/issues)
 
 </div>
 
@@ -107,6 +107,8 @@ Landsat and MODIS use the equivalent bands for their sensors.
 The result is compared between the first and last image of the period. The reported confidence is the cloud-free fraction of the imagery, which is a data-quality signal and not a model score. There is no trained neural network in the live pipeline.
 
 Gemini does not compute any numbers. It only writes explanations of the numbers the pipeline produces.
+
+The full details, including formulas, band mappings, change detection, the ground-truth matching rule and limitations, are in **[METHODOLOGY.md](./METHODOLOGY.md)**.
 
 ## Architecture
 
@@ -302,6 +304,7 @@ LandSat/
 │   ├── services/       Open-Meteo and Nominatim adapters
 │   ├── locales/        13 translation catalogs
 │   └── test/           Vitest suites
+├── METHODOLOGY.md        Formulas, algorithms and limitations of the analysis
 ├── supabase/migrations/  SQL schema (0001 to 0006)
 ├── e2e/                  Playwright tests
 ├── infra/gcp/            GCP definitions (Cloud Run jobs, workflow, Pub/Sub, alerts, budget)
@@ -325,6 +328,7 @@ The app builds, type-checks, lints cleanly and passes its 21 unit and contract t
 - **The admin settings page is a mock.** Saving shows a toast but persists nothing.
 - **No neural-network segmentation.** Land cover uses fixed index thresholds. `artifacts/ml-phase2/` records a U-Net experiment (mIoU 0.889 on its own validation set) that the running app does not use.
 - **No R² or regression line** in the ground-truth comparison. It is a scatter plot only.
+- **The "historical baseline" is simulated.** `src/ai/tools/get-historical-baseline.ts` returns fixed NDVI and NDWI values by latitude band, and they are passed to the AI change summary as context. Treat any baseline comparison in the AI text as unreliable. See [METHODOLOGY.md](./METHODOLOGY.md#10-weather-and-context-data).
 - **In-memory rate limiting and job queue** do not coordinate across instances.
 - **Unverified integrations.** Earth Engine, Gemini, Groq, HuggingFace and Supabase calls are not covered by automated tests.
 
