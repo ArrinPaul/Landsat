@@ -1,551 +1,351 @@
 <div align="center">
 
-# Landsat (Earth Insights)
+# Earth Insights
 
-### Satellite Data Analytics, Environmental Intelligence, and Precision Agriculture Platform
+### Satellite analytics and AI crop advice, powered by Google Earth Engine
 
-![Next.js](https://img.shields.io/badge/Next.js-15.5-black?style=for-the-badge&logo=next.js)
-![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-06B6D4?style=for-the-badge&logo=tailwindcss)
-![Google Genkit](https://img.shields.io/badge/Google_Genkit-1.21-4285F4?style=for-the-badge&logo=google)
-![Gemini AI](https://img.shields.io/badge/Gemini_AI-3.6_Flash-EA4335?style=for-the-badge&logo=google)
-![Google Earth Engine](https://img.shields.io/badge/Google_Earth_Engine-0.1-34A853?style=for-the-badge&logo=googleearth)
-![Vitest](https://img.shields.io/badge/Vitest-4-6E9F18?style=for-the-badge&logo=vitest)
-![Playwright](https://img.shields.io/badge/Playwright-1.55-2EAD33?style=for-the-badge&logo=playwright)
+_Pick a place on Earth, see how it changed, and get advice you can act on._
 
-Landsat is an enterprise-grade environmental intelligence and precision agriculture platform. It bridges the gap between raw multispectral satellite imagery and ground-level decision-making by integrating Google Earth Engine, Google Genkit with Gemini models, Open-Meteo Climate APIs, and interactive GIS visualization dashboards.
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![CI](https://github.com/ArrinPaul/LandSat/actions/workflows/ci.yml/badge.svg)](https://github.com/ArrinPaul/LandSat/actions/workflows/ci.yml)
 
----
+![Next.js](https://img.shields.io/badge/Next.js-15-000000?logo=nextdotjs&logoColor=white)
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-06B6D4?logo=tailwindcss&logoColor=white)
+![Genkit](https://img.shields.io/badge/Genkit-1.21-4285F4?logo=firebase&logoColor=white)
+![Gemini](https://img.shields.io/badge/Gemini-3.x-8E75B2?logo=googlegemini&logoColor=white)
+![Earth Engine](https://img.shields.io/badge/Google_Earth_Engine-34A853?logo=googleearth&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?logo=supabase&logoColor=white)
+![Vitest](https://img.shields.io/badge/Vitest-4-6E9F18?logo=vitest&logoColor=white)
+![Playwright](https://img.shields.io/badge/Playwright-E2E-2EAD33?logo=playwright&logoColor=white)
 
-[System Architecture](#1-system-architecture) · [UML Diagrams](#2-uml-class-and-use-case-diagrams) · [Tech Stack](#3-tech-stack) · [Features](#4-features) · [RBAC](#5-role-based-access-control-rbac) · [AI & Neural Engine](#6-ai-and-neural-engine) · [Database Schema](#7-database-schema-erd) · [API Reference](#8-api-reference) · [Security & Compliance](#9-security-and-compliance) · [Design System](#10-design-system) · [Project Structure](#11-project-structure) · [Getting Started](#12-getting-started)
+[Quickstart](#quickstart) · [Features](#features) · [How it works](#how-the-analysis-works) · [AI engine](#ai-engine) · [Security](#security) · [Project status](#project-status) · [Report an issue](https://github.com/ArrinPaul/LandSat/issues)
 
 </div>
 
 ---
 
+## About
+
+Earth Insights is a web app that turns satellite imagery into answers. You choose a location, either by coordinates, by name or by drawing an area on a map. It pulls Sentinel-2, Landsat 8/9 or MODIS imagery through Google Earth Engine and computes vegetation, water, built-up and burn indices over time. It also compares land cover before and after, and explains the change in plain language with Gemini.
+
+Beyond imagery, it adds weather from Open-Meteo and AI-assisted tools for farmers and analysts: crop suggestions, irrigation scheduling, soil-moisture and yield estimates, drought and flood risk, and a spoken advisory. The interface is available in 13 languages.
+
+**Who it's for:** researchers and students exploring land-cover change, agronomists and farmers planning crops, and anyone who wants satellite data without writing Earth Engine code.
+
+> This is an independent project. It uses publicly available Landsat, Sentinel-2 and MODIS data through Google Earth Engine, and is not affiliated with or endorsed by NASA, USGS, ESA or Google.
+
 ## Table of Contents
 
-1. [System Architecture](#1-system-architecture)
-2. [UML Class and Use Case Diagrams](#2-uml-class-and-use-case-diagrams)
-3. [Tech Stack](#3-tech-stack)
-4. [Features](#4-features)
-5. [Role-Based Access Control (RBAC)](#5-role-based-access-control-rbac)
-6. [AI and Neural Engine](#6-ai-and-neural-engine)
-7. [Database Schema (ERD)](#7-database-schema-erd)
-8. [API Reference](#8-api-reference)
-9. [Security and Compliance](#9-security-and-compliance)
-10. [Design System](#10-design-system)
-11. [Project Structure](#11-project-structure)
-12. [Getting Started and Operational Scripts](#12-getting-started)
+1. [About](#about)
+2. [Features](#features)
+3. [How the analysis works](#how-the-analysis-works)
+4. [Architecture](#architecture)
+5. [Tech stack](#tech-stack)
+6. [Quickstart](#quickstart)
+7. [Configuration](#configuration)
+8. [AI engine](#ai-engine)
+9. [Authentication and roles](#authentication-and-roles)
+10. [Database](#database)
+11. [Server actions](#server-actions)
+12. [Security](#security)
+13. [Testing](#testing)
+14. [Scripts](#scripts)
+15. [Project structure](#project-structure)
+16. [Deployment](#deployment)
+17. [Project status](#project-status)
+18. [Troubleshooting](#troubleshooting)
+19. [Contributing](#contributing)
+20. [License](#license)
 
----
+## Features
 
-## 1. System Architecture
+| Area | What it does |
+| :--- | :--- |
+| **Satellite analytics** | Time series of NDVI, NDWI, NDBI and NBR for any point or drawn polygon, with a selectable source (Sentinel-2, Landsat 8/9 or MODIS), date range and radius (10 to 2000 m). True-colour thumbnails and a timelapse. |
+| **Land-cover change** | Area of vegetation, water, built-up and other surfaces at the start and end of the period, with absolute and percentage change and before/after maps. |
+| **AI change insights** | Gemini explains what changed and why it may have happened, and writes a report summary. |
+| **Ground-truth comparison** | Upload your own `date,value` CSV and compare it with the satellite series in a scatter plot. Export the computed metrics as CSV. An example is in `test_ground_truth.csv`. |
+| **Predict suite** | Weather forecast, crop planning, irrigation schedule, soil moisture, crop yield, drought and flood risk, scenario analysis and satellite pass prediction. |
+| **Crop advisor** | Crop suggestions and detailed advice on planting density, pests and fertilization, with text-to-speech playback. |
+| **AI assistant** | A floating chatbot grounded in agriculture and satellite topics. |
+| **Accounts** | Registration, login, onboarding that captures farm details, profile and password management, and saved history and preferences. |
+| **Admin area** | User management, activity log, analysis log and usage analytics for administrators. |
+| **13 languages** | Assamese, Bengali, English, Gujarati, Hindi, Kannada, Malayalam, Marathi, Odia, Punjabi, Spanish, Tamil and Telugu, with light and dark themes. |
 
-Landsat is architected as a distributed, service-oriented system built on Next.js 15 App Router, React Server Actions, Google Genkit AI Engine, and an asynchronous task queue for planetary-scale Earth Engine computation.
+## How the analysis works
 
-```mermaid
-graph TB
-    subgraph CLIENT["Client Presentation Layer (Next.js 15 App Router)"]
-        direction TB
-        UI_Landing["Landing Page (/)"]
-        UI_Dash["Satellite Analytics Dashboard (/dashboard)"]
-        UI_Predict["Predictive Environmental Suite (/predict)"]
-        UI_Advisor["Precision Crop Advisor (/crop-advisor)"]
-        UI_Chat["Contextual AI Assistant Widget"]
-        UI_GIS["Interactive GIS Canvas and Recharts"]
-    end
+**Imagery sources** (selected per request):
 
-    subgraph SECURITY_GATEWAY["Security and Context Layer"]
-        AuthCtx["Auth Context Extractor<br/>Header / Cookie RBAC Token"]
-        Sanitizer["Prompt Sanitizer and Redactor"]
-        RateLimit["Sliding Window Rate Limiter"]
-    end
+| Source | Earth Engine collection | Resolution |
+| :--- | :--- | :--- |
+| `sentinel2` | `COPERNICUS/S2_SR_HARMONIZED` | 10 m |
+| `landsat` | `LANDSAT/LC09/C02/T1_L2` merged with `LC08` | 30 m |
+| `modis` | `MODIS/061/MOD09GA` | 500 m |
 
-    subgraph SERVER_ACTIONS["Application Server and Action Handlers"]
-        Actions["Next.js Server Actions<br/>Zod Schema Contracts"]
-        JobQueue["Job Processing Engine<br/>Async Queue and Status Tracking"]
-    end
+Scenes with 75% or more cloud cover are filtered out for Sentinel-2 and Landsat. For a drawn polygon the indices are averaged over the whole shape. For a point, a circle of the chosen radius is used.
 
-    subgraph AI_PIPELINE["Genkit AI and Multi-Provider Engine"]
-        GenkitCore["Google Genkit 1.21 Core"]
-        PrimaryModel["Primary: Gemini 3.6 Flash / 3.7 Flash"]
-        FallbackGemini["Fallback 1: Gemini 3.1 Flash-Lite"]
-        FallbackGroq["Fallback 2: Groq SDK (Llama 3.3)"]
-        FallbackHF["Fallback 3: HuggingFace Inference"]
-        TTSFlow["Text-to-Speech Engine"]
-    end
+**Spectral indices** are normalized differences of two bands, $(A - B)/(A + B)$:
 
-    subgraph EXTERNAL_SERVICES["External Infrastructure and Data Services"]
-        GEE["Google Earth Engine API<br/>Multispectral Bands B1-B12"]
-        Meteo["Open-Meteo REST API<br/>Real-time and Historical Weather"]
-        DB["Supabase Database / Storage<br/>Jobs, Preferences, History"]
-    end
+| Index | Measures | Sentinel-2 bands |
+| :--- | :--- | :--- |
+| NDVI | Vegetation vigour | NIR `B8`, red `B4` |
+| NDWI | Surface water | green `B3`, NIR `B8` |
+| NDBI | Built-up surfaces | SWIR `B11`, NIR `B8` |
+| NBR | Burn severity | NIR `B8A`, SWIR `B12` |
 
-    CLIENT -->|"User Invocation"| SECURITY_GATEWAY
-    SECURITY_GATEWAY --> SERVER_ACTIONS
-    SERVER_ACTIONS --> AI_PIPELINE
-    SERVER_ACTIONS --> JobQueue
-    JobQueue --> GEE
-    SERVER_ACTIONS --> Meteo
-    JobQueue --> DB
-    AI_PIPELINE --> PrimaryModel
-    PrimaryModel -.->|"Auto Fallback"| FallbackGemini
-    FallbackGemini -.->|"Auto Fallback"| FallbackGroq
-    FallbackGroq -.->|"Auto Fallback"| FallbackHF
-    AI_PIPELINE --> TTSFlow
-```
+Landsat and MODIS use the equivalent bands for their sensors.
 
----
+**Land-cover classification** is a transparent rule-based classifier on those indices, applied per pixel:
 
-## 2. UML Class and Use Case Diagrams
+1. **Water** if NDWI > 0.
+2. Otherwise **vegetation** if NDVI > 0.2.
+3. Otherwise **built-up** if NDBI > 0.
+4. Everything else is **other**.
 
-### UML Class Diagram (Domain Models and Workflows)
+The result is compared between the first and last image of the period. The reported confidence is the cloud-free fraction of the imagery, which is a data-quality signal and not a model score. There is no trained neural network in the live pipeline.
+
+Gemini does not compute any numbers. It only writes explanations of the numbers the pipeline produces.
+
+## Architecture
 
 ```mermaid
-classDiagram
-    class UserContext {
-        +String userId
-        +UserRole role
-        +String ip
-        +Boolean isAuthenticated()
-    }
-
-    class AnalysisJob {
-        +String id
-        +String userId
-        +JobStatus status
-        +ComputeMetricsInput input
-        +AnalysisResult result
-        +String error
-        +DateTime createdAt
-        +DateTime updatedAt
-        +start()
-        +poll()
-    }
-
-    class AnalysisResult {
-        +TimeSeriesData timeSeries
-        +LandCoverAnalysis landCover
-        +HistoricalDataPoint[] historicalWeather
-        +AnalyzeChangeOutput changeAnalysis
-        +SegmentationInference segmentationInference
-    }
-
-    class TimeSeriesData {
-        +DataPoint[] NDVI
-        +DataPoint[] NDWI
-        +DataPoint[] NDBI
-        +DataPoint[] NBR
-        +DataPoint[] B1_to_B12
-    }
-
-    class LandCoverAnalysis {
-        +LandCoverChangeStat vegetation
-        +LandCoverChangeStat water
-        +LandCoverChangeStat builtUp
-        +LandCoverChangeStat other
-        +String beforeMapUrl
-        +String afterMapUrl
-    }
-
-    class CropAdvisorEngine {
-        +suggestCrop(SuggestCropInput) SuggestCropOutput
-        +getAdvancedAdvice(AdvancedCropAdviceInput) AdvancedCropAdvice
-        +generateSpeech(String text) AudioBuffer
-    }
-
-    class PredictiveEngine {
-        +predictWeather(Float lat, Float lon) WeatherData
-        +planCrops(CropPlanInput) CropPlan
-        +scheduleIrrigation(IrrigationInput) IrrigationSchedule
-        +predictSoilMoisture(SoilInput) SoilMoisturePrediction
-        +predictCropYield(YieldInput) CropYieldPrediction
-        +assessRisk(RiskInput) DroughtFloodRisk
-        +predictSatellitePass(PassInput) SatellitePassData
-    }
-
-    UserContext --> AnalysisJob : submits
-    AnalysisJob --> AnalysisResult : generates
-    AnalysisResult --> TimeSeriesData : contains
-    AnalysisResult --> LandCoverAnalysis : contains
-    CropAdvisorEngine --> UserContext : scoped to
-    PredictiveEngine --> UserContext : scoped to
+flowchart LR
+    U[Browser<br/>Next.js App Router] --> MW[Middleware<br/>session check + admin gate]
+    MW --> SA[Server Actions<br/>Zod validation, sanitizing, rate limit]
+    SA --> Q[In-process job queue<br/>concurrency 2]
+    Q --> GEE[Google Earth Engine]
+    SA --> AI[Genkit flows]
+    AI --> G[Gemini]
+    AI -.->|fallback| GR[Groq]
+    AI -.->|fallback| HF[HuggingFace]
+    SA --> OM[Open-Meteo / Nominatim]
+    SA --> DB[(Supabase PostgreSQL)]
+    Q --> DB
 ```
 
-### UML Use Case Diagram
+- **Server Actions** in `src/lib/actions.ts` are the main API. Every action goes through one wrapper that sanitizes input, applies rate limiting, retries with backoff, redacts errors and normalizes confidence values to 0 to 1.
+- **Earth Engine jobs** are started and then polled by job ID, so the UI never blocks. Results are stored in the `analysis_jobs` table, with an in-memory fallback when Supabase is unavailable.
+- **Genkit flows** in `src/ai/flows/` wrap each AI feature with a Zod-typed input and output.
 
-```mermaid
-graph LR
-    User["User / Researcher / Agronomist"]
-    Admin["System Administrator"]
+## Tech stack
 
-    subgraph Landsat_Platform["Landsat Intelligence System"]
-        UC1["Explore Global Satellite Imagery and Indices"]
-        UC2["Upload and Validate Ground Truth CSV"]
-        UC3["Execute Land Cover Classification and Change Detection"]
-        UC4["Query 24-hr Forecast and Historical Climate Data"]
-        UC5["Obtain AI Precision Crop and Fertilizer Advisory"]
-        UC6["Listen to Advisory via Text-to-Speech (TTS)"]
-        UC7["Simulate Soil Moisture, Crop Yield, and Hazard Risks"]
-        UC8["Interact with Context-Aware AI Chatbot"]
-        UC9["Manage Role Governance, Audit Logs, and System Telemetry"]
-    end
+| Layer | Technology |
+| :--- | :--- |
+| Framework | Next.js 15 (App Router, Turbopack, Server Actions), React 18, TypeScript 5 |
+| UI | Tailwind CSS 3, Radix UI, Recharts, Leaflet with leaflet-draw |
+| AI | Google Genkit 1.21, Gemini, Groq SDK, HuggingFace Inference |
+| Earth observation | `@google/earthengine`, Open-Meteo, Nominatim (OpenStreetMap) |
+| Data and auth | Supabase PostgreSQL, `bcryptjs`, `jose` (signed session cookie) |
+| Validation | Zod |
+| Quality | Vitest, Playwright, ESLint, Prettier, Husky |
+| Hosting | Firebase App Hosting (`apphosting.yaml`) |
 
-    User --> UC1
-    User --> UC2
-    User --> UC3
-    User --> UC4
-    User --> UC5
-    User --> UC6
-    User --> UC7
-    User --> UC8
-    Admin --> UC9
-    Admin --> UC1
-    Admin --> UC3
-```
+## Quickstart
 
----
+Prerequisites:
 
-## 3. Tech Stack
-
-| Layer | Technology | Version | Description and Role |
-| :--- | :--- | :--- | :--- |
-| **Framework** | Next.js | `15.5.12` | Full-stack application framework with App Router, Turbopack, and Server Actions |
-| **User Interface** | React / React DOM | `18.3.1` | Concurrent component rendering for client and server contexts |
-| **Language** | TypeScript | `^5.0.0` | End-to-end static type enforcement |
-| **Styling** | Tailwind CSS | `3.4.1` | Design system implementation with utility classes and animations |
-| **UI Primitives** | Radix UI | Latest | Accessible, unstyled UI primitives (Dialog, Select, Accordion, Tabs) |
-| **Data Visualization** | Recharts | `^2.15.1` | Declarative SVG time-series charts, scatter plots, and correlation visuals |
-| **AI Orchestration** | Google Genkit | `1.21.0` | Production framework for generative flows, tools, and schema enforcement |
-| **Primary LLMs** | Google Gemini | `3.6 / 3.7 Flash` | High-throughput multimodal reasoning, analytics, and agronomic generation |
-| **Fallback LLMs** | Groq SDK / HuggingFace | `^0.37.0` | Automated multi-provider failover pipeline |
-| **Earth Observation** | `@google/earthengine`| `^0.1.411` | Cloud-scale planetary satellite processing and spectral band extraction |
-| **Meteorological Data** | Open-Meteo REST API | Latest | High-resolution global forecast and historical climate ingestion |
-| **Persistence** | Supabase JS | `^2.110.6` | PostgreSQL cloud backend for asynchronous jobs, history, and preferences |
-| **Schema Validation** | Zod | `^3.24.2` | Runtime schema validation for Server Actions and AI structured outputs |
-| **Quality Assurance** | Vitest and Playwright | `^4.0 / ^1.55` | Unit testing, contract validation, and end-to-end browser testing |
-
----
-
-## 4. Features
-
-### 1. Multispectral Satellite Analytics (`/dashboard`)
-- **Global Coordinate Exploration**: Arbitrary geographic coordinate input (Latitude, Longitude) and custom temporal observation windows.
-- **Automated Spectral Indices**:
-  - **NDVI** (Normalized Difference Vegetation Index): Evaluates canopy greenness, biomass density, and photosynthetic activity.
-  - **NDWI** (Normalized Difference Water Index): Delineates surface water boundaries and plant water content.
-  - **NDBI** (Normalized Difference Built-up Index): Accurately highlights urban density and artificial surfaces.
-  - **NBR** (Normalized Burn Ratio): Evaluates burn severity and ecological regeneration.
-- **Multispectral Raw Band Ingestion**: Visualizes individual spectral channels (B1 through B12) over time.
-- **Asynchronous Task Processing**: Earth Engine workloads are queued and polled to maintain zero UI blocking.
-
-### 2. Ground Truth Cross-Validation
-- Upload in-situ field measurement CSV datasets (`date, value`).
-- Automated temporal synchronization with satellite overpass timelines.
-- Interactive scatter plot generation with linear regression line and coefficient of determination ($R^2$) calculation.
-- One-click CSV export of computed time-series metrics.
-
-### 3. Land Cover Classification and Change Analysis
-- Surface area computation across four primary classes: **Vegetation**, **Water Bodies**, **Built-Up Areas**, and **Other Surfaces**.
-- Absolute surface area shift ($km^2$) and percentage delta quantification over user-defined time periods.
-- Dual-pane Before and After map comparison.
-- Automated AI Change Insight summaries explaining environmental drivers.
-
-### 4. Predictive Environmental Suite (`/predict`)
-- **Natural Language Geocoding**: Resolves location queries (e.g., "Nile River Delta") into precise spatial coordinates (`suggestCoordinates`).
-- **Weather and Climate Integration**: 24-hour hourly forecast and multi-year climate benchmarks via Open-Meteo.
-- **Crop Planning**: Location-specific crop selection with optimal planting windows (`planCrops`).
-- **Irrigation Scheduling**: Soil moisture estimation with calculated watering depths in inches (`scheduleIrrigation`).
-- **Soil Moisture Predictions**: Volumetric water content ($m^3/m^3$) estimation with confidence scoring (`predictSoilMoisture`).
-- **Crop Yield Forecasting**: Machine-assisted quantitative yield projections (`predictCropYield`).
-- **Hazard Risk Assessment**: Drought and flood risk classification (`analyzeDroughtAndFloodRisk`).
-- **Satellite Pass Tracking**: Orbital pass schedule prediction for Landsat and Sentinel constellations.
-
-### 5. Precision Crop Advisor (`/crop-advisor`)
-- AI-tailored crop recommendations evaluating soil taxonomy, moisture conditions, and agro-climatic zones.
-- Comprehensive agronomic strategy:
-  - Recommended planting density (seeds/hectare).
-  - Pathogen and pest threat mitigation profiles.
-  - Phased nutritional and fertilization schedules.
-- **Text-to-Speech (TTS)**: Built-in audio playback for hands-free advisory access in field environments.
-
-### 6. Context-Aware AI Assistant
-- Embedded floating assistant grounded in agricultural intelligence and satellite data analysis.
-- Multi-turn conversation capability with security prompt governance and sensitive data redaction.
-
-### 7. Multilingual Support (i18n)
-- Multilingual interface supporting localized language catalogs (English, Hindi, Spanish, French, and additional locales) with persistent user preference storage.
-
----
-
-## 5. Role-Based Access Control (RBAC)
-
-The platform enforces a zero-trust RBAC model via Next.js request headers and signed session cookies (`src/lib/auth.ts`).
-
-### Roles and Permissions Matrix
-
-| Permission / Action | Viewer (`viewer`) | Analyst (`analyst`) | Admin (`admin`) |
-| :--- | :---: | :---: | :---: |
-| View Public Dashboards and Visualizations | Yes | Yes | Yes |
-| Run Basic Predictor Flows (Weather, Satellite Pass) | Yes | Yes | Yes |
-| Execute Heavy Satellite Computations (GEE) | No | Yes | Yes |
-| Upload Custom Ground Truth CSVs | No | Yes | Yes |
-| Run Advanced Crop Advisory and Yield Simulations | No | Yes | Yes |
-| Trigger Scenario Analysis and Hazard Risk Models | No | Yes | Yes |
-| Access Admin Logs and System Telemetry | No | No | Yes |
-| Modify Rate Limits and Security Policies | No | No | Yes |
-
-### RBAC Enforcement Pattern
-
-```typescript
-// Extracted on every Server Action invocation
-const authContext = await getAuthContext();
-requireRole(authContext, ['analyst', 'admin']);
-```
-
----
-
-## 6. AI and Neural Engine
-
-The platform AI layer is managed by Google Genkit with multi-provider redundancy to ensure zero downtime.
-
-### Model Architecture and Resiliency Pipeline
-
-```mermaid
-graph TD
-    Request["AI Flow Request<br/>(e.g., crop advice, change summary, metrics insight)"]
-    Sanitize["Prompt Sanitizer and Token Redactor"]
-    RateCheck{"Rate Limit Check<br/>Sliding Window"}
-
-    Primary["Primary Model:<br/><b>Gemini 3.6 Flash / 3.7 Flash</b>"]
-    FB1["Fallback 1:<br/><b>Gemini 3.1 Flash-Lite</b>"]
-    FB2["Fallback 2:<br/><b>Groq SDK (Llama 3.3 70B)</b>"]
-    FB3["Fallback 3:<br/><b>HuggingFace Inference API</b>"]
-
-    Response["Structured Zod Output<br/>with Normalized Confidence"]
-
-    Request --> Sanitize --> RateCheck
-    RateCheck -->|"Pass"| Primary
-    RateCheck -->|"Limit Exceeded"| Error["429 Rate Limit Error"]
-
-    Primary -->|"Success"| Response
-    Primary -.->|"Quota 429 or Fail"| FB1
-    FB1 -->|"Success"| Response
-    FB1 -.->|"Quota or Error"| FB2
-    FB2 -->|"Success"| Response
-    FB2 -.->|"Fail"| FB3
-    FB3 -->|"Success"| Response
-```
-
-### Core Genkit AI Flows and Tools
-
-- `ai/flows/compute-metrics.ts`: Remote sensing calculation and AI change interpretation.
-- `ai/flows/analyze-change.ts`: Natural language synthesis of multi-temporal satellite differences.
-- `ai/flows/get-advanced-crop-advice.ts`: Agronomic management, risk assessment, and fertilization plans.
-- `ai/flows/suggest-crop.ts`: Automated crop recommendation evaluating climate, soil, and moisture.
-- `ai/flows/predict-crop-yield.ts`: Yield estimation based on historic and spectral inputs.
-- `ai/flows/predict-soil-moisture.ts`: Volumetric water content regression modeling.
-- `ai/flows/analyze-drought-flood-risk.ts`: Multi-spectral hazard risk classification.
-- `ai/flows/chatbot.ts`: Conversational interface with memory and agricultural grounding.
-- `ai/flows/text-to-speech.ts`: Multi-lingual speech synthesis.
-- `ai/tools/get-soil-type.ts`, `get-soil-moisture.ts`, `get-historical-baseline.ts`: Genkit tool integrations.
-
----
-
-## 7. Database Schema (ERD)
-
-The persistent database layer utilizes PostgreSQL via Supabase, with an in-memory fallback for local development.
-
-```mermaid
-erDiagram
-    ANALYSIS_JOBS {
-        uuid id PK "Job Unique Identifier"
-        string user_id FK "User Identifier"
-        string status "queued | processing | completed | failed"
-        jsonb input "Coordinates, DateRange, Metric options"
-        jsonb result "Computed time-series, land cover, weather"
-        text error "Redacted error message (if failed)"
-        timestamp created_at "Job creation timestamp"
-        timestamp updated_at "Job completion/update timestamp"
-    }
-
-    USER_PREFERENCES {
-        string id PK "User ID"
-        jsonb preferences "Language, theme, reduced motion"
-        timestamp updated_at "Last updated timestamp"
-    }
-
-    USER_HISTORY {
-        uuid id PK "History entry ID"
-        string user_id FK "User ID"
-        string kind "dashboard | chat"
-        jsonb payload "Location, coordinates, prompt metadata"
-        timestamp created_at "Creation timestamp"
-    }
-
-    USER_PREFERENCES ||--o{ USER_HISTORY : "has"
-    USER_PREFERENCES ||--o{ ANALYSIS_JOBS : "initiates"
-```
-
----
-
-## 8. API Reference
-
-The backend exposes strongly typed Next.js Server Actions with strict Zod validation (`src/lib/action-schemas.ts`).
-
-### Key Action Endpoints
-
-| Action Function | Input Schema | Output Type | Description |
-| :--- | :--- | :--- | :--- |
-| `startMetricsComputationAction` | `ComputeMetricsInputActionSchema` | `StartComputationOutput` | Enqueues an Earth Engine satellite analysis job |
-| `getMetricsResultAction` | `{ jobId: string }` | `JobResultOutput` | Polls the status/result of an analysis job |
-| `suggestCropAction` | `SuggestCropActionSchema` | `SuggestCropOutput` | Recommends crops based on coordinates and soil data |
-| `getAdvancedCropAdviceAction` | `AdvancedCropAdviceActionSchema` | `AdvancedCropAdvice` | Returns detailed agronomic strategy and risk guide |
-| `predictSoilMoistureAction` | `CoordinatesSchema` | `SoilMoisturePrediction` | Computes volumetric soil water content |
-| `predictCropYieldAction` | `PredictCropYieldActionSchema` | `CropYieldPrediction` | Generates crop yield forecasts |
-| `analyzeDroughtAndFloodRiskAction` | `CoordinatesSchema` | `DroughtFloodRisk` | Assesses drought and flood hazard risks |
-| `getWeatherReportAction` | `CoordinatesSchema` | `WeatherData` | Retrieves 24-hr forecast and current conditions |
-| `suggestCoordinatesAction` | `SuggestCoordinatesActionSchema` | `Coordinates` | Resolves natural language location queries |
-| `chatbotAction` | `ChatbotInputActionSchema` | `ChatbotOutput` | Submits conversational turns to the AI assistant |
-| `textToSpeechAction` | `TextToSpeechActionSchema` | `{ audioDataUri: string }` | Synthesizes spoken audio from text |
-
----
-
-## 9. Security and Compliance
-
-The platform implements layered security best practices to protect data integrity, prevent prompt injection, and avoid leaking credentials:
-
-1. **Prompt Sanitization (`src/lib/security.ts`)**:
-   - Strips system delimiter tags (`<|...|>`, `[INST]`, `<system>`, `<user>`).
-   - Filters common jailbreak attempts ("ignore previous instructions", "developer mode").
-   - Enforces strict character and token limits.
-2. **Data Redaction**:
-   - Automatically sanitizes API keys, Bearer tokens, secrets, and authorization headers from error messages and logs.
-3. **Sliding Window Rate Limiter (`src/ai/rate-limiter.ts`)**:
-   - Tracks requests per IP and user ID, rejecting bursts exceeding configured quotas.
-4. **Zod Runtime Type Safety**:
-   - All server actions strictly reject malformed JSON, invalid coordinates (latitude not in $[-90, 90]$, longitude not in $[-180, 180]$), and improperly formatted date strings.
-5. **Zero-Trust Role Enforcement**:
-   - Every sensitive server action verifies caller permissions prior to execution.
-
----
-
-## 10. Design System
-
-The application features an accessible, high-contrast design system optimized for scientific data and GIS visualization.
-
-### Design Tokens and Visual Standards
-
-- **Theme Support**: Dark and Light themes with `next-themes` and localStorage persistence.
-- **Color Palette**:
-  - **Primary**: Deep Satellite Teal / Emerald (`hsl(160, 84%, 39%)`) — represents vegetation and environmental monitoring.
-  - **Secondary / Accent**: Electric Indigo (`hsl(217, 91%, 60%)`) — predictive AI and neural processing.
-  - **Surfaces**: Dark slate palettes with glassmorphism backdrops (`rgba(15, 23, 42, 0.75)`).
-- **Typography**: Inter / Sans-serif typography optimized for tabular numerical data and geospatial coordinates.
-- **Component Primitives**: Radix UI primitives styled with Tailwind CSS, supporting full keyboard navigation and screen-reader accessibility.
-
----
-
-## 11. Project Structure
-
-```
-Landsat-main/
-├── .env.example                # Environment variables template
-├── package.json                # Project dependencies and operational scripts
-├── tsconfig.json               # TypeScript configuration
-├── tailwind.config.ts          # Tailwind styling configuration
-├── next.config.ts              # Next.js configuration
-├── vitest.config.ts            # Vitest unit test configuration
-├── playwright.config.ts        # Playwright E2E configuration
-├── e2e/                        # End-to-End test suites
-└── src/
-    ├── ai/                     # Genkit flows, tools, and AI providers
-    │   ├── flows/              # Workflows (compute-metrics, crop advice, chatbot, etc.)
-    │   ├── tools/              # Tools (soil data, historical baselines, scenarios)
-    │   ├── genkit.ts           # Genkit initialization and model configuration
-    │   ├── providers.ts        # Multi-provider fallback manager (Gemini, Groq, HF)
-    │   ├── rate-limiter.ts     # In-memory sliding window rate limiter
-    │   └── prompt-governance.ts# Safety, sanitization, and prompt governance
-    ├── app/                    # Next.js App Router pages
-    │   ├── page.tsx            # Landing page
-    │   ├── dashboard/          # Satellite analysis dashboard
-    │   ├── predict/            # Predictive environmental & agriculture suite
-    │   ├── crop-advisor/       # AI precision crop advisor
-    │   ├── pricing/            # Subscription & pricing tiers
-    │   ├── payment/            # Checkout & payment flow
-    │   ├── settings/           # User configuration & preferences
-    │   ├── layout.tsx          # Root layout and theme providers
-    │   └── globals.css         # Global CSS design system
-    ├── components/             # Reusable UI and feature components
-    │   ├── ui/                 # Radix UI primitive wrappers
-    │   ├── dashboard.tsx       # Main dashboard controller
-    │   ├── input-panel.tsx     # Coordinate, date, and CSV input controller
-    │   ├── visualizations.tsx  # Time-series charts & scatter plots
-    │   ├── land-cover-analysis.tsx # Surface classification component
-    │   ├── gis-dashboard.tsx   # GIS map & layer controls
-    │   └── chatbot.tsx         # Floating AI conversational assistant
-    ├── hooks/                  # Custom React hooks (useLanguage, useToast, etc.)
-    ├── lib/                    # Server actions, security, schemas, and utilities
-    │   ├── actions.ts          # Next.js Server Actions entrypoint
-    │   ├── action-schemas.ts   # Zod validation schemas for all actions
-    │   ├── job-queue.ts        # Async task queue for Earth Engine jobs
-    │   ├── supabase.ts         # Supabase client connection
-    │   ├── types.ts            # Core TypeScript types & data models
-    │   └── logger.ts           # Structured logging utility
-    ├── locales/                # Internationalization translation dictionaries (en, hi, es, etc.)
-    ├── services/               # External service adapters (Open-Meteo, etc.)
-    └── test/                   # Vitest unit and action contract tests
-```
-
----
-
-## 12. Getting Started
-
-### Prerequisites
-
-- **Node.js**: `>= 20.0.0` (Recommended: `v24.11.1`)
-- **npm** or **pnpm**
-- **Google Gemini API Key**: [Obtain from Google AI Studio](https://aistudio.google.com/)
-- *(Optional)* **Google Earth Engine Service Account Key** for live planetary imagery analysis.
-
-### Quick Start
+- **Node.js 24.11.1 or newer 24.x** (`engines` allows `>=24.11.1 <25`, and `.nvmrc` pins `24.11.1`)
+- A [Supabase](https://supabase.com) project, which is required
+- A Gemini API key from [Google AI Studio](https://aistudio.google.com/)
+- A Google Earth Engine service account, if you want satellite analysis
 
 ```bash
-# 1. Clone repository
-git clone https://github.com/ArrinPaul/Satellite_Data.git
-cd Satellite_Data
-
-# 2. Install dependencies
+git clone https://github.com/ArrinPaul/LandSat.git
+cd LandSat
 npm install
 
-# 3. Configure environment
 cp .env.example .env.local
+# fill in JWT_SECRET, the Supabase variables, and at least one AI key
+```
 
-# 4. Start Next.js development server
+Create the database tables by running every file in `supabase/migrations/` in order (`0001` to `0006`) in the Supabase SQL editor. Then start the app:
+
+```bash
 npm run dev
 ```
 
-Open [http://localhost:9003](http://localhost:9003) to explore the application.
+Open <http://localhost:9003>, register an account and follow the onboarding.
 
-### Available Scripts
+**Create the first admin.** New accounts get the `viewer` role. Promote yourself once in the Supabase SQL editor, and after that admins can change roles from `/admin/users`:
 
-| Command | Description |
+```sql
+update users set role = 'admin' where email = 'you@example.com';
+```
+
+## Configuration
+
+Copy `.env.example` to `.env.local`. Never commit it.
+
+| Variable | Required | Purpose |
+| :--- | :---: | :--- |
+| `JWT_SECRET` | Yes | Random string of at least 32 characters used to sign session cookies |
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Supabase project |
+| `SUPABASE_SERVICE_ROLE_KEY` | Yes | Server-side database access. It bypasses RLS, so keep it secret. |
+| `GEMINI_API_KEY` | One AI key | Primary AI provider. `GOOGLE_GENAI_API_KEY` is an accepted alias. |
+| `GROQ_API_KEY`, `HUGGINGFACE_API_KEY` | No | Fallback AI providers |
+| `GOOGLE_APPLICATION_CREDENTIALS_JSON` | For satellite analysis | Service-account key as a single-line JSON string. Without it, Earth Engine analysis fails. |
+| `AUTH_REQUIRED` | No | Set `true` to make server actions reject callers without a session instead of treating them as anonymous viewers |
+| `JOB_QUEUE_CONCURRENCY` | No | Concurrent Earth Engine jobs per server instance (default `2`) |
+| `NODE_ENV` | No | `development` by default |
+
+## AI engine
+
+AI calls go through Genkit and a fallback chain, so a quota error on one provider does not stop the feature.
+
+```mermaid
+flowchart TD
+    R[AI request] --> S[Sanitize + redact]
+    S --> RL{Rate limit}
+    RL -->|over limit| E[Error to the user]
+    RL -->|ok| P[Gemini 3.6 Flash]
+    P -->|failure or quota| F1[Gemini 3.1 Flash-Lite / 3.7 Flash]
+    F1 -->|failure| GQ[Groq]
+    GQ -->|failure| HF[HuggingFace Qwen2.5-72B]
+    P --> O[Zod-validated output]
+    F1 --> O
+    GQ --> O
+    HF --> O
+```
+
+Models are set in `src/ai/genkit.ts` (Gemini) and `src/ai/providers.ts` (Groq tries `openai/gpt-oss-120b`, `openai/gpt-oss-20b`, then `groq/compound`; HuggingFace uses `Qwen/Qwen2.5-72B-Instruct`). Model names change often, so check those files for the current values.
+
+Flows (`src/ai/flows/`): `compute-metrics`, `analyze-change`, `generate-insights`, `generate-report-summary`, `generate-timelapse-video`, `suggest-crop`, `get-advanced-crop-advice`, `plan-crops`, `schedule-irrigation`, `predict-soil-moisture`, `predict-crop-yield`, `analyze-drought-flood-risk`, `predict-satellite-pass`, `get-weather-report`, `suggest-coordinates`, `chatbot` and `text-to-speech`. Tools (`src/ai/tools/`) cover soil type, soil moisture, historical baseline, drought and flood data, and scenario analysis.
+
+Several predictions (soil moisture, yield, risk) are AI-generated estimates built on weather and location data. Treat them as decision support and not as measurements.
+
+## Authentication and roles
+
+Accounts are stored in the `users` table with `bcrypt` password hashes. Login sets a signed 7-day session cookie (`jose`, JWT). The Edge middleware requires a session for `/dashboard`, `/predict`, `/crop-advisor`, `/settings`, `/onboarding` and `/admin`, redirects signed-in users away from `/login` and `/register`, and strips any client-supplied identity headers.
+
+Roles are `viewer` (the default), `analyst` and `admin`. **Only `admin` is enforced today:** the `/admin` pages and `/api/admin/*` routes require it. All signed-in users can use the satellite, predict and crop-advisor features regardless of role, so `analyst` currently behaves like `viewer`. See [Project status](#project-status).
+
+## Database
+
+Supabase PostgreSQL, set up by `supabase/migrations/0001` to `0006`. All server access uses the service-role key, which bypasses Row Level Security by design, so RLS is enabled but acts as a backstop.
+
+| Table | Purpose |
 | :--- | :--- |
-| `npm run dev` | Starts the Next.js development server on port 9003 with Turbopack |
-| `npm run genkit:dev` | Launches the interactive Google Genkit Developer UI |
-| `npm run build` | Compiles the production build |
-| `npm run start` | Runs the compiled production application |
-| `npm run typecheck` | Executes TypeScript type checking (`tsc --noEmit`) |
-| `npm run lint` | Runs ESLint validation |
-| `npm run test` | Runs all Vitest unit and contract tests |
-| `npm run test:contracts` | Validates Server Action schemas against contract tests |
-| `npm run test:e2e` | Executes Playwright end-to-end browser tests |
-| `npm run security:audit` | Runs automated npm dependency security audit |
+| `users` | Accounts, role, onboarding progress, disabled flag, last login |
+| `profiles` | Farm details from onboarding (location, soil type, planting season, machinery access) |
+| `account_events` | Audit trail for account actions |
+| `user_preferences` | Language, theme and other preferences |
+| `user_history` | Dashboard and chat history |
+| `analysis_jobs` | Earth Engine job status, input and result |
+| `system_metrics` | Usage metrics shown in admin analytics |
 
----
+## Server actions
+
+The app's API is a set of Next.js Server Actions in `src/lib/actions.ts`, validated by Zod schemas in `src/lib/action-schemas.ts`. Each returns `{ data, error }`.
+
+| Action | Purpose |
+| :--- | :--- |
+| `startMetricsComputationAction`, `getMetricsResultAction` | Start an Earth Engine job and poll for its result |
+| `suggestCoordinatesAction`, `geocodeCityAction` | Turn a place name into coordinates |
+| `generateInsightAction`, `generateReportAction` | AI insights and report summary |
+| `getWeatherReportAction`, `predictSatellitePassAction` | Weather and satellite passes |
+| `planCropsAction`, `suggestCropAction`, `getAdvancedCropAdviceAction` | Crop planning and advice |
+| `scheduleIrrigationAction`, `predictSoilMoistureAction`, `predictCropYieldAction` | Irrigation, soil moisture and yield |
+| `analyzeDroughtAndFloodRiskAction`, `runScenarioAnalysisAction` | Hazard risk and what-if analysis |
+| `generateTimelapseVideoAction`, `textToSpeechAction`, `chatbotAction` | Timelapse, speech and chat |
+| `saveUserPreferencesAction`, `getUserPreferencesAction`, `appendUserHistoryAction`, `listUserHistoryAction` | Preferences and history |
+
+Auth, profile and admin features use conventional route handlers under `src/app/api/` (`auth/*`, `profile/*`, `onboarding`, `admin/*`).
+
+## Security
+
+- **Session cookies** are signed JWTs with a 7-day lifetime. The app refuses to sign or verify without `JWT_SECRET`.
+- **Passwords** are hashed with bcrypt (10 rounds) and must be at least 8 characters.
+- **Route protection.** Middleware guards the app pages and the admin area.
+- **Prompt sanitizing.** Input is stripped of prompt-delimiter tags and common jailbreak phrases and capped at 4000 characters before it reaches an AI model.
+- **Secret redaction.** Error messages and logs have bearer tokens, API keys and long token-like strings removed.
+- **Validation.** Server actions parse their input with Zod, including coordinate ranges.
+- **Rate limiting.** Each user, IP and action is limited to 15 requests per minute. The limiter is in memory, so it is per server instance and resets on restart.
+- **Supply chain.** CI runs `npm audit` and fails on high-severity findings.
+
+## Testing
+
+```bash
+npm test               # Vitest: 4 files, 21 tests
+npm run test:contracts # server action schema contract tests only
+npm run test:e2e       # Playwright
+npm run typecheck && npm run lint
+```
+
+Vitest covers server-action contracts, change analysis, CSV parsing and JWT handling. Playwright (`e2e/dashboard.spec.ts`) checks that anonymous visitors are redirected to `/login` for the protected pages. Earth Engine, Gemini and Supabase are not exercised by the automated tests, so those integrations need manual checks with real credentials.
+
+CI (`.github/workflows/ci.yml`) runs lint, typecheck, tests, contract tests, a high-severity audit and a production build on every push and pull request to `main`. A Husky pre-commit hook is also configured.
+
+## Scripts
+
+| Command | What it does |
+| :--- | :--- |
+| `npm run dev` | Dev server on port 9003 with Turbopack |
+| `npm run build` / `npm start` | Production build and server |
+| `npm run genkit:dev` | Genkit Developer UI for the AI flows |
+| `npm run typecheck`, `npm run lint` | Type check and ESLint (zero warnings allowed) |
+| `npm test`, `npm run test:contracts`, `npm run test:e2e` | Test suites |
+| `npm run security:audit` | `npm audit` at high severity |
+| `npm run format`, `npm run format:check` | Prettier |
+
+## Project structure
+
+```text
+LandSat/
+├── src/
+│   ├── app/            Pages: landing, dashboard, login, register, onboarding, settings,
+│   │                   admin/*; route handlers in api/ (auth, profile, onboarding, admin)
+│   ├── ai/             Genkit flows, tools, provider fallback, rate limiter, prompt governance
+│   ├── components/     Dashboard, GIS map, charts, chatbot, forms, ui/ primitives
+│   ├── lib/            Server actions, schemas, auth, JWT, security, Supabase, job queue
+│   ├── services/       Open-Meteo and Nominatim adapters
+│   ├── locales/        13 translation catalogs
+│   └── test/           Vitest suites
+├── supabase/migrations/  SQL schema (0001 to 0006)
+├── e2e/                  Playwright tests
+├── infra/gcp/            GCP definitions (Cloud Run jobs, workflow, Pub/Sub, alerts, budget)
+├── artifacts/ml-phase2/  Records from a land-cover model experiment (not used at runtime)
+├── docs/superpowers/     Frontend rework design spec and plan
+├── apphosting.yaml       Firebase App Hosting config
+└── test_ground_truth.csv Example ground-truth CSV
+```
+
+## Deployment
+
+The app is configured for Firebase App Hosting (`apphosting.yaml`, `.firebaserc`, up to 5 instances). Set the variables from [Configuration](#configuration) as secrets, apply the Supabase migrations and deploy. Because the rate limiter and job queue live in process memory, each instance has its own limits and queue.
+
+`infra/gcp/` holds definitions for a larger batch pipeline (preprocess, train and inference Cloud Run jobs, a workflow, Pub/Sub topics, alerts and a budget). They are infrastructure definitions only, and the app does not call them today.
+
+## Project status
+
+The app builds, type-checks, lints cleanly and passes its 21 unit and contract tests. Known gaps:
+
+- **Roles beyond `admin` are not enforced.** The permissions matrix in older versions of this README (analyst-only satellite computation and so on) was not implemented. All signed-in users can use every feature.
+- **The admin settings page is a mock.** Saving shows a toast but persists nothing.
+- **No neural-network segmentation.** Land cover uses fixed index thresholds. `artifacts/ml-phase2/` records a U-Net experiment (mIoU 0.889 on its own validation set) that the running app does not use.
+- **No R² or regression line** in the ground-truth comparison. It is a scatter plot only.
+- **In-memory rate limiting and job queue** do not coordinate across instances.
+- **Unverified integrations.** Earth Engine, Gemini, Groq, HuggingFace and Supabase calls are not covered by automated tests.
+
+## Troubleshooting
+
+| Symptom | Likely cause | Fix |
+| :--- | :--- | :--- |
+| Every sign-in or session check fails | `JWT_SECRET` is missing or shorter than 32 characters | Set a long random `JWT_SECRET` and restart. |
+| Database errors, or registration fails | Supabase variables are empty or migrations were not run | Set the three Supabase variables and run `supabase/migrations/0001` to `0006` in order. |
+| "All AI and Satellite services are disabled" | No AI key and no Earth Engine credentials are set | Set `GEMINI_API_KEY` (or another AI key) and/or `GOOGLE_APPLICATION_CREDENTIALS_JSON`. |
+| "GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable not set" | Satellite analysis needs a service-account key | Add the service-account JSON as a single line. |
+| "No valid satellite imagery found" | No scenes for that place, dates and cloud limit | Widen the date range, increase the radius or try another source. |
+| "Too Many Requests" | More than 15 calls per minute to one action | Wait a minute. The limit is per user, IP and action. |
+| Redirected from `/admin` to `/dashboard` | Your account is not an admin | Set `role = 'admin'` for your user in the `users` table. |
+| Node version error on install or start | Node outside `>=24.11.1 <25` | Use `nvm use` with the pinned `.nvmrc`. |
+| Lint fails in CI on a warning | ESLint runs with `--max-warnings=0` | Fix the warning, or run `npm run lint:fix`. |
+
+## Contributing
+
+Issues and pull requests are welcome. Run `npm run lint`, `npm run typecheck`, `npm test` and `npm run build` before opening a PR, which are the same checks CI runs. Never commit `.env` files, service-account keys or API keys.
 
 ## License
 
-This project is licensed under the **MIT License**.
+Released under the MIT License. See [LICENSE](LICENSE).
