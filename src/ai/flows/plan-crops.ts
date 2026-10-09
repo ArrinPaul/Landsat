@@ -30,9 +30,12 @@ async function fetchClimateDataForCropPlanning(lat: number, lon: number) {
     const temps = historicalWeather.daily.temperature_2m_mean.filter(t => t !== null) as number[];
     const precip = historicalWeather.daily.precipitation_sum.filter(p => p !== null) as number[];
     
-    const avgTemp = temps.length > 0 ? temps.reduce((a, b) => a + b, 0) / temps.length : 20;
-    const minTemp = temps.length > 0 ? Math.min(...temps) : 0;
-    const maxTemp = temps.length > 0 ? Math.max(...temps) : 35;
+    if (temps.length === 0) {
+      throw new Error('No temperature observations were returned for this location');
+    }
+    const avgTemp = temps.reduce((a, b) => a + b, 0) / temps.length;
+    const minTemp = Math.min(...temps);
+    const maxTemp = Math.max(...temps);
     const totalPrecip = precip.reduce((a, b) => a + b, 0);
     
     return {
@@ -44,16 +47,7 @@ async function fetchClimateDataForCropPlanning(lat: number, lon: number) {
       currentMoisture: getMoistureLevel(soilData.current.soil_moisture_0_to_1cm)
     };
   } catch (error) {
-    console.warn('Using mock climate data for crop planning', error);
-    const tempAdjustment = Math.abs(lat) / 90 * 15;
-    return {
-      avgAnnualTemp: (20 - tempAdjustment).toFixed(1),
-      minTemp: (5 - tempAdjustment).toFixed(1),
-      maxTemp: (30 - tempAdjustment / 2).toFixed(1),
-      annualPrecipitation: '500',
-      soilType: 'Loam',
-      currentMoisture: 'Optimal' as const
-    };
+    throw new Error(`Climate data for crop planning is unavailable: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
@@ -61,6 +55,7 @@ const PlanCropsInputSchema = z.object({
   latitude: z.number().describe('The latitude of the location.'),
   longitude: z.number().describe('The longitude of the location.'),
   realClimateData: z.string().optional().describe('Real climate data from Open-Meteo API.'),
+  currentDate: z.string().optional().describe('ISO timestamp of the request, supplied server-side.'),
 });
 export type PlanCropsInput = z.infer<typeof PlanCropsInputSchema>;
 
@@ -84,7 +79,7 @@ const planCropsPrompt = ai.definePrompt({
   input: { schema: PlanCropsInputSchema },
   prompt: `You are an expert agronomist providing advice to farmers. You will receive REAL climate and soil data from Open-Meteo API - use these actual values to recommend crops that will thrive in these conditions.
 
-  The current date is ${new Date().toISOString()}. Your recommendations must be seasonally appropriate.
+  The current date is {{{currentDate}}}. Your recommendations must be seasonally appropriate.
 
   **REAL CLIMATE DATA (from Open-Meteo API - Last 12 Months):**
   {{{realClimateData}}}
@@ -109,6 +104,7 @@ export async function planCrops(input: PlanCropsInput): Promise<PlanCropsOutput>
     
     const promptInput = {
       ...input,
+      currentDate: new Date().toISOString(),
       realClimateData: `Average Temperature: ${realData.avgAnnualTemp}°C, Min Temp: ${realData.minTemp}°C, Max Temp: ${realData.maxTemp}°C, Annual Precipitation: ${realData.annualPrecipitation}mm, Soil Type: ${realData.soilType}, Current Moisture: ${realData.currentMoisture}`
     };
     

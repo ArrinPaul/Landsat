@@ -170,6 +170,7 @@
     "dashboard.weather.wind": "കാറ്റ്",
     "dashboard.weather.hourly": "മണിക്കൂർ പ്രവചനം",
     "dashboard.weather.precipitation": "മഴ",
+    "dashboard.weather.unavailable": "Weather data was unavailable for this period, so temperature and rainfall are not shown.",
     "dashboard.weather.temperature": "താപനില",
     "dashboard.landCover.title": "ഭൂവിനിയോഗ മാറ്റ വിശകലനം",
     "dashboard.landCover.description": "തിരഞ്ഞെടുത്ത കാലയളവിൻ്റെ തുടക്കത്തിലും അവസാനത്തിലുമുള്ള വിവിധ ഭൂവിനിയോഗ வகைகளுக்கான വിസ്തീർണ്ണ സ്ഥിതിവിവരക്കണക്കുകളും ദൃശ്യവൽക്കരണവും.",

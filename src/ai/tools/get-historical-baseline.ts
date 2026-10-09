@@ -32,9 +32,6 @@ export async function getHistoricalBaseline(latitude: number, longitude: number)
     averageNDWI = 0.2;
   }
 
-  // Simulate a delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-
   return {
     description,
     averageNDVI,

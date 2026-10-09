@@ -12,7 +12,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { executePromptWithFallback, safeParseAIJson } from '@/ai/ai-utils';
-import { getSoilAndWeatherData, getMoistureLevel, getSoilTypeName } from '@/services/open-meteo';
+import { getSoilAndWeatherData, getMoistureLevel, getSoilTypeName, formatVwcPercent, MOISTURE_DRY_BELOW, MOISTURE_WET_ABOVE } from '@/services/open-meteo';
 
 // Fetch real weather forecast
 async function fetchWeatherForecast(lat: number, lon: number) {
@@ -28,6 +28,7 @@ const ScheduleIrrigationInputSchema = z.object({
   longitude: z.number().describe('The longitude of the location.'),
   realSoilData: z.string().optional().describe('Real soil moisture data from Open-Meteo.'),
   realForecast: z.string().optional().describe('Real 7-day weather forecast from Open-Meteo.'),
+  currentDate: z.string().optional().describe('ISO timestamp of the request, supplied server-side.'),
 });
 export type ScheduleIrrigationInput = z.infer<typeof ScheduleIrrigationInputSchema>;
 
@@ -46,7 +47,7 @@ const scheduleIrrigationPrompt = ai.definePrompt({
   input: { schema: ScheduleIrrigationInputSchema },
   prompt: `You are an agricultural water management specialist. You will receive REAL soil moisture data and a REAL 7-day weather forecast from Open-Meteo API. Use this actual data to provide irrigation recommendations.
 
-  The current date is ${new Date().toISOString()}.
+  The current date is {{{currentDate}}}.
 
   **REAL SOIL DATA (from Open-Meteo API):**
   {{{realSoilData}}}
@@ -58,9 +59,9 @@ const scheduleIrrigationPrompt = ai.definePrompt({
   1. Use ONLY the actual soil moisture and forecast values provided
   2. DO NOT make up weather predictions or soil conditions
   3. Decision logic using REAL data:
-     - Soil moisture < 0.20 (Dry) + No rain in forecast → Irrigate immediately
-     - Soil moisture 0.20-0.40 (Optimal) + Rain expected → Delay irrigation
-     - Soil moisture > 0.40 (Wet) → No irrigation needed
+     - Soil moisture < ${MOISTURE_DRY_BELOW} (Dry) + No rain in forecast → Irrigate immediately
+     - Soil moisture ${MOISTURE_DRY_BELOW}-${MOISTURE_WET_ABOVE} (Optimal) + Rain expected → Delay irrigation
+     - Soil moisture > ${MOISTURE_WET_ABOVE} (Wet) → No irrigation needed
   4. Water depth: 0.5-1 inch for vegetables, 1-2 inches for field crops
 
   Your response MUST be a valid JSON object ONLY that conforms to the ScheduleIrrigationOutput schema. Do not add any other text or formatting.
@@ -92,7 +93,8 @@ export async function scheduleIrrigation(input: ScheduleIrrigationInput): Promis
     
     const promptInput = {
       ...input,
-      realSoilData: `Soil Moisture: ${soilData.current.soil_moisture_0_to_1cm.toFixed(1)}% VWC (${moistureLevel}), Soil Type: ${soilType}`,
+      currentDate: new Date().toISOString(),
+      realSoilData: `Soil Moisture: ${formatVwcPercent(soilData.current.soil_moisture_0_to_1cm)} VWC (${moistureLevel}), Soil Type: ${soilType}`,
       realForecast: JSON.stringify(forecastSummary, null, 2)
     };
     
@@ -110,15 +112,6 @@ export async function scheduleIrrigation(input: ScheduleIrrigationInput): Promis
         throw new Error("AI returned invalid JSON format. Please try again.");
     }
   } catch (error) {
-    console.warn('Network error, using mock irrigation recommendation', error);
-    // Return reasonable mock recommendation
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    return {
-      recommendation: 'Irrigate within 24 hours',
-      nextIrrigationDate: tomorrow.toISOString().split('T')[0],
-      wateringDepthInches: 1.5,
-      notes: 'Based on typical soil moisture requirements for this region. Real-time data unavailable.'
-    };
+    throw error instanceof Error ? error : new Error(String(error));
   }
 }

@@ -284,7 +284,7 @@ const SATELLITE_CONFIGS: Record<SatelliteSource, SatelliteConfig> = {
                 .filterBounds(areaOfInterest)
                 .filterDate(startDate, endDate),
         bandMap: { B1: 'B1', B2: 'B2', B3: 'B3', B4: 'B4', B5: 'B5', B6: 'B6', B7: 'B7', B8: 'B8', B8A: 'B8A', B9: 'B9', B11: 'B11', B12: 'B12' },
-        indexBands: { ndvi: ['B8', 'B4'], ndwi: ['B3', 'B8'], ndbi: ['B11', 'B8'], nbr: ['B8A', 'B12'] },
+        indexBands: { ndvi: ['B8', 'B4'], ndwi: ['B3', 'B8'], ndbi: ['B11', 'B8'], nbr: ['B8', 'B12'] },
         trueColor: { bands: ['B4', 'B3', 'B2'], min: 0, max: 3000 },
     },
     // 30m/pixel, revisit ~8 days combining Landsat 8 + 9. Longest historical heritage of any
@@ -498,7 +498,7 @@ async function runEeAnalysis(input: ComputeMetricsInput): Promise<any> {
         return ee.Feature(null, featureProps);
     });
 
-    const firstImage = withMetrics.first();
+    const firstImage = withMetrics.sort('system:time_start', true).first();
     const lastImage = withMetrics.sort('system:time_start', false).first();
 
     // Grid scale for the classification/change-magnitude sample grids: aim for roughly a 20x20
@@ -627,15 +627,23 @@ const computeMetricsFlow = async (input: ComputeMetricsInput, jobId: string) => 
   try {
     const [eeData, weatherData, historicalBaseline] = await Promise.all([
         runEeAnalysis(input),
-        getHistoricalWeather(input.latitude, input.longitude, input.startDate, input.endDate),
+        getHistoricalWeather(input.latitude, input.longitude, input.startDate, input.endDate).catch((error: unknown) => {
+            logger.warn('historical_weather_unavailable', {
+                scope: 'ai.flows.compute-metrics',
+                error: redactSensitive(error instanceof Error ? error.message : String(error)),
+            });
+            return null;
+        }),
         getHistoricalBaseline(input.latitude, input.longitude)
     ]);
     
-    const historicalWeatherResult: HistoricalDataPoint[] = weatherData.daily.time.map((date, index) => ({
-        date: date,
-        temperature: weatherData.daily.temperature_2m_mean[index],
-        precipitation: weatherData.daily.precipitation_sum[index],
-    }));
+    const historicalWeatherResult: HistoricalDataPoint[] = weatherData
+        ? weatherData.daily.time.map((date, index) => ({
+            date: date,
+            temperature: weatherData.daily.temperature_2m_mean[index],
+            precipitation: weatherData.daily.precipitation_sum[index],
+        }))
+        : [];
 
     const allBands = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B9', 'B11', 'B12'];
     const timeSeriesResult: any = {

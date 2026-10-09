@@ -22,28 +22,18 @@ export const getDroughtAndFloodRiskData = ai.defineTool(
     }),
   },
   async ({ latitude, longitude }) => {
-    try {
-      // Fetch data in parallel
-      const [precipitationData, soilData] = await Promise.all([
-        getHistoricalPrecipitation(latitude, longitude),
-        getSoilAndWeatherData(latitude, longitude)
-      ]);
+    // Fetch data in parallel. Failures propagate: there is no safe default for real risk data.
+    const [precipitationData, soilData] = await Promise.all([
+      getHistoricalPrecipitation(latitude, longitude),
+      getSoilAndWeatherData(latitude, longitude)
+    ]);
 
-      const moisture = getMoistureLevel(soilData.current.soil_moisture_0_to_1cm);
-      const avgPrecipitation = precipitationData.yearly.precipitation_sum[0] || 0;
+    const moisture = getMoistureLevel(soilData.current.soil_moisture_0_to_1cm);
+    const avgPrecipitation = precipitationData.yearly.precipitation_sum[0] || 0;
 
-      return { 
-        averagePrecipitationMm: avgPrecipitation,
-        currentMoistureLevel: moisture as 'Dry' | 'Optimal' | 'Wet'
-      };
-
-    } catch (error) {
-        console.error("Error in getDroughtAndFloodRiskData tool:", error);
-        // Provide reasonable fallback values in case of API failure.
-        return { 
-            averagePrecipitationMm: 500, // A global average-ish fallback
-            currentMoistureLevel: 'Optimal' as const
-        };
-    }
+    return {
+      averagePrecipitationMm: avgPrecipitation,
+      currentMoistureLevel: moisture as 'Dry' | 'Optimal' | 'Wet'
+    };
   }
 );

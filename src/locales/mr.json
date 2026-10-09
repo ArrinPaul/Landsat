@@ -170,6 +170,7 @@
     "dashboard.weather.wind": "वारा",
     "dashboard.weather.hourly": "तासाचा अंदाज",
     "dashboard.weather.precipitation": "वर्षा",
+    "dashboard.weather.unavailable": "Weather data was unavailable for this period, so temperature and rainfall are not shown.",
     "dashboard.weather.temperature": "तापमान",
     "dashboard.landCover.title": "जमीन आच्छादन बदल विश्लेषण",
     "dashboard.landCover.description": "निवडलेल्या कालावधीच्या सुरूवातीला आणि शेवटी विविध जमीन आच्छादन प्रकारांसाठी क्षेत्रफळ आकडेवारी आणि व्हिज्युअलायझेशन.",

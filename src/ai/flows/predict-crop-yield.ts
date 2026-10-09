@@ -12,7 +12,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { executePromptWithFallback, safeParseAIJson } from '@/ai/ai-utils';
-import { getHistoricalWeather, getSoilAndWeatherData, getSoilTypeName, getMoistureLevel } from '@/services/open-meteo';
+import { getHistoricalWeather, getSoilAndWeatherData, getSoilTypeName, getMoistureLevel, formatVwcPercent } from '@/services/open-meteo';
 function predictYieldClassical(params: any) {
   return { predictedYield: 4.5, confidence: 0.8, signals: ['Favorable'] };
 }
@@ -54,27 +54,21 @@ async function fetchRealClimateData(lat: number, lon: number) {
     const temps = historicalWeather.daily.temperature_2m_mean.filter(t => t !== null) as number[];
     const precip = historicalWeather.daily.precipitation_sum.filter(p => p !== null) as number[];
     
-    const avgTemp = temps.length > 0 ? temps.reduce((a, b) => a + b, 0) / temps.length : 20;
+    if (temps.length === 0) {
+      throw new Error('No temperature observations were returned for this location');
+    }
+    const avgTemp = temps.reduce((a, b) => a + b, 0) / temps.length;
     const totalPrecip = precip.reduce((a, b) => a + b, 0);
     
     return {
       avgTemperature: avgTemp.toFixed(1),
       totalPrecipitationMm: totalPrecip.toFixed(0),
-      soilMoisture: soilData.current.soil_moisture_0_to_1cm.toFixed(1),
+      soilMoisture: soilData.current.soil_moisture_0_to_1cm.toFixed(3),
       moistureLevel: getMoistureLevel(soilData.current.soil_moisture_0_to_1cm),
       soilType: getSoilTypeName(soilData.hourly?.soil_type_0_to_10cm?.[0])
     };
   } catch (error) {
-    console.warn('Using mock climate data for crop yield', error);
-    // Return reasonable mock data based on latitude
-    const tempAdjustment = Math.abs(lat) / 90 * 10; // Colder at poles
-    return {
-      avgTemperature: (20 - tempAdjustment).toFixed(1),
-      totalPrecipitationMm: '350',
-      soilMoisture: '0.25',
-      moistureLevel: 'Optimal' as const,
-      soilType: 'Loam'
-    };
+    throw new Error(`Climate data for yield prediction is unavailable: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
@@ -113,18 +107,22 @@ export async function predictCropYield(input: PredictCropYieldInput): Promise<Pr
     const totalPrecipitationMm = Number(realData.totalPrecipitationMm);
     const soilMoisture = Number(realData.soilMoisture);
 
+    if (![avgTemperature, totalPrecipitationMm, soilMoisture].every(Number.isFinite)) {
+      throw new Error('Climate or soil moisture data is unavailable for this location');
+    }
+
     const modelPrediction = predictYieldClassical({
       cropType: input.cropType,
-      avgTemperatureC: Number.isFinite(avgTemperature) ? avgTemperature : 20,
-      totalPrecipitationMm: Number.isFinite(totalPrecipitationMm) ? totalPrecipitationMm : 350,
-      soilMoisture: Number.isFinite(soilMoisture) ? soilMoisture : 0.25,
+      avgTemperatureC: avgTemperature,
+      totalPrecipitationMm,
+      soilMoisture,
       soilType: realData.soilType,
     });
 
     const promptInput = {
       ...input,
       realClimateData: `Average Temperature: ${realData.avgTemperature}°C, Total Precipitation (6 months): ${realData.totalPrecipitationMm}mm, Model signals: ${modelPrediction.signals.join(', ')}`,
-      realSoilData: `Soil Moisture: ${realData.soilMoisture}% VWC (${realData.moistureLevel}), Soil Type: ${realData.soilType}`
+      realSoilData: `Soil Moisture: ${formatVwcPercent(Number(realData.soilMoisture))} VWC (${realData.moistureLevel}), Soil Type: ${realData.soilType}`
     };
     
     const response = await executePromptWithFallback(predictCropYieldPrompt, promptInput, undefined, 'crop-yield');

@@ -20,8 +20,8 @@ console.log('[AI] Provider Limits:', JSON.stringify(getProviderLimits(), null, 2
 // Primary model configuration - using stable Gemini models
 // gemini-2.0-flash is the current recommended model (best for cost/performance balance)
 // Fallback to gemini-1.5-pro if 2.0 has issues
-const PRIMARY_MODEL = 'googleai/gemini-3.6-flash'; // Current recommended active model
-const FALLBACK_MODEL = 'googleai/gemini-3.1-flash-lite'; // Active lightweight fallback
+const PRIMARY_MODEL = process.env.GEMINI_PRIMARY_MODEL || 'googleai/gemini-3.6-flash'; // Override via GEMINI_PRIMARY_MODEL
+const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'googleai/gemini-3.1-flash-lite'; // Override via GEMINI_FALLBACK_MODEL
 
 // Initialize Genkit with primary Gemini model
 export const ai = genkit({

@@ -70,8 +70,7 @@ export const getSoilMoisture = ai.defineTool(
           scope: 'ai.tools.get-soil-moisture',
           error: redactSensitive(error instanceof Error ? error.message : String(error)),
         });
-        // Provide a fallback value in case of API failure to ensure the flow can continue.
-        return { moistureLevel: 'Optimal' as const };
+        throw error instanceof Error ? error : new Error(String(error));
     }
   }
 );

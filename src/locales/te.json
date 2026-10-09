@@ -170,6 +170,7 @@
     "dashboard.weather.wind": "గాలి",
     "dashboard.weather.hourly": "గంట సూచన",
     "dashboard.weather.precipitation": "వర్షపాతం",
+    "dashboard.weather.unavailable": "Weather data was unavailable for this period, so temperature and rainfall are not shown.",
     "dashboard.weather.temperature": "ఉష్ణోగ్రత",
     "dashboard.landCover.title": "భూమి కవర్ మార్పు విశ్లేషణ",
     "dashboard.landCover.description": "ఎంచుకున్న కాలం ప్రారంభంలో మరియు చివరిలో వివిధ భూమి కవర్ రకాల కోసం ప్రాంత గణాంకాలు మరియు దృశ్యమానత.",

@@ -170,6 +170,7 @@
     "dashboard.weather.wind": "हवा",
     "dashboard.weather.hourly": "घंटे का पूर्वानुमान",
     "dashboard.weather.precipitation": "वर्षा",
+    "dashboard.weather.unavailable": "Weather data was unavailable for this period, so temperature and rainfall are not shown.",
     "dashboard.weather.temperature": "तापमान",
     "dashboard.landCover.title": "भूमि कवर परिवर्तन विश्लेषण",
     "dashboard.landCover.description": "चयनित अवधि की शुरुआत और अंत में विभिन्न भूमि कवर प्रकारों के लिए क्षेत्र के आँकड़े और विज़ुअलाइज़ेशन।",

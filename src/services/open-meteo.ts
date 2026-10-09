@@ -8,6 +8,7 @@ import { getTraceContext } from '@/lib/trace';
 import { logSystemMetric } from '@/lib/metrics';
 
 const ARCHIVE_API_URL = "https://archive-api.open-meteo.com/v1/archive";
+const FORECAST_API_URL = "https://api.open-meteo.com/v1/forecast";
 
 
 export interface SoilAndWeatherData {
@@ -28,11 +29,11 @@ export interface SoilAndWeatherData {
         interval: number;
         soil_moisture_0_to_1cm: number;
     };
-    hourly_units: {
+    hourly_units?: {
         time: string;
         soil_type_0_to_10cm: string;
     };
-    hourly: {
+    hourly?: {
         time: string[];
         soil_type_0_to_10cm: number[];
     };
@@ -78,75 +79,44 @@ export interface HistoricalPrecipitationData {
 
 
 /**
- * Fetches the latest soil type and moisture data for a given location.
+ * Fetches the latest topsoil moisture for a given location from the Open-Meteo forecast API.
+ * Open-Meteo does not provide soil texture, so `hourly.soil_type_0_to_10cm` is left undefined
+ * (getSoilTypeName reports "Unknown") rather than being guessed.
  * @param latitude The latitude of the location.
  * @param longitude The longitude of the location.
- * @returns A promise that resolves to the soil and weather data.
+ * @returns A promise that resolves to the soil moisture data.
+ * @throws If the API is unreachable or returns no soil moisture value. No mock data is returned.
  */
 export async function getSoilAndWeatherData(latitude: number, longitude: number): Promise<SoilAndWeatherData> {
     const traceId = getTraceContext()?.requestId;
-    // Try primary URL first, then fallback
-    const urls = [
-        `https://soil-api.open-meteo.com/v1/soil?latitude=${latitude}&longitude=${longitude}&current=soil_moisture_0_to_1cm&hourly=soil_type_0_to_10cm`,
-        `https://archive-api.open-meteo.com/v1/archive?latitude=${latitude}&longitude=${longitude}&start_date=2024-01-01&end_date=2024-01-01&hourly=soil_moisture_0_to_1cm` // Fallback
-    ];
+    const url = `${FORECAST_API_URL}?latitude=${latitude}&longitude=${longitude}&current=soil_moisture_0_to_1cm`;
 
-    for (const url of urls) {
-        try {
-            const response = await fetch(url, {
-                cache: 'no-store',
-                headers: traceId ? { 'x-request-id': traceId } : undefined,
-            });
-            if (!response.ok) {
-                throw new Error(`Open-Meteo Soil API returned an error: ${response.status} ${response.statusText}`);
-            }
-            const data = await response.json();
-            
-            logSystemMetric({ metric_type: 'api_call', provider: 'open-meteo', is_success: true, metadata: { endpoint: 'soil' } });
-            
-            // Normalize fallback data structure
-            if (!data.current) {
-                data.current = {
-                    time: new Date().toISOString(),
-                    interval: 3600,
-                    soil_moisture_0_to_1cm: 0.25 // Default optimal moisture
-                };
-            }
-            if (!data.hourly) {
-                data.hourly = {
-                    time: [new Date().toISOString()],
-                    soil_type_0_to_10cm: [4] // Default: Loam
-                };
-            }
-            
-            return data as SoilAndWeatherData;
-        } catch (error: unknown) {
-            const message = error instanceof Error ? error.message : String(error);
-            logger.warn('soil_fetch_failed', {
-                scope: 'services.open-meteo',
-                endpoint: url.split('?')[0],
-                error: redactSensitive(message),
-            });
-            logSystemMetric({ metric_type: 'api_call', provider: 'open-meteo', is_success: false, error_message: message, metadata: { endpoint: 'soil' } });
-            continue;
+    try {
+        const response = await fetch(url, {
+            cache: 'no-store',
+            headers: traceId ? { 'x-request-id': traceId } : undefined,
+        });
+        if (!response.ok) {
+            throw new Error(`Open-Meteo API returned an error: ${response.status} ${response.statusText}`);
         }
+        const data = await response.json();
+        const moisture = data?.current?.soil_moisture_0_to_1cm;
+        if (typeof moisture !== 'number' || Number.isNaN(moisture)) {
+            throw new Error('Open-Meteo response contained no soil moisture value');
+        }
+
+        logSystemMetric({ metric_type: 'api_call', provider: 'open-meteo', is_success: true, metadata: { endpoint: 'soil' } });
+        return data as SoilAndWeatherData;
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        logger.error('soil_fetch_failed', {
+            scope: 'services.open-meteo',
+            endpoint: FORECAST_API_URL,
+            error: redactSensitive(message),
+        });
+        logSystemMetric({ metric_type: 'api_call', provider: 'open-meteo', is_success: false, error_message: message, metadata: { endpoint: 'soil' } });
+        throw new Error(`Failed to fetch soil moisture data: ${message}`);
     }
-    
-    // If all URLs fail, return mock data as last resort
-    logger.error('soil_all_endpoints_failed', { scope: 'services.open-meteo' });
-    return {
-        latitude,
-        longitude,
-        generationtime_ms: 0,
-        utc_offset_seconds: 0,
-        timezone: 'UTC',
-        timezone_abbreviation: 'UTC',
-        elevation: 0,
-        current_units: { time: 'iso8601', interval: 'seconds', soil_moisture_0_to_1cm: 'm³/m³' },
-        current: { time: new Date().toISOString(), interval: 3600, soil_moisture_0_to_1cm: 0.25 },
-        hourly_units: { time: 'iso8601', soil_type_0_to_10cm: 'code' },
-        hourly: { time: [new Date().toISOString()], soil_type_0_to_10cm: [4] }
-    };
 }
 
 /**
@@ -190,68 +160,55 @@ export async function getHistoricalWeather(latitude: number, longitude: number, 
             error: redactSensitive(message),
         });
         logSystemMetric({ metric_type: 'api_call', provider: 'open-meteo', is_success: false, error_message: message, metadata: { endpoint: 'historical_weather' } });
-        logger.warn('historical_weather_mock_fallback', { scope: 'services.open-meteo' });
-        
-        // Return mock historical data as fallback
-        const days = Math.floor((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
-        const mockTemps: number[] = [];
-        const mockPrecip: number[] = [];
-        const mockTimes: string[] = [];
-        
-        for (let i = 0; i < days; i++) {
-            const date = new Date(startDate);
-            date.setDate(date.getDate() + i);
-            mockTimes.push(date.toISOString().split('T')[0]);
-            // Generate realistic seasonal temperatures (15-25°C avg)
-            mockTemps.push(15 + Math.random() * 10);
-            // Random precipitation (0-20mm)
-            mockPrecip.push(Math.random() * 20);
-        }
-        
-        return {
-            latitude,
-            longitude,
-            generationtime_ms: 0,
-            utc_offset_seconds: 0,
-            timezone: 'UTC',
-            timezone_abbreviation: 'UTC',
-            elevation: 0,
-            daily_units: {
-                time: 'iso8601',
-                temperature_2m_mean: '°C',
-                precipitation_sum: 'mm'
-            },
-            daily: {
-                time: mockTimes,
-                temperature_2m_mean: mockTemps,
-                precipitation_sum: mockPrecip
-            }
-        };
+        throw new Error(`Failed to fetch historical weather: ${message}`);
     }
 }
 
+/** A year needs at least this many non-null daily values to count towards the normal. */
+const MIN_DAYS_PER_NORMAL_YEAR = 330;
+
 /**
- * Fetches the 30-year average annual precipitation for a given location.
+ * Averages annual precipitation totals from a daily series.
+ * Only years with enough non-null days are used, so a gap-filled year does not drag the mean down.
+ * @returns The mean yearly total in mm, or null when no year has enough data.
+ */
+export function averageAnnualPrecipitationMm(times: string[], values: (number | null)[]): number | null {
+    const perYear = new Map<string, { sum: number; days: number }>();
+    for (let i = 0; i < times.length; i++) {
+        const value = values[i];
+        if (value === null || value === undefined || Number.isNaN(value)) continue;
+        const year = times[i].slice(0, 4);
+        const entry = perYear.get(year) ?? { sum: 0, days: 0 };
+        entry.sum += value;
+        entry.days += 1;
+        perYear.set(year, entry);
+    }
+    const totals = [...perYear.values()].filter(y => y.days >= MIN_DAYS_PER_NORMAL_YEAR).map(y => y.sum);
+    if (totals.length === 0) return null;
+    return totals.reduce((a, b) => a + b, 0) / totals.length;
+}
+
+/**
+ * Fetches the 1991-2020 average annual precipitation for a given location.
+ * The archive API has no yearly aggregation, so this requests daily ERA5 data and aggregates it.
  * @param latitude The latitude of the location.
  * @param longitude The longitude of the location.
- * @returns A promise that resolves to the historical precipitation data.
+ * @returns A promise that resolves to the precipitation normal (`yearly.precipitation_sum[0]`, mm/year).
+ * @throws If the API is unreachable or returns too little data. No mock data is returned.
  */
 export async function getHistoricalPrecipitation(latitude: number, longitude: number): Promise<HistoricalPrecipitationData> {
     const traceId = getTraceContext()?.requestId;
-    // Fetches data for the climate normal period (1991-2020) to get a 30-year average.
     const params = new URLSearchParams({
         latitude: latitude.toString(),
         longitude: longitude.toString(),
         start_date: '1991-01-01',
-        end_date: '2020-12-31', 
-        yearly: "precipitation_sum",
-        models: "ERA5_seamless", // Use climate reanalysis data
+        end_date: '2020-12-31',
+        daily: 'precipitation_sum',
+        models: 'era5_seamless',
     });
 
-    const url = `${ARCHIVE_API_URL}?${params.toString()}`;
-
     try {
-        const response = await fetch(url, {
+        const response = await fetch(`${ARCHIVE_API_URL}?${params.toString()}`, {
             cache: 'no-store',
             headers: traceId ? { 'x-request-id': traceId } : undefined,
         });
@@ -259,19 +216,24 @@ export async function getHistoricalPrecipitation(latitude: number, longitude: nu
             throw new Error(`Open-Meteo Archive API returned an error: ${response.status} ${response.statusText}`);
         }
         const data = await response.json();
-        
-        logSystemMetric({ metric_type: 'api_call', provider: 'open-meteo', is_success: true, metadata: { endpoint: 'historical_precipitation' } });
-        
-        // The API returns yearly data for the whole range. We need to average it.
-        if (data.yearly && data.yearly.precipitation_sum && data.yearly.precipitation_sum.length > 0) {
-            const validValues = data.yearly.precipitation_sum.filter((p: number | null) => p !== null);
-            const average = validValues.reduce((a: number, b: number) => a + b, 0) / validValues.length;
-            // We'll return the average as if it were a single yearly value for simplicity.
-            data.yearly.precipitation_sum = [average];
-            data.yearly.time = [ '1991-2020 Average' ];
+        const average = averageAnnualPrecipitationMm(data?.daily?.time ?? [], data?.daily?.precipitation_sum ?? []);
+        if (average === null) {
+            throw new Error('Open-Meteo response had too little data to compute a precipitation normal');
         }
-        
-        return data as HistoricalPrecipitationData;
+
+        logSystemMetric({ metric_type: 'api_call', provider: 'open-meteo', is_success: true, metadata: { endpoint: 'historical_precipitation' } });
+
+        return {
+            latitude: data.latitude ?? latitude,
+            longitude: data.longitude ?? longitude,
+            generationtime_ms: data.generationtime_ms ?? 0,
+            utc_offset_seconds: data.utc_offset_seconds ?? 0,
+            timezone: data.timezone ?? 'UTC',
+            timezone_abbreviation: data.timezone_abbreviation ?? 'UTC',
+            elevation: data.elevation ?? 0,
+            yearly_units: { time: 'string', precipitation_sum: 'mm' },
+            yearly: { time: ['1991-2020 Average'], precipitation_sum: [average] },
+        };
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
         logger.error('historical_precipitation_fetch_failed', {
@@ -279,26 +241,7 @@ export async function getHistoricalPrecipitation(latitude: number, longitude: nu
             error: redactSensitive(message),
         });
         logSystemMetric({ metric_type: 'api_call', provider: 'open-meteo', is_success: false, error_message: message, metadata: { endpoint: 'historical_precipitation' } });
-        logger.warn('historical_precipitation_mock_fallback', { scope: 'services.open-meteo' });
-        
-        // Return mock 30-year average (global average ~500mm/year)
-        return {
-            latitude,
-            longitude,
-            generationtime_ms: 0,
-            utc_offset_seconds: 0,
-            timezone: 'UTC',
-            timezone_abbreviation: 'UTC',
-            elevation: 0,
-            yearly_units: {
-                time: 'string',
-                precipitation_sum: 'mm'
-            },
-            yearly: {
-                time: ['1991-2020 Average'],
-                precipitation_sum: [500 + (Math.random() - 0.5) * 200] // 400-600mm range
-            }
-        };
+        throw new Error(`Failed to fetch precipitation normal: ${message}`);
     }
 }
 
@@ -319,15 +262,25 @@ export function getSoilTypeName(typeIndex: number | undefined): string {
     return soilTypes[typeIndex] || "Unknown";
 }
 
+/** Volumetric water content (m³/m³) below which topsoil is considered dry. */
+export const MOISTURE_DRY_BELOW = 0.2;
+/** Volumetric water content (m³/m³) above which topsoil is considered wet. */
+export const MOISTURE_WET_ABOVE = 0.4;
+
 /**
  * Categorizes the volumetric water content into a moisture level.
- * Typical values for VWC range from <10% (very dry) to >40% (saturated).
- * @param vwc The volumetric water content percentage (e.g., 25.5).
+ * Open-Meteo reports soil moisture as a fraction in m³/m³ (about 0.05 to 0.5).
+ * @param vwc The volumetric water content in m³/m³ (e.g., 0.255).
  * @returns 'Dry', 'Optimal', or 'Wet'.
  */
 export function getMoistureLevel(vwc: number | undefined): 'Dry' | 'Optimal' | 'Wet' {
-    if (vwc === undefined) return "Optimal"; // Default fallback
-    if (vwc < 15) return 'Dry';
-    if (vwc > 35) return 'Wet';
+    if (vwc === undefined || Number.isNaN(vwc)) return "Optimal"; // Default fallback
+    if (vwc < MOISTURE_DRY_BELOW) return 'Dry';
+    if (vwc > MOISTURE_WET_ABOVE) return 'Wet';
     return 'Optimal';
+}
+
+/** Formats a m³/m³ volumetric water content fraction as a percent string. */
+export function formatVwcPercent(vwc: number): string {
+    return `${(vwc * 100).toFixed(1)}%`;
 }
