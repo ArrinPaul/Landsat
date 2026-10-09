@@ -12,15 +12,17 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { executePromptWithFallback, safeParseAIJson } from '@/ai/ai-utils';
+import { getForecast } from '@/lib/data/open-meteo-forecast';
 import { getSoilAndWeatherData, getMoistureLevel, getSoilTypeName, formatVwcPercent, MOISTURE_DRY_BELOW, MOISTURE_WET_ABOVE } from '@/services/open-meteo';
 
 // Fetch real weather forecast
 async function fetchWeatherForecast(lat: number, lon: number) {
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=precipitation_sum,temperature_2m_max,evapotranspiration&timezone=auto&forecast_days=7`;
-  
-  const response = await fetch(url, { cache: 'no-store' });
-  if (!response.ok) throw new Error('Failed to fetch weather forecast');
-  return await response.json();
+  return getForecast({
+    latitude: lat,
+    longitude: lon,
+    daily: ['precipitation_sum', 'temperature_2m_max', 'evapotranspiration'],
+    forecastDays: 7,
+  });
 }
 
 const ScheduleIrrigationInputSchema = z.object({

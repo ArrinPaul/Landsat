@@ -8,16 +8,17 @@
 
 import {z} from 'genkit';
 import { getCache, setCache } from '@/ai/cache';
+import { getForecast } from '@/lib/data/open-meteo-forecast';
 
 // Real-time weather data fetching
 async function fetchRealWeatherData(latitude: number, longitude: number) {
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&hourly=temperature_2m,weather_code&timezone=auto&forecast_days=1`;
-  
-  const response = await fetch(url, { cache: 'no-store' });
-  if (!response.ok) {
-    throw new Error(`Open-Meteo API error: ${response.status}`);
-  }
-  return await response.json();
+  return getForecast({
+    latitude,
+    longitude,
+    current: ['temperature_2m', 'relative_humidity_2m', 'wind_speed_10m', 'weather_code'],
+    hourly: ['temperature_2m', 'weather_code'],
+    forecastDays: 1,
+  });
 }
 
 // Map weather codes to icon names and descriptions
