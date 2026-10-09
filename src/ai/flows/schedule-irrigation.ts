@@ -13,7 +13,8 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { executePromptWithFallback, safeParseAIJson } from '@/ai/ai-utils';
 import { getForecast } from '@/lib/data/open-meteo-forecast';
-import { getSoilAndWeatherData, getMoistureLevel, getSoilTypeName, formatVwcPercent, MOISTURE_DRY_BELOW, MOISTURE_WET_ABOVE } from '@/services/open-meteo';
+import { getSoilAndWeatherData, getMoistureLevel, formatVwcPercent, MOISTURE_DRY_BELOW, MOISTURE_WET_ABOVE } from '@/services/open-meteo';
+import { describeSoil } from '@/lib/data/soilgrids';
 
 // Fetch real weather forecast
 async function fetchWeatherForecast(lat: number, lon: number) {
@@ -77,13 +78,13 @@ const scheduleIrrigationPrompt = ai.definePrompt({
 export async function scheduleIrrigation(input: ScheduleIrrigationInput): Promise<ScheduleIrrigationOutput> {
     try {
       // Fetch REAL data
-      const [soilData, forecastData] = await Promise.all([
+      const [soilData, forecastData, soilType] = await Promise.all([
         getSoilAndWeatherData(input.latitude, input.longitude),
-        fetchWeatherForecast(input.latitude, input.longitude)
+        fetchWeatherForecast(input.latitude, input.longitude),
+        describeSoil(input.latitude, input.longitude)
       ]);
       
       const moistureLevel = getMoistureLevel(soilData.current.soil_moisture_0_to_1cm);
-      const soilType = getSoilTypeName(soilData.hourly?.soil_type_0_to_10cm?.[0]);
     
     // Format forecast data
     const forecastSummary = forecastData.daily.time.map((date: string, i: number) => ({

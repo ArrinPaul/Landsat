@@ -10,7 +10,8 @@
  */
 
 import { z } from 'genkit';
-import { getSoilAndWeatherData, getMoistureLevel, getSoilTypeName } from '@/services/open-meteo';
+import { getSoilAndWeatherData, getMoistureLevel, formatVwcPercent } from '@/services/open-meteo';
+import { describeSoil } from '@/lib/data/soilgrids';
 
 const PredictSoilMoistureInputSchema = z.object({
   latitude: z.number().describe('The latitude of the location.'),
@@ -29,9 +30,9 @@ export type PredictSoilMoistureOutput = z.infer<typeof PredictSoilMoistureOutput
  */
 function getMoistureSummary(level: 'Dry' | 'Optimal' | 'Wet', vwc: number, soilType: string): string {
   const summaries = {
-    'Dry': `Soil is dry (${vwc.toFixed(1)}% VWC). ${soilType} soil type. Consider irrigation for most crops.`,
-    'Optimal': `Soil moisture is optimal (${vwc.toFixed(1)}% VWC). ${soilType} soil type. Good conditions for plant growth.`,
-    'Wet': `Soil is saturated (${vwc.toFixed(1)}% VWC). ${soilType} soil type. Avoid irrigation, watch for waterlogging.`
+    'Dry': `Soil is dry (${formatVwcPercent(vwc)} VWC). ${soilType} soil type. Consider irrigation for most crops.`,
+    'Optimal': `Soil moisture is optimal (${formatVwcPercent(vwc)} VWC). ${soilType} soil type. Good conditions for plant growth.`,
+    'Wet': `Soil is saturated (${formatVwcPercent(vwc)} VWC). ${soilType} soil type. Avoid irrigation, watch for waterlogging.`
   };
   return summaries[level];
 }
@@ -43,8 +44,7 @@ export async function predictSoilMoisture(input: PredictSoilMoistureInput): Prom
       
       const vwc = data.current.soil_moisture_0_to_1cm;
       const moistureLevel = getMoistureLevel(vwc);
-      const soilTypeIndex = data.hourly?.soil_type_0_to_10cm?.[0];
-      const soilType = getSoilTypeName(soilTypeIndex);
+      const soilType = await describeSoil(input.latitude, input.longitude);
       
       return {
         volumetricWaterContent: vwc,

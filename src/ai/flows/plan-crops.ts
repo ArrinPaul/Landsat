@@ -12,7 +12,8 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { executePromptWithFallback, safeParseAIJson } from '@/ai/ai-utils';
-import { getHistoricalWeather, getSoilAndWeatherData, getMoistureLevel, getSoilTypeName } from '@/services/open-meteo';
+import { getHistoricalWeather, getSoilAndWeatherData, getMoistureLevel } from '@/services/open-meteo';
+import { describeSoil } from '@/lib/data/soilgrids';
 import { describeClimateQuality, getCrossCheckedClimate } from '@/lib/data/climate-cross-check';
 import { isAvailable } from '@/lib/data/measured';
 
@@ -23,9 +24,10 @@ async function fetchClimateDataForCropPlanning(lat: number, lon: number) {
   startDate.setFullYear(startDate.getFullYear() - 1); // Last year's data
   
   try {
-    const [historicalWeather, soilData] = await Promise.all([
+    const [historicalWeather, soilData, soilType] = await Promise.all([
       getHistoricalWeather(lat, lon, startDate.toISOString().split('T')[0], endDate.toISOString().split('T')[0]),
-      getSoilAndWeatherData(lat, lon)
+      getSoilAndWeatherData(lat, lon),
+      describeSoil(lat, lon)
     ]);
     
     // Calculate seasonal averages
@@ -45,7 +47,7 @@ async function fetchClimateDataForCropPlanning(lat: number, lon: number) {
       minTemp: minTemp.toFixed(1),
       maxTemp: maxTemp.toFixed(1),
       annualPrecipitation: totalPrecip.toFixed(0),
-      soilType: getSoilTypeName(soilData.hourly?.soil_type_0_to_10cm?.[0]),
+      soilType,
       currentMoisture: getMoistureLevel(soilData.current.soil_moisture_0_to_1cm)
     };
   } catch (error) {
