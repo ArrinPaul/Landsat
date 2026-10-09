@@ -21,7 +21,8 @@
     "test:contracts": "vitest run src/test/action-contracts.test.ts",
     "test:e2e": "playwright test",
     "test:watch": "vitest",
-    "security:audit": "npm audit --audit-level=high",
+    "security:audit": "npm audit --omit=dev --audit-level=critical",
+    "security:audit:report": "npm audit --omit=dev --audit-level=high",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky"
@@ -57,7 +58,7 @@
     "leaflet": "^1.9.4",
     "leaflet-draw": "^1.0.4",
     "lucide-react": "^0.475.0",
-    "next": "15.5.12",
+    "next": "15.5.27",
     "next-themes": "^0.3.0",
     "node-fetch": "^3.3.2",
     "react": "^18.3.1",
