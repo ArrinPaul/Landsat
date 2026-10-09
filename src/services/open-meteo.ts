@@ -6,6 +6,7 @@ import { logger } from '@/lib/logger';
 import { redactSensitive } from '@/lib/security';
 import { getTraceContext } from '@/lib/trace';
 import { logSystemMetric } from '@/lib/metrics';
+import { cacheKey, withCache, type DataCacheStore } from '@/lib/data/cache';
 
 const ARCHIVE_API_URL = "https://archive-api.open-meteo.com/v1/archive";
 const FORECAST_API_URL = "https://api.open-meteo.com/v1/forecast";
@@ -196,7 +197,7 @@ export function averageAnnualPrecipitationMm(times: string[], values: (number | 
  * @returns A promise that resolves to the precipitation normal (`yearly.precipitation_sum[0]`, mm/year).
  * @throws If the API is unreachable or returns too little data. No mock data is returned.
  */
-export async function getHistoricalPrecipitation(latitude: number, longitude: number): Promise<HistoricalPrecipitationData> {
+async function fetchHistoricalPrecipitation(latitude: number, longitude: number): Promise<HistoricalPrecipitationData> {
     const traceId = getTraceContext()?.requestId;
     const params = new URLSearchParams({
         latitude: latitude.toString(),
@@ -245,6 +246,26 @@ export async function getHistoricalPrecipitation(latitude: number, longitude: nu
     }
 }
 
+
+const THIRTY_DAYS_S = 30 * 24 * 60 * 60;
+
+/**
+ * The 1991-2020 normal for a location is fixed, so it is cached for 30 days
+ * (it is about 11,000 daily rows to download otherwise).
+ * @param store Injected in tests; defaults to the Supabase-backed cache.
+ */
+export function getHistoricalPrecipitation(
+    latitude: number,
+    longitude: number,
+    store?: DataCacheStore,
+): Promise<HistoricalPrecipitationData> {
+    return withCache(
+        cacheKey('open-meteo-normal-1991-2020', latitude, longitude),
+        THIRTY_DAYS_S,
+        () => fetchHistoricalPrecipitation(latitude, longitude),
+        store,
+    );
+}
 
 /**
  * Maps the soil type index from the API to a human-readable name.

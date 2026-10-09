@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { DataCacheStore } from '@/lib/data/cache';
 import { averageAnnualPrecipitationMm, getHistoricalPrecipitation } from '@/services/open-meteo';
 
 const okJson = (body: unknown) =>
@@ -69,5 +70,19 @@ describe('getHistoricalPrecipitation', () => {
   it('throws when the response has too little data to compute a normal', async () => {
     vi.stubGlobal('fetch', vi.fn(() => okJson({ daily: { time: ['2001-01-01'], precipitation_sum: [1] } })));
     await expect(getHistoricalPrecipitation(20, 78)).rejects.toThrow(/precipitation/i);
+  });
+
+  it('serves a repeat request from the cache without refetching 30 years of data', async () => {
+    const { times, values } = dailySeries([1991, 1992], 2);
+    const fetchMock = vi.fn(() => okJson({ latitude: 20, longitude: 78, daily: { time: times, precipitation_sum: values } }));
+    vi.stubGlobal('fetch', fetchMock);
+    const data = new Map<string, unknown>();
+    const store: DataCacheStore = { get: async (k) => data.get(k), set: async (k, v) => void data.set(k, v) };
+
+    const first = await getHistoricalPrecipitation(20, 78, store);
+    const second = await getHistoricalPrecipitation(20, 78, store);
+
+    expect(second).toEqual(first);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
