@@ -12,7 +12,8 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { executePromptWithFallback, safeParseAIJson } from '@/ai/ai-utils';
-import { getHistoricalWeather, getSoilAndWeatherData, getSoilTypeName, getMoistureLevel, formatVwcPercent } from '@/services/open-meteo';
+import { getHistoricalWeather, getSoilAndWeatherData, getMoistureLevel, formatVwcPercent } from '@/services/open-meteo';
+import { describeSoil } from '@/lib/data/soilgrids';
 function predictYieldClassical(params: any) {
   return { predictedYield: 4.5, confidence: 0.8, signals: ['Favorable'] };
 }
@@ -45,9 +46,10 @@ async function fetchRealClimateData(lat: number, lon: number) {
   startDate.setMonth(startDate.getMonth() - 6); // Last 6 months
   
   try {
-    const [historicalWeather, soilData] = await Promise.all([
+    const [historicalWeather, soilData, soilType] = await Promise.all([
       getHistoricalWeather(lat, lon, startDate.toISOString().split('T')[0], endDate.toISOString().split('T')[0]),
-      getSoilAndWeatherData(lat, lon)
+      getSoilAndWeatherData(lat, lon),
+      describeSoil(lat, lon)
     ]);
     
     // Calculate averages from historical data
@@ -65,7 +67,7 @@ async function fetchRealClimateData(lat: number, lon: number) {
       totalPrecipitationMm: totalPrecip.toFixed(0),
       soilMoisture: soilData.current.soil_moisture_0_to_1cm.toFixed(3),
       moistureLevel: getMoistureLevel(soilData.current.soil_moisture_0_to_1cm),
-      soilType: getSoilTypeName(soilData.hourly?.soil_type_0_to_10cm?.[0])
+      soilType
     };
   } catch (error) {
     throw new Error(`Climate data for yield prediction is unavailable: ${error instanceof Error ? error.message : String(error)}`);
