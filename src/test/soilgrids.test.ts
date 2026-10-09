@@ -93,6 +93,30 @@ describe('getSoilTexture', () => {
     expect(m.reason).toMatch(/no soil data/i);
   });
 
+  it('stops waiting at the deadline but still fills the cache for the next request', async () => {
+    const fetchMock = vi.fn(
+      () =>
+        new Promise<Response>((resolve) => {
+          setTimeout(() => {
+            resolve({ ok: true, status: 200, statusText: 'OK', json: () => Promise.resolve(REAL_BODY) } as Response);
+          }, 150);
+        }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const store = emptyStore();
+
+    const slow = await getSoilTexture(20.5, 78.9, store, 20);
+    expect(slow.status).toBe('unavailable');
+    expect(slow.reason).toMatch(/did not answer within/i);
+
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    const next = await getSoilTexture(20.5, 78.9, store, 20);
+    expect(next.status).toBe('measured');
+    expect(next.value?.texture).toBe('Clay');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it('serves the second request from the cache', async () => {
     const fetchMock = vi.fn(() => okJson(REAL_BODY));
     vi.stubGlobal('fetch', fetchMock);

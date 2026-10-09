@@ -7,6 +7,12 @@ const SOURCE = 'ISRIC SoilGrids 0-5 cm';
 const NINETY_DAYS_S = 90 * 24 * 60 * 60;
 /** Modelled 250 m product, not an in-field measurement. */
 const SOILGRIDS_QUALITY = 0.75;
+/**
+ * SoilGrids is slow (measured at 55 s for one point on 2026-10-10). A caller
+ * waits at most this long; the request keeps running and fills the cache.
+ */
+const DEFAULT_DEADLINE_MS = 8_000;
+const UPSTREAM_TIMEOUT_MS = 90_000;
 
 export interface SoilTexture {
   texture: string;
@@ -75,30 +81,54 @@ export function parseSoilGrids(body: unknown): SoilTexture | null {
 /**
  * Real topsoil texture, pH and organic carbon from ISRIC SoilGrids. Cached for
  * 90 days (soil does not change). Never throws; failures are `unavailable`.
+ *
+ * SoilGrids can take close to a minute, so the caller is only made to wait
+ * `deadlineMs`. If the deadline passes the answer is `unavailable` for this
+ * request, but the upstream call keeps running and populates the cache, so the
+ * next request for the same area is served instantly.
  */
 export async function getSoilTexture(
   latitude: number,
   longitude: number,
   store?: DataCacheStore,
+  deadlineMs: number = DEFAULT_DEADLINE_MS,
 ): Promise<Measured<SoilTexture>> {
   const params = new URLSearchParams({ lon: String(longitude), lat: String(latitude), depth: '0-5cm', value: 'mean' });
   for (const property of ['clay', 'sand', 'silt', 'phh2o', 'soc']) params.append('property', property);
 
+  const lookup = withCache<SoilTexture | null>(
+    cacheKey('soilgrids', latitude, longitude),
+    NINETY_DAYS_S,
+    async () =>
+      parseSoilGrids(
+        await fetchJson<unknown>(`${SOILGRIDS_URL}?${params.toString()}`, {
+          provider: 'soilgrids',
+          endpoint: 'properties_query',
+          timeoutMs: UPSTREAM_TIMEOUT_MS,
+          retries: 0,
+        }),
+      ),
+    store,
+  );
+  // If the deadline wins, `lookup` is still pending; make sure a later failure
+  // is not reported as an unhandled rejection.
+  lookup.catch(() => undefined);
+
+  const DEADLINE = Symbol('deadline');
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<typeof DEADLINE>((resolve) => {
+    timer = setTimeout(() => resolve(DEADLINE), deadlineMs);
+  });
+
   try {
-    const soil = await withCache<SoilTexture | null>(
-      cacheKey('soilgrids', latitude, longitude),
-      NINETY_DAYS_S,
-      async () =>
-        parseSoilGrids(
-          await fetchJson<unknown>(`${SOILGRIDS_URL}?${params.toString()}`, {
-            provider: 'soilgrids',
-            endpoint: 'properties_query',
-            timeoutMs: 20_000,
-            retries: 1,
-          }),
-        ),
-      store,
-    );
+    const soil = await Promise.race([lookup, deadline]);
+    if (soil === DEADLINE) {
+      return unavailable({
+        unit: 'USDA texture class',
+        source: SOURCE,
+        reason: `SoilGrids did not answer within ${Math.round(deadlineMs / 1000)} s; it is being fetched and will be cached for the next request`,
+      });
+    }
     if (soil === null) {
       return unavailable({
         unit: 'USDA texture class',
@@ -113,6 +143,8 @@ export async function getSoilTexture(
       source: SOURCE,
       reason: error instanceof Error ? error.message : String(error),
     });
+  } finally {
+    clearTimeout(timer);
   }
 }
 
